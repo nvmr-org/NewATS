@@ -4,6 +4,10 @@ Created on Nov 18, 2016
 @author: ttb
 '''
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Block(object):
     """The layout class defines blocks and segments of a layout.  Blocks should be 
@@ -44,41 +48,52 @@ class Block(object):
         self.segment = Block.segmentCount
         self.occupied = blockOccupied
         self.stopRequired = stopRequired
-        self.waitTime = waitTime
+        self.waitTime = waitTime 
+        if not stopRequired: self.waitTime = 0
         self.length = length
         self.description = description
         self.next = None
-        print "Block Added: ", self.address, " ", self.description
+        logger.info("Block Added: %s - %s", self.address, self.description)
+
 
     def set_blockAddress(self, blockAddress=-1):
         # Set the Layout Block Address.
         self.address = blockAddress
         
+
     def set_segmentAddress(self, segmentAddress=-1):
         # Set the Layout Segment Address.
         self.segment = segmentAddress
         
+
     def set_blockOccupied(self):
         self.occupied = True
     
+
     def set_blockClear(self):
         self.occupied = False
         
+
     def get_blockAddress(self):
         return self.address
     
+
     def get_segmentAddress(self):
         return self.segment
             
+
     def get_layoutLength(self):
         return Block.blockCount
     
+
     def get_isBlockOccupied(self):
         return self.occupied
+
 
     def isStopRequired(self):
         return self.stopRequired
     
+
     def get_waitTime(self):
         return self.waitTime
         

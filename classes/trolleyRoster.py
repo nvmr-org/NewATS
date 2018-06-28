@@ -4,6 +4,9 @@ Created on Nov 18, 2016
 @author: ttb
 '''
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TrolleyRoster(object):
     """A TrolleyRoster object is essentially a linked list of trolley objects that 
@@ -25,7 +28,7 @@ class TrolleyRoster(object):
 
 
     deviceCount = 0
-    multipleDetected = False
+    multipleDetectedInBlock = False
     
     def __init__(self, trolleyObjects=None):
         """Initialize the class"""
@@ -41,38 +44,40 @@ class TrolleyRoster(object):
             self.first = None
             self.last = None
             #self.next = None
-            
-        """Return a Trolley object whose id is *id* and starting position and next 
-        position are the 0th and 1st blocks if not provided.  Priority should reflect the 
-        order of the trolley's on the Layout."""
-        #self.trolleys = list(trolleyObjects)
-        #TrolleyRoster.deviceCount += 1
         
+
     def __repr__(self):
         return "<{0} {1}>".format(self.__class__.__name__, self._list)
     
+
     def __len__(self):
         """List length"""
         return(len(self._list))
     
+
     def size(self):
         return(len(self._list))
     
+
     def __getitem__(self, ii):
         """Get a list item"""
         return self._list[ii]
     
+
     def __delitem__(self, ii):
         """Delete an item"""
         del self._list[ii]
         
+
     def __setitem__(self, ii, val):
         # optional: self._acl_check(val)
         self._list[ii] = val
 
+
     def __str__(self):
         return str(self._list)
     
+
     def insert(self, ii, val):
         # optional: self._acl_check(val)
         self._list.insert(len(self._list), val)
@@ -87,49 +92,68 @@ class TrolleyRoster(object):
             #self.next = self.first
         self.last = val
         
+
     def append(self, trolley):
         # if the block is currently occupied by another trolley set a flag before inserting
-        print 'TrolleyRoster.append'
+        #print 'TrolleyRoster.append'
         if self.findByAddress(trolley.address) != None:
+            logger.error("Error: Attempt to register multiple trolleys to the same address: %s", trolley.address)
             sys.exit("Error: Attempt to register multiple trolleys to the same address:" + trolley.address)
-        if self.findByCurrentBlock(trolley.currentPosition.address):
-            print 'Warning: Multiple trolleys registered to the same block: ', trolley.currentPosition.address
-            print 'Warning: Trolleys will depart in the order they were registered.'
-            self.multipleDetected = True
-        print "Requesting Slot for Trolley:", trolley.address
+        self.checkForMultipleTrolleysInOneBlock()
+#         if self.findByCurrentBlock(trolley.currentPosition.address):
+#             logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
+#             logger.warning('Warning: Trolleys will depart in the order they were registered.')
+#             self.multipleDetectedInBlock = True
+        #print "Requesting Slot for Trolley:", trolley.address
         trolley.requestSlot(trolley.address)
         self.insert(len(self._list), trolley)
-        
+
+
+    def checkForMultipleTrolleysInOneBlock(self):
+        self.multipleDetectedInBlock = False
+        for trolley in self._list:
+            print "Trolley: " + str(trolley.address) + "   Find: "+ str(self.findByCurrentBlock(trolley.currentPosition.address).address)
+            if self.findByCurrentBlock(trolley.currentPosition.address).address <> trolley.address:
+                logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
+                logger.warning('Warning: Trolleys will depart in the order they were registered.')
+                self.multipleDetectedInBlock = True
+                break
+
+
     def dump(self):
         print "**************"
         print "TrolleyRoster"
         print "**************"
-        if self.multipleDetected:
-            print 'Warning: Multiple trolleys registered to the same block. '
-
+        self.checkForMultipleTrolleysInOneBlock()
+#         if self.multipleDetectedInBlock:
+#             print 'Warning: Multiple trolleys registered to the same block. '
         print "Roster Size: ", self.size()
-        print "MultipleState: ",self.multipleDetected
+        print "MultipleState: ",self.multipleDetectedInBlock
         for trolley in self._list:
             print "Id:", trolley.priority, 
             print " Address:", trolley.address, 
             print " Speed:", trolley.speed,
             print " Current Position:", trolley.currentPosition.address, 
             print " Next Position:", trolley.nextPosition.address,
-            print " Next Trolley:", self.getNextTrolley(trolley).address,
-            print " Throttle:", trolley.throttle
+            print " Next Trolley:", self.getNextTrolley(trolley).address
+            #print " Throttle:", trolley.throttle
+
 
     def getNextTrolleyAddress(self, val):
         return val.next.address
 
+
     def getNextTrolley(self, val):
         return val.next
         
+
     def findByCurrentBlock(self, currentPosition):
         for trolley in self._list:
             if trolley.currentPosition.address == currentPosition:
                 return trolley
         #return find(lambda trolley: trolley.currentPosition == currentPosition, self._list)
         
+
     def findByAddress(self, address):
         for trolley in self._list:
             if trolley.address == address:
@@ -143,6 +167,7 @@ class TrolleyRoster(object):
             if trolley.nextPosition.address == nextPosition:
                 return trolley
             
+
     def findByCurrentSegment(self, segment, blockMap):
         for trolley in self._list:
             for block in blockMap:
