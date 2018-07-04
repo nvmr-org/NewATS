@@ -112,7 +112,7 @@ class TrolleyRoster(object):
     def checkForMultipleTrolleysInOneBlock(self):
         self.multipleDetectedInBlock = False
         for trolley in self._list:
-            print "Trolley: " + str(trolley.address) + "   Find: "+ str(self.findByCurrentBlock(trolley.currentPosition.address).address)
+            logger.debug("Trolley: %s   Find: %s", str(trolley.address), str(self.findByCurrentBlock(trolley.currentPosition.address).address))
             if self.findByCurrentBlock(trolley.currentPosition.address).address <> trolley.address:
                 logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
                 logger.warning('Warning: Trolleys will depart in the order they were registered.')
