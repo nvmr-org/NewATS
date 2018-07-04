@@ -137,7 +137,7 @@ class BlockMap(object):
     
 
     def findSegmentByAddress(self,address):
-        for block in self._list():
+        for block in self._list:
             if block.address == address:
                 return block.segment
         return None
