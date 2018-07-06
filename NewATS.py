@@ -1,6 +1,5 @@
 #from argparse import _StoreFalseAction
 #from classes.layoutMap import LayoutMap
-from datetime import timedelta
 #from classes import layoutMap
 print "ATS Start"
 from classes.trolley import Trolley
@@ -11,6 +10,7 @@ from classes.messengerFacade import Messenger
 import datetime
 import time
 import logging
+from random import randint
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 logger = logging.getLogger("NewATS")
@@ -69,7 +69,7 @@ def checkAllTrolleyMovement(trolleyRoster, layoutMap):
             if checkIfTrolleyShouldStop(trolley, trolleyRoster, layoutMap):
                 logger.info("Trolley: %s   Status: Is Running (%s seconds) in block: %s",
                         trolley.address, (datetime.datetime.now() - trolley.startTime).seconds, trolley.currentPosition.address)
-                logger.info("Trolley: %s   Status: Stopping",trolley.address)
+                logger.info("Trolley: %s   Action: Stopping",trolley.address)
                 trolley.slowStop()
                 trolleyRoster.dump()
     
@@ -79,15 +79,19 @@ def checkIfTrolleyCanMove(trolley, trolleyRoster, layoutMap):
     if layoutMap.isSegmentOccupied(trolley.nextPosition.segment): 
         logger.debug("Trolley: %s   Alert: Next segment occupied", trolley.address)
         return False
-    # If this trolley is not the next one scheduled for the next block return false
-    if not trolley.address == trolleyRoster.findByNextBlock(trolley.nextPosition.address).address:
-        logger.debug("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition().address)
-        return False
     # If this trolley is in a block that requires a stop and has not been stopped long enough return false
     if trolley.currentPosition.stopRequired:
         if not checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
             logger.debug("Trolley: %s   Alert: Required stop time has not been met", trolley.address)
             return False
+    # If this trolley is not the next one scheduled for the next block return false
+    if trolley.address != trolleyRoster.findByNextBlock(trolley.nextPosition.address).address:
+        # The exception to this is if the next block is part of the current segment the trolley is already in
+        if trolley.currentPosition.segment != trolley.nextPosition.segment:
+            logger.debug("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition().address)
+            return False
+        else:
+            logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s - ******* START CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
     #print "Reason: is allowed to move"
     return True
 
@@ -104,15 +108,20 @@ def checkIfTrolleyShouldStop(trolley, trolleyRoster, layoutMap):
     if layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
         logger.info("Trolley: %s   Alert: Next segment occupied", trolley.address)
         return True
-    # If this trolley is not the next one scheduled for the next block return true
-    if trolley.address != trolleyRoster.findByNextBlock(trolley.nextPosition.address).address: 
-        logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition.address)
-        return True
     # If this trolley is in a block that requires a stop and has not been stopped long enough return true
     if trolley.currentPosition.stopRequired:
         if not checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
             logger.info("Trolley: %s   Alert: Required stop time has not been met", trolley.address)
             return True
+    # If this trolley is not the next one scheduled for the next block return true
+    if trolley.address != trolleyRoster.findByNextBlock(trolley.nextPosition.address).address: 
+        # The exception to this is if the next block is part of the current segment the trolley is already in
+        if trolley.currentPosition.segment != trolley.nextPosition.segment:
+            logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
+            return True
+        else:
+            logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s - ******* CONTINUE CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
+        #return True
     #print "Reason: is allowed to move"
     return False
     
@@ -139,6 +148,9 @@ def simulateAllMovement(trolleyRoster, layoutMap):
             if travelTime > (trolley.currentPosition.length / 4):
                 logger.info("Simulating event for SensorID: %s by Trolley: %s", trolley.nextPosition.address, trolley.address)
                 return trolley.nextPosition.address
+            # Simulate ramdom noise on used block
+            #if randint(0, 9) > 8:
+            #    return trolley.currentPosition.address
     return None
     
     
@@ -146,19 +158,34 @@ def processBlockEvent(trolleyRoster, layoutMap, sensorId):
     # We should only process sensors going HIGH or OCCUPIED
     # A sensor going high indicates that a trolley has moved into that block
     logger.info('Processing event for SensorID = %s', sensorId)
-    # check if the event should be associated with a trolley
-    trolley = trolleyRoster.findByNextBlock(sensorId)
-    if trolley and trolley.getSpeed() > 0 :
+    # check if this event is associated with a trolley that is already in this block
+    # if it is, then treat the event as a bouncy sensor reading
+    if trolleyRoster.findByCurrentBlock(sensorId):
+        logger.info('Bouncy sensor event for block: %s', sensorId)
+        return
+    # check if this event is associated with a trolley that is already in this segment
+    # if it is, then us this trolley.  This give priority to a trolley that is 
+    # already in a segment vs a new one entering the segment.
+    eventSegmentId = layoutMap.findSegmentByAddress(sensorId)
+    trolley = trolleyRoster.findByCurrentSegment(eventSegmentId, layoutMap)
+    if trolley and trolley.getSpeed() > 0:
         # If we get here, this trolley was associated with this event
-        logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
+        logger.info('Trolley %s found in Segment: %s  for Block: %s',trolley.address , eventSegmentId, sensorId)
         # Move the trolley into the next block
         trolley.advance(trolleyRoster, layoutMap)
-        # Check if the trolley should stop at thsi location
-        #if trolley.currentPosition.isStopRequired():
-        #    print "Trolley Stop Required for Trolley:", trolley.address, 'at Block:', trolley.currentPosition.address
-        #    trolley.slowStop()
+        # Check if the trolley should stop at this location
         if layoutMap.isSegmentOccupied(trolley.nextPosition):
             trolley.slowStop()
+    else:
+        trolley = trolleyRoster.findByNextBlock(sensorId)
+        if trolley and trolley.getSpeed() > 0 :
+            # If we get here, this trolley was associated with this event
+            logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
+            # Move the trolley into the next block
+            trolley.advance(trolleyRoster, layoutMap)
+            # Check if the trolley should stop at this location
+            if layoutMap.isSegmentOccupied(trolley.nextPosition):
+                trolley.slowStop()
     layoutMap.printBlocks(trolleyRoster)
     layoutMap.printSegments(trolleyRoster)
     trolleyRoster.dump()
@@ -238,6 +265,6 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
     trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, currentPosition=100))
     trolleyRoster.append(Trolley(blockMap, address=502, maxSpeed=40, currentPosition=100))
     trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
-
-
+    trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
+    
 main()
