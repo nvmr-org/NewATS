@@ -6,15 +6,13 @@ import sys
 import time
 import datetime
 import logging
-import Queue
 from classes.messengerFacade import Messenger
-
 
 logger = logging.getLogger(__name__)
 
 
 
-class Trolley():
+class Trolley(object):
     """A trolley object that consists of the following properties:
 
     Attributes:
@@ -29,7 +27,7 @@ class Trolley():
     throttleWaitTime = 10
     #eventQueue = Queue()
     msg = Messenger()
-
+    #interruptableSleep = Event()
     
     def __init__(self, blockMap, address=9999, maxSpeed=0, currentPosition=0):
         """Return a Trolley object whose id is *id* and starting position and next 
@@ -41,7 +39,6 @@ class Trolley():
         self.address = address
         isLong = True if self.address > 100 else False
         self.speed = 0
-        self.bfSent = False
         self.maxSpeed = maxSpeed
         # Check that the position requested is defined otherwise throw an exception
         currentBlock = blockMap.findBlockByAddress(currentPosition)
@@ -56,15 +53,24 @@ class Trolley():
         self.next = None
         self.stopTime = datetime.datetime.now()
         self.startTime = None
-        #print "Going to add throttle for address: ", self.address, "type:", isLong
-        #self.throttle = self.getThrottle(self.address, isLong, self.throttleWaitTime)  # address, long address = true
+        self.slotId = None
+        #print "Going to add throttle for address: ", self.address, "isLong:", isLong
+        #self.throttle = Trolley.msg.requestThrottle(self.address, isLong, self.throttleWaitTime)  # address, long address = true
         #print "Return from getThrottle"
-        #self.slotId = self.throttle.getLocoNetSlot()
-        self.slotId = self.address
+        #self.slotId = self.throttle.getLocoNetSlot()\
+        #self.slotRequestSent = Trolley.msg.requestSlot(address)
+        #logger.info("Trolley SlotRequestSent=%s", self.slotRequestSent)
+        self.lastStatusTime=datetime.datetime.now()
+        #while self.slotId is None:
+        #    logger.info("Waiting for SlotId assignment on Trolley: %s", self.address)
+            #Trolley.interruptableSleep.wait(10)
+        #   time.sleep(0.01)
+        #self.slotId = None
+        #Trolley.msg.setSlotInUse(self.slotId)
         #print "Returned from getThrottle"
         #if (self.throttle == None) :
         #    print "Couldn't assign throttle!"
-        logger.info("Trolley Added: %s  in Block: %s", self.address, self.currentPosition.address)
+        logger.info("Trolley Added: %s  in Block: %s at Slot: %s", self.address, self.currentPosition.address,self.slotId)
         
 
     @staticmethod
@@ -80,20 +86,23 @@ class Trolley():
     def setAddress(self, address=9999):
         """Set the Trolley's ID."""
         self.address = address
-        
-        
+
+
     # ****************
     # Set Slot INUSE *
     # ****************
-    def setSlotId(self, slotId=-1):
+    def setSlotId(self, slotId=None):
         """Set the Trolley's DCC SlotId."""
+        logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
         self.slotId = slotId
-        Trolley.msg.setSlotId(slotId)
+        #Trolley.msg.setSlotInUse(slotId)
         
 
-    def requestSlot(self,deviceID):
-        self.slotId = deviceID
-        Trolley.msg.requestSlot(deviceID)
+    def requestSlot(self,slotId):
+        """Request the Trolley's DCC SlotId."""
+        logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
+        #self.slotId = deviceID
+        Trolley.msg.requestSlot(slotId)
 
 
     # ***************************************
@@ -102,7 +111,7 @@ class Trolley():
     def freeSlot(self) :
         self.setSpeed(0) #stop trolley
         Trolley.msg.freeSlot(self.slotId)
-        self.slotId = -1
+        self.slotId = None
         return
 
 
@@ -242,5 +251,3 @@ class Trolley():
         if self.speed > 0:
             self.set_currentPosition(self.currentPosition+1)
             
-
- 

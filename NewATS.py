@@ -11,136 +11,139 @@ import datetime
 import time
 import logging
 from random import randint
+import java
+import javax.swing
+#from javax.swing import SwingUtilities
+from javax.swing.text import DefaultCaret
+from java.awt import Font
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+apNameVersion = "New Automatic Trolley Sequencer"
+
+# *************************************************************************
+# WindowListener is a interface class and therefore all of it's           *
+# methods should be implemented even if not used to avoid AttributeErrors *
+# *************************************************************************
+class WinListener(java.awt.event.WindowListener):
+
+    def windowClosing(self, event):
+        global killed
+        
+        #print "window closing"
+        killed = True #this will signal scanReporter thread to exit
+        #time.sleep(2.0) #give it a chance to happen before going on
+        #jmri.jmrix.loconet.LnTrafficController.instance().removeLocoNetListener(0xFF, lnListen)
+        #list = sensors.getSystemNameList()
+        
+        #for i in range(list.size()):    #remove each of the sensor listeners that were added
+        
+            #sensors.getSensor(list.get(i)).removePropertyChangeListener(listener)
+            # print "remove"
+            
+        #fr.dispose()         #close the pane (window)
+        return
+        
+    def windowActivated(self, event):
+        return
+        
+    def windowDeactivated(self, event):
+        return
+        
+    def windowOpened(self, event):
+        return
+        
+    def windowClosed(self, event):
+        time.sleep(3.0) #wait 3 seconds before moving on to allow last free to complete
+        print 'slots freed and exited'
+        print
+        return
+        
+    def windowIconified(self, event):
+        return
+        
+    def windowDeiconified(self, event):
+        return
+
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s',
+                    handlers=[logging.FileHandler("{0}.log".format('NewATS')),
+                              logging.StreamHandler()])
 logger = logging.getLogger("NewATS")
+
 msg = Messenger()
+#msg.enableAllDebug()
+
 #Trolley.setMessageManager(msgManager = msg)        
+logger.info("Initialize Empty Layout Map")
+layoutMap = BlockMap() # Initialize and empty block map to define the layout
+logger.info("Initialize Empty Trolley Roster")
+trolleyRoster = TrolleyRoster()  # Initialize an empty roster of trolley devices
+
+try:
+    jmriFlag = True
+    import jmri
+    logger.info('Successfully Imported jmri', exc_info=True)
+    #jmri.jmrix.loconet.LocoNetListener
+except ImportError:
+    jmriFlag = False
+    logger.info('Failed to import jmir - bypassing', exc_info=True)
+#logger.info("Initialize Empty Layout Map")
+#layoutMap = BlockMap() # Initialize and empty block map to define the layout
+#logger.info("Initialize Empty Trolley Roster")
+#trolleyRoster = TrolleyRoster()  # Initialize an empty roster of trolley devices
 
 
-def main():
-    logger.info("Initialize Empty Layout Map")
-    layoutMap = BlockMap([]) # Initialize and empty block map to define the layout
-    logger.info("Initialize Empty Trolley Roster")
-    trolleyRoster = TrolleyRoster([])  # Initialize an empty roster of trolley devices
-    
-    logger.info("Build Layout Map")
-    buildLayoutMap(layoutMap)  # Build the layout
-    logger.info("Build Trolley Roster")
-    buildTrolleyRoster(trolleyRoster, layoutMap)  # Build the roster of trolleys
-    
-    logger.info("Dumping Trolley Roster")
-    trolleyRoster.dump()
-    logger.info("Dumping Layout Map")
-    layoutMap.dump()
-    
-    layoutMap.printBlocks(trolleyRoster)
-    layoutMap.printSegments(trolleyRoster)
-       
-    
-    #startAllTrolleysMoving(trolleyRoster, layoutMap)
-    msg = Trolley.getMessageManager()
-    
-    try:
-        while True:
-            #logger.info("looping for events")
-            checkAllTrolleyMovement(trolleyRoster, layoutMap)
-            event = simulateAllMovement(trolleyRoster,layoutMap)
-            if event: processBlockEvent(trolleyRoster, layoutMap, event)
-            time.sleep(0.5)
-    except KeyboardInterrupt:
+class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
+    def init(self):
         pass
- 
-    layoutMap.printBlocks(trolleyRoster)
-    layoutMap.printSegments(trolleyRoster)
-    trolleyRoster.dump()
+        #logger.info("Initialize Empty Layout Map")
+        #layoutMap = BlockMap() # Initialize and empty block map to define the layout
+        #logger.info("Initialize Empty Trolley Roster")
+        #trolleyRoster = TrolleyRoster()  # Initialize an empty roster of trolley devices
+        #logger.info("Build Layout Map")
+        #buildLayoutMap(layoutMap)  # Build the layout
+        #logger.info("Build Trolley Roster")
+        #buildTrolleyRoster(trolleyRoster, layoutMap)  # Build the roster of trolleys
+        #logger.info("Dumping Trolley Roster")
+        #trolleyRoster.dump()
+        #logger.info("Dumping Layout Map")
+        #layoutMap.dump()
+        #layoutMap.printBlocks(trolleyRoster)
+        #layoutMap.printSegments(trolleyRoster)
 
-
-def checkAllTrolleyMovement(trolleyRoster, layoutMap):
-    for trolley in trolleyRoster:
-        if trolley.getSpeed() == 0:
-            if checkIfTrolleyCanMove(trolley, trolleyRoster, layoutMap):
-                logger.info("Trolley: %s   Status: Not Moving (%s seconds) in block: %s",
-                        trolley.address, (datetime.datetime.now() - trolley.stopTime).seconds, trolley.currentPosition.address)
-                logger.info("Trolley: %s   Action: Starting",trolley.address)
-                trolley.fullSpeed()
-                trolleyRoster.dump()
-        else:
-            if checkIfTrolleyShouldStop(trolley, trolleyRoster, layoutMap):
-                logger.info("Trolley: %s   Status: Is Running (%s seconds) in block: %s",
-                        trolley.address, (datetime.datetime.now() - trolley.startTime).seconds, trolley.currentPosition.address)
-                logger.info("Trolley: %s   Action: Stopping",trolley.address)
-                trolley.slowStop()
-                trolleyRoster.dump()
     
-
-def checkIfTrolleyCanMove(trolley, trolleyRoster, layoutMap):
-    # If the next segment is occupied return false
-    if layoutMap.isSegmentOccupied(trolley.nextPosition.segment): 
-        logger.debug("Trolley: %s   Alert: Next segment occupied", trolley.address)
-        return False
-    # If this trolley is in a block that requires a stop and has not been stopped long enough return false
-    if trolley.currentPosition.stopRequired:
-        if not checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
-            logger.debug("Trolley: %s   Alert: Required stop time has not been met", trolley.address)
-            return False
-    # If this trolley is not the next one scheduled for the next block return false
-    if trolley.address != trolleyRoster.findByNextBlock(trolley.nextPosition.address).address:
-        # The exception to this is if the next block is part of the current segment the trolley is already in
-        if trolley.currentPosition.segment != trolley.nextPosition.segment:
-            logger.debug("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition().address)
-            return False
+    def handle(self):
+        # handle() is called repeatedly until it returns false.
+        #
+        # We wait until handle gets called to check if trolleys
+        # in the roster have been assigned slots.  If at least 
+        # one trolley is not assigned we register it.  We wait
+        # for all trolleys to be registered before starting the
+        # movement checks.
+        #
+        # This is where we should also check that all the trolleys
+        # in the roster are current.
+        if trolleyRoster.checkIfAllTrolleysAreRegistered():
+            trolleyRoster.checkAllTrolleyMovement(layoutMap)
+            event = simulateAllMovement(trolleyRoster,layoutMap)
+            if event: trolleyRoster.processBlockEvent(event)
         else:
-            logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s - ******* START CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
-    #print "Reason: is allowed to move"
-    return True
-
-
-def checkRequiredStopTimeMet(stopTime, waitTime):
-    timeSinceStop = (datetime.datetime.now() - stopTime).seconds
-    #logger.info("Required Stop Time Met = %s (TimeStopped: %s   waitTime: %s)", timeSinceStop > waitTime, timeSinceStop, waitTime)
-    if timeSinceStop > waitTime: return True
-    return False
-
-
-def checkIfTrolleyShouldStop(trolley, trolleyRoster, layoutMap):
-    # If the next segment is occupied return false
-    if layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
-        logger.info("Trolley: %s   Alert: Next segment occupied", trolley.address)
+            trolleyRoster.registerOneTrolley()
+        self.waitMsec(1000)    
         return True
-    # If this trolley is in a block that requires a stop and has not been stopped long enough return true
-    if trolley.currentPosition.stopRequired:
-        if not checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
-            logger.info("Trolley: %s   Alert: Required stop time has not been met", trolley.address)
-            return True
-    # If this trolley is not the next one scheduled for the next block return true
-    if trolley.address != trolleyRoster.findByNextBlock(trolley.nextPosition.address).address: 
-        # The exception to this is if the next block is part of the current segment the trolley is already in
-        if trolley.currentPosition.segment != trolley.nextPosition.segment:
-            logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
-            return True
-        else:
-            logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s - ******* CONTINUE CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
-        #return True
-    #print "Reason: is allowed to move"
-    return False
+        #layoutMap.printBlocks(trolleyRoster)
+        #layoutMap.printSegments(trolleyRoster)
+        #trolleyRoster.dump()
+
+
+    # handle adding to message window
+    def msgText(self, txt) :
+        self.scrollArea.append(txt)
+        if (self.autoScroll.isSelected() == True) :
+            self.scrollArea.setCaretPosition(self.scrollArea.getDocument().getLength())
+        return
     
-    
-    
-# def startAllTrolleysMoving(trolleyRoster, layoutMap):
-#     for trolley in trolleyRoster:
-#         if trolley.getSpeed() == 0:
-#             # A trolley can start moving if the next block is empty, and the trolley is the 
-#             # next one (by priority order) to be scheduled for the next block
-#             logger.info("Trolley: %s  is not moving" ,trolley.address)
-# #             print "  CurrentPosition:",trolley.getCurrentPosition().address
-# #             print "  NextPosition:",trolley.getNextPosition().address
-# #             print "  NextSegmentOccupied? ",layout.isSegmentOccupied(trolley.getNextPosition().segment)
-# #             print "  Next trolley to move into that block: ", trolleyRoster.findByNextBlock(trolley.getNextPosition().address).address
-#             if (not layoutMap.isSegmentOccupied(trolley.getNextPosition().segment) and 
-#                 trolley.address == trolleyRoster.findByNextBlock(trolley.getNextPosition().address).address):
-#                 logger.info("Starting Trolley: %s", trolley.address)
-#                 trolley.fullSpeed()
+
+
 def simulateAllMovement(trolleyRoster, layoutMap):
     for trolley in trolleyRoster:
         if trolley.getSpeed() > 0:
@@ -149,48 +152,11 @@ def simulateAllMovement(trolleyRoster, layoutMap):
                 logger.info("Simulating event for SensorID: %s by Trolley: %s", trolley.nextPosition.address, trolley.address)
                 return trolley.nextPosition.address
             # Simulate ramdom noise on used block
-            #if randint(0, 9) > 8:
-            #    return trolley.currentPosition.address
+            if randint(0, 999) > 990:
+                return trolley.currentPosition.address
     return None
     
     
-def processBlockEvent(trolleyRoster, layoutMap, sensorId):
-    # We should only process sensors going HIGH or OCCUPIED
-    # A sensor going high indicates that a trolley has moved into that block
-    logger.info('Processing event for SensorID = %s', sensorId)
-    # check if this event is associated with a trolley that is already in this block
-    # if it is, then treat the event as a bouncy sensor reading
-    if trolleyRoster.findByCurrentBlock(sensorId):
-        logger.info('Bouncy sensor event for block: %s', sensorId)
-        return
-    # check if this event is associated with a trolley that is already in this segment
-    # if it is, then us this trolley.  This give priority to a trolley that is 
-    # already in a segment vs a new one entering the segment.
-    eventSegmentId = layoutMap.findSegmentByAddress(sensorId)
-    trolley = trolleyRoster.findByCurrentSegment(eventSegmentId, layoutMap)
-    if trolley and trolley.getSpeed() > 0:
-        # If we get here, this trolley was associated with this event
-        logger.info('Trolley %s found in Segment: %s  for Block: %s',trolley.address , eventSegmentId, sensorId)
-        # Move the trolley into the next block
-        trolley.advance(trolleyRoster, layoutMap)
-        # Check if the trolley should stop at this location
-        if layoutMap.isSegmentOccupied(trolley.nextPosition):
-            trolley.slowStop()
-    else:
-        trolley = trolleyRoster.findByNextBlock(sensorId)
-        if trolley and trolley.getSpeed() > 0 :
-            # If we get here, this trolley was associated with this event
-            logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
-            # Move the trolley into the next block
-            trolley.advance(trolleyRoster, layoutMap)
-            # Check if the trolley should stop at this location
-            if layoutMap.isSegmentOccupied(trolley.nextPosition):
-                trolley.slowStop()
-    layoutMap.printBlocks(trolleyRoster)
-    layoutMap.printSegments(trolleyRoster)
-    trolleyRoster.dump()
-
-
 # def moveAllTrolleys(trolleyRoster, layout):
 #     layoutLength = len(layout)
 #     nextList = []
@@ -261,10 +227,37 @@ def buildLayoutMap(layout):
 
 def buildTrolleyRoster(trolleyRoster, blockMap):
     # When building a roster you need to provide the layout map so that the starting 
-    # potisions of the trolleys can be validated.
+    # potisions of the trolleys can be validated. The roster is built prior to sending any
+    # requests to JMRI for slots. Registration should occur in the handler on a one by one
+    # basis to avoid conflicts.
     trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, currentPosition=100))
     trolleyRoster.append(Trolley(blockMap, address=502, maxSpeed=40, currentPosition=100))
     trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
     trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
     
-main()
+
+#logger.info("Initialize Empty Layout Map")
+#layoutMap = BlockMap() # Initialize and empty block map to define the layout
+#logger.info("Initialize Empty Trolley Roster")
+#trolleyRoster = TrolleyRoster()  # Initialize an empty roster of trolley devices
+
+# create a TrolleyAutomation object
+a = TrolleyAutomation()
+
+# set the name - This will show in the threat monitor
+a.setName("Trolley Automation Script")
+
+# Start it running
+a.start()
+
+logger.info("Building Layout Map")
+buildLayoutMap(layoutMap)  # Build the layout
+layoutMap.dump()
+
+logger.info("Building Trolley Roster")
+buildTrolleyRoster(trolleyRoster, layoutMap)  # Build the roster of trolleys
+trolleyRoster.dump()
+
+logger.info("Setup Complete  - ")
+layoutMap.printBlocks(trolleyRoster)
+layoutMap.printSegments(trolleyRoster)

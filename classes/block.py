@@ -3,7 +3,6 @@ Created on Nov 18, 2016
 
 @author: ttb
 '''
-import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -86,7 +85,7 @@ class Block(object):
         return Block.blockCount
     
 
-    def get_isBlockOccupied(self):
+    def isBlockOccupied(self):
         return self.occupied
 
 
