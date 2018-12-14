@@ -36,7 +36,7 @@ except ImportError:
 #        return
 class Messenger(jmri.jmrix.loconet.LocoNetListener):
     iTrace = False #turn enter (In) trace print off/on
-    bTrace = True #turn all (Between) enter and exit traces print off/on 
+    bTrace = False #turn all (Between) enter and exit traces print off/on 
     oTrace = False #turn exit (Out) trace print off/on
     dTrace = False #turn limited section Debug trace print off/on
     lTrace = False #turn msgListener incoming opcode print off/on
@@ -133,9 +133,9 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         if Messenger.oTrace : logger.info("<<==exiting sendLnMsg")
         return
 
-    # ************************
-    # * send a sensor report *
-    # ************************
+    # ***********************************
+    # * Create and send a sensor report *
+    # ***********************************
     def sendSenorReportMsg(self,sensorId):
         if Messenger.iTrace : logger.info("==>>entering sendSnrRptMsg -->")
         ARGS = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
@@ -146,7 +146,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         b2XIL = b2I | b2XL
         in2 = b2XIL + (snrAddr >> 7) # XIL plus upper 4 address bits
         msgLength = 4
-        opcode = 0xB2
+        opcode = 0xB2 #OPC_INPUT_REP
         ARGS[1] = in1
         ARGS[2] = in2
         self.sendLnMsg(msgLength,opcode,ARGS)
