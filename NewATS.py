@@ -40,6 +40,7 @@ class WinListener(java.awt.event.WindowListener):
             # print "remove"
             
         #fr.dispose()         #close the pane (window)
+        trolleyRoster.destroy()
         return
         
     def windowActivated(self, event):
@@ -52,6 +53,7 @@ class WinListener(java.awt.event.WindowListener):
         return
         
     def windowClosed(self, event):
+        trolleyRoster.destroy()
         time.sleep(3.0) #wait 3 seconds before moving on to allow last free to complete
         print 'slots freed and exited'
         print
@@ -125,7 +127,8 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         if trolleyRoster.checkIfAllTrolleysAreRegistered():
             trolleyRoster.checkAllTrolleyMovement(layoutMap)
             event = simulateAllMovement(trolleyRoster,layoutMap)
-            if event: trolleyRoster.processBlockEvent(event)
+            if event: msg.sendSenorReportMsg(event)
+            #if event: trolleyRoster.processBlockEvent(event)
         else:
             trolleyRoster.registerOneTrolley()
         self.waitMsec(1000)    

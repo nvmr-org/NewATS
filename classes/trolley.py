@@ -54,6 +54,7 @@ class Trolley(object):
         self.stopTime = datetime.datetime.now()
         self.startTime = None
         self.slotId = None
+        self.slotRequestSent = None
         #print "Going to add throttle for address: ", self.address, "isLong:", isLong
         #self.throttle = Trolley.msg.requestThrottle(self.address, isLong, self.throttleWaitTime)  # address, long address = true
         #print "Return from getThrottle"
@@ -103,6 +104,7 @@ class Trolley(object):
         logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
         #self.slotId = deviceID
         Trolley.msg.requestSlot(slotId)
+        self.setSpeed(0)
 
 
     # ***************************************
@@ -173,17 +175,16 @@ class Trolley(object):
     # **************************
     # Blink light and leave ON *
     # **************************
-#     def blinkOn(self) :
-#         logger.debug("Blink Lights for Trolley: %s  Throttle:", self.address, self.throttle)
-#         if self.throttle == None: return
-#         count = 5
-#         while (count > 0) :
-#             count -= 1
-#             time.sleep(0.5) #wait half sec before toggling
-#             self.lightOff()
-#             time.sleep(0.5) #wait half sec before toggling
-#             self.lightOn()
-#             return
+    def blinkOn(self) :
+        logger.debug("Blink Lights for Trolley: %s", self.address)
+        count = 3
+        while (count > 0) :
+            count -= 1
+            time.sleep(0.5) #wait half sec before toggling
+            self.lightOff()
+            time.sleep(0.5) #wait half sec before toggling
+            self.lightOn()
+            return
     
 
     def setCurrentPosition(self, currentPosition=-1):

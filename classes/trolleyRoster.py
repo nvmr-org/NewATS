@@ -133,6 +133,12 @@ class TrolleyRoster(object):
                 break
 
 
+    def destroy(self):
+        for trolley in self._list:
+            trolley.freeSlot()
+            logger.info('Trolley %s Stopped and Removed', trolley.address)
+
+
     def dump(self):
         print "**************"
         print "TrolleyRoster"

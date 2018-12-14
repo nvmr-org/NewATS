@@ -36,7 +36,7 @@ except ImportError:
 #        return
 class Messenger(jmri.jmrix.loconet.LocoNetListener):
     iTrace = False #turn enter (In) trace print off/on
-    bTrace = False #turn all (Between) enter and exit traces print off/on 
+    bTrace = True #turn all (Between) enter and exit traces print off/on 
     oTrace = False #turn exit (Out) trace print off/on
     dTrace = False #turn limited section Debug trace print off/on
     lTrace = False #turn msgListener incoming opcode print off/on
@@ -133,6 +133,27 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         if Messenger.oTrace : logger.info("<<==exiting sendLnMsg")
         return
 
+    # ************************
+    # * send a sensor report *
+    # ************************
+    def sendSenorReportMsg(self,sensorId):
+        if Messenger.iTrace : logger.info("==>>entering sendSnrRptMsg -->")
+        ARGS = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
+        snrAddr = sensorId -1
+        in1 = (snrAddr & 0x7F) >> 1 # lower 7 address bits left shifted once
+        b2I = (snrAddr % 2) << 5 # remainder odd/even
+        b2XL = 0x50 # X = 1 and L = 1
+        b2XIL = b2I | b2XL
+        in2 = b2XIL + (snrAddr >> 7) # XIL plus upper 4 address bits
+        msgLength = 4
+        opcode = 0xB2
+        ARGS[1] = in1
+        ARGS[2] = in2
+        self.sendLnMsg(msgLength,opcode,ARGS)
+        logger.info("Sent Sensor Message for SensorId:" + str(sensorId))
+        if Messenger.oTrace : logger.info("<<==exiting sendSnrRptMsg")
+        return
+
 
     # ************************
     # Send Emergency stop 
@@ -170,7 +191,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS[2] = 0x10 #OFF with direction forward and light ON
         self.sendLnMsg(msgLength,opcode,ARGS)
         if Messenger.sTrace : logger.info("sent ring bell %s", str(hex(opcode)))
-        time.sleep(3) #wait 3 sec before returning
+        #time.sleep(3) #wait 3 sec before returning
         #self.throttle.setF1(True)     # turn on bell
         #self.waitMsec(1000)           # wait for 1 seconds
         #self.throttle.setF1(False)    # turn off bell
@@ -189,10 +210,10 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = 0x00 #light OFF, direction forward
-        time.sleep(1.0) #wait 1 second before sending in case decoder is processing a previous command
+        #time.sleep(1.0) #wait 1 second before sending in case decoder is processing a previous command
         self.sendLnMsg(msgLength,opcode,ARGS)
         if Messenger.sTrace : logger.info("sent light OFF ",str(hex(opcode)))
-        time.sleep(1.0) #wait 1 second before returning to let decoder finish processing this command
+        #time.sleep(1.0) #wait 1 second before returning to let decoder finish processing this command
         #self.throttle.setF0(False)    # turn off light
         #self.waitMsec(1000)           # wait for 1 second
         return
@@ -209,7 +230,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = 0x00 #light OFF, direction forward
-        time.sleep(1.0) #wait 1 second before sending in case decoder is processing a previous command
+        #time.sleep(1.0) #wait 1 second before sending in case decoder is processing a previous command
         self.sendLnMsg(msgLength,opcode,ARGS)
         if Messenger.sTrace : logger.info("sent light OFF ",str(hex(opcode)))
         #time.sleep(1.0) #wait 1 second before returning to let decoder finish processing this command
@@ -343,9 +364,14 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
             
 
     def getArgsFromMessage(self,msg):
-        i = 0
+        i = 1
+        ARGS=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        logger.info("Getting ARGS from message - msgLen:%s",str(msg.getNumDataElements()))
         while i < msg.getNumDataElements():
             ARGS[i] = msg.getElement(i)
+            #logger.info("Arg[%s]:%s ", str(i),str(hex(msg.getElement(i))))
+            i+=1
+        logger.info("ARGS from message - ARGS:%s",str(ARGS))
         return ARGS
 
         
@@ -378,15 +404,15 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         if (msg.getOpCode() == 178) and ((msg.getElement(2) & 0x10) == 0x10) :
             eventAddr = msg.sensorAddr() + 1
             if Messenger.bTrace : logger.info("== eventAddr = " + str(eventAddr))
-            if eventAddr >= 100 and eventAddr <= 107 :
-                if Messenger.bTrace : logger.info("eventAddr Rcvd = " + str(eventAddr) )#gaw-debug
+            if layoutMap.findBlockByAddress(eventAddr) :
+                if Messenger.bTrace : logger.info("Valid Sensor Event Rcvd = " + str(eventAddr) )#gaw-debug
                 trolleyRoster.processBlockEvent(eventAddr)
                 
 
-        #############################################################
-        ## only listen for slot data response message (opcode 231) ##
-        ## triggered by throttle requests 0xBF #OPC_LOCO_ADR       ##
-        #############################################################
+        #####################################################################
+        ## only listen for slot data response message (opcode 231 or 0xE7) ##
+        ## triggered by throttle requests 0xBF #OPC_LOCO_ADR               ##
+        #####################################################################
         if (msg.getOpCode() == 0xE7):
             slotId = msg.getElement(2)
             status = msg.getElement(3)
@@ -397,20 +423,43 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
             if Messenger.bTrace : logger.info("E7 Opcode Received - Hi:"+str(hex(hiAddrByte))+" Lo:"+ str(hex(loAddrByte))
                         +" address:"+str(address)+" slot:"+str(slotId)
                         +" Status:"+str(hex(status)))
+            # See if this 0xE7 message is for a device in the trolleyRoster that sent a slot request
             trolley = trolleyRoster.findByAddress(address)
             if trolley and trolley.slotRequestSent:
                 if Messenger.bTrace : logger.info("Trolley: "+str(address)+" SlotId:"+str(slotId)+" Status:"+str(status))
+                # Per the LocoNet specs, check the D5 & D4 bits of the STATUS1 byte to determine the state of the slot
+                # 11=IN_USE, 10=IDLE, 01=COMMON, 00=FREE SLOT and respond
                 if ((status >> 4) & 0x03) < 3: # if status is IDLE, COMMON, or FREE
                     if trolley.slotId is None: 
                         if Messenger.bTrace : logger.info("Trolley: "+str(address)+" Slot was IDLE, COMMON, or FREE")
-                        self.setSlotInUse(slotId)
+                        self.setSlotInUse(slotId) # Set the slot to IN-USE
                         trolley.slotId = slotId
                         logger.info("Trolley %s SlotId = %s",str(address), str(slotId))
+                        ARGS = self.getArgsFromMessage(msg)
+                        ARGS[3]=0 # Set Speed to Zero
+                        self.writeSlotData(ARGS)  # Write back the slot data with speed = 0
+                        #trolley.ringBell()
+                        #trolley.blinkOn()
                     else:
+                        # We really should never get here because that means a slot was already assigned to the 
+                        # trollet but we somehow received a slot request anyway.  So just write the slot data back
+                        # out to refresh the slot.
                         if Messenger.bTrace : logger.info("Trolley: "+str(address)+" Slot was IDLE, COMMON, or FREE")
-                        self.writeSlotData(self.getArgsFromMessage)
+                        logger.info("Trolley %s SlotId = %s - STRANGE CONDITION",str(address), str(slotId))
+                        self.writeSlotData(self.getArgsFromMessage(msg))
+                        #trolley.ringBell()
+                        #trolley.blinkOn()
                 else:
+                    # If we get here LocoNet already has the slot assigned and marked as IN-USE.  Per the LocoNet specs
+                    # we should effectively Steal this throttle by unlinking and re-linking.  For now though we will just 
+                    # assume the slot is ours and set the speed to zero.
                     trolley.slotId = slotId
+                    ARGS = self.getArgsFromMessage(msg)
+                    ARGS[3]=0 # Set Speed to Zero
+                    logger.info("Trolley %s SlotId = %s - SLOT WAS ALREADY ASSIGNED",str(address), str(slotId))
+                    self.writeSlotData(ARGS)  # Write back the slot data with speed = 0
+                    #trolley.ringBell()
+                    #trolley.blinkOn()
             else:
                 logger.info("E7 Opcode Received - But no trolley defined")
             
