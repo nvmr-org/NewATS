@@ -36,6 +36,7 @@ class TrolleyRoster(object):
     #msg = Messenger()
     __instance = None  # Make sure there is only one version of the trolleyroster
     __allowRun = False
+    __automationObject = None
     
     def __init__(self, trolleyObjects=None):
         """Initialize the class"""
@@ -135,8 +136,9 @@ class TrolleyRoster(object):
 
     def destroy(self):
         for trolley in self._list:
-            trolley.freeSlot()
-            logger.info('Trolley %s Stopped and Removed', trolley.address)
+            if trolley.slotId:
+                trolley.freeSlot()
+                logger.info('Trolley %s Stopped and Removed', trolley.address)
 
 
     def dump(self):
@@ -285,6 +287,7 @@ class TrolleyRoster(object):
 
 
     def processBlockEvent(self, sensorId):
+        if not self.__automationObject.isRunning(): return
         # We should only process sensors going HIGH or OCCUPIED
         # A sensor going high indicates that a trolley has moved into that block
         logger.info('Processing event for SensorID = %s', sensorId)
@@ -321,5 +324,10 @@ class TrolleyRoster(object):
         self.dump()
 
 
+    def setAutomationObject(self,automationObject):
+        self.__automationObject = automationObject
+        return
 
-
+    def stopAllTrolleys(self):
+        for trolley in self._list:
+            trolley.eStop()

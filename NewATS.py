@@ -13,11 +13,12 @@ import logging
 from random import randint
 import java
 import javax.swing
-#from javax.swing import SwingUtilities
+from javax.swing import SwingUtilities
 from javax.swing.text import DefaultCaret
 from java.awt import Font
 
 apNameVersion = "New Automatic Trolley Sequencer"
+enableSimulator = True
 
 # *************************************************************************
 # WindowListener is a interface class and therefore all of it's           *
@@ -31,16 +32,9 @@ class WinListener(java.awt.event.WindowListener):
         #print "window closing"
         killed = True #this will signal scanReporter thread to exit
         #time.sleep(2.0) #give it a chance to happen before going on
-        #jmri.jmrix.loconet.LnTrafficController.instance().removeLocoNetListener(0xFF, lnListen)
-        #list = sensors.getSystemNameList()
-        
-        #for i in range(list.size()):    #remove each of the sensor listeners that were added
-        
-            #sensors.getSensor(list.get(i)).removePropertyChangeListener(listener)
-            # print "remove"
-            
-        #fr.dispose()         #close the pane (window)
+        fr.dispose()         #close the pane (window)
         trolleyRoster.destroy()
+        msg.destroyListener()
         return
         
     def windowActivated(self, event):
@@ -124,14 +118,15 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         #
         # This is where we should also check that all the trolleys
         # in the roster are current.
-        if trolleyRoster.checkIfAllTrolleysAreRegistered():
-            trolleyRoster.checkAllTrolleyMovement(layoutMap)
-            event = simulateAllMovement(trolleyRoster,layoutMap)
-            if event: msg.sendSenorReportMsg(event)
-            #if event: trolleyRoster.processBlockEvent(event)
-        else:
-            trolleyRoster.registerOneTrolley()
-        self.waitMsec(1000)    
+        #logger.info("Handler - Automation Running: %s", self.isRunning)
+        if self.isRunning():
+            if trolleyRoster.checkIfAllTrolleysAreRegistered():
+                trolleyRoster.checkAllTrolleyMovement(layoutMap)
+                if enableSimulator : simulateAllMovement(trolleyRoster,layoutMap)
+                #if event: trolleyRoster.processBlockEvent(event)
+            else:
+                trolleyRoster.registerOneTrolley()
+        self.waitMsec(1000)      
         return True
         #layoutMap.printBlocks(trolleyRoster)
         #layoutMap.printSegments(trolleyRoster)
@@ -148,16 +143,18 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
 def simulateAllMovement(trolleyRoster, layoutMap):
+    event = None
     for trolley in trolleyRoster:
         if trolley.getSpeed() > 0:
             travelTime = (datetime.datetime.now() - trolley.startTime).seconds
             if travelTime > (trolley.currentPosition.length / 4):
                 logger.info("Simulating event for SensorID: %s by Trolley: %s", trolley.nextPosition.address, trolley.address)
-                return trolley.nextPosition.address
-            # Simulate ramdom noise on used block
+                event =  trolley.nextPosition.address
+            # Simulate random noise on used block
             if randint(0, 999) > 990:
-                return trolley.currentPosition.address
-    return None
+                event =  trolley.currentPosition.address
+    if event: msg.sendSenorReportMsg(event)
+    return event
     
     
 # def moveAllTrolleys(trolleyRoster, layout):
@@ -236,7 +233,7 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
     trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, currentPosition=100))
     trolleyRoster.append(Trolley(blockMap, address=502, maxSpeed=40, currentPosition=100))
     trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
-    trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
+    #trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
     
 
 #logger.info("Initialize Empty Layout Map")
@@ -244,14 +241,156 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
 #logger.info("Initialize Empty Trolley Roster")
 #trolleyRoster = TrolleyRoster()  # Initialize an empty roster of trolley devices
 
+
+# *************************************
+# start to initialise the display GUI *
+# *************************************
+# *******************************************************
+def whenEnterButtonClicked(event): #not used
+    return
+
+def whenStopAllButtonClicked(event) :
+    global automationObject
+    tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
+    tgoButton.setEnabled(True)           #button starts as grayed out (disabled)
+
+    automationObject.stop()
+    trolleyRoster.stopAllTrolleys()
+    return
+    
+def whenQuitButtonClicked(event) :
+    global autommationObject
+    tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
+    tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
+    automationObject.stop()
+    trolleyRoster.destroy()
+    fr.dispose()         #close the pane (window)
+    return
+
+def whenTgoButtonClicked(event) :
+    global automationObject
+    tstopButton.setEnabled(True)           #button starts as grayed out (disabled)
+    tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
+    automationObject.start()
+    msg1t = "Start Running button pressed, slot "
+    print msg1t
+    print
+    scrollArea.setText(scrollArea.getText() + msg1t + "\n\n")
+    return
+
+# =================================
+# create buttons and define action
+# =================================
+#enterButton = javax.swing.JButton("Start the Run")
+#enterButton.setEnabled(False)           #button starts as grayed out (disabled)
+#enterButton.actionPerformed = whenEnterButtonClicked
+
+quitButton = javax.swing.JButton("Quit")
+quitButton.actionPerformed = whenQuitButtonClicked
+
+tgoButton = javax.swing.JButton("Start Running")
+tgoButton.actionPerformed = whenTgoButtonClicked
+
+tstopButton = javax.swing.JButton("Stop All Trolleys")
+tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
+tstopButton.actionPerformed = whenStopAllButtonClicked
+
+# =====================================
+# create text fields and define action
+# =====================================
+
+# create a text area
+scrollArea = javax.swing.JTextArea(10, 45)    #define a text area with it's size
+scrollArea.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE); # automatically scroll to last message
+scrollArea.font=Font("monospaced", Font.PLAIN, 20)
+# scrollArea.setText("Put any init text here\n")
+scrollField = javax.swing.JScrollPane(scrollArea) #put text area in scroll field
+scrollField.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+scrollField.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
+
+# ------------------------------------------------------------------------------------------
+# create a frame to hold the buttons and fields
+# also create a window listener. This is used mainly to remove the property change listener
+# when the window is closed by clicking on the window close button
+# ------------------------------------------------------------------------------------------
+w = WinListener()
+#fr = javax.swing.JFrame(apNameVersion)       #argument is the frames title
+fr = jmri.util.JmriJFrame(apNameVersion) #use this in order to get it to appear on webserver
+fr.contentPane.setLayout(javax.swing.BoxLayout(fr.contentPane, javax.swing.BoxLayout.Y_AXIS))
+fr.addWindowListener(w)
+
+# ---------------------------------------------------------------------------------------
+butPanel = javax.swing.JPanel()
+####butPanel.setLayout(java.awt.FlowLayout(2))    #2 is right align for FlowLayout
+butPanel.setLayout(javax.swing.BoxLayout(butPanel, javax.swing.BoxLayout.PAGE_AXIS))
+####butPanel.add(resyncButton)
+####butPanel.add(javax.swing.Box.createVerticalStrut(20)) #empty vertical space between buttons
+#butPanel.add(clearButton) #currently inoperative and appears to be no longer needed
+
+#butPanel.add(javax.swing.Box.createVerticalStrut(10)) #empty vertical space between buttons
+butPanel.add(tgoButton)
+#butPanel.add(javax.swing.Box.createVerticalStrut(20)) #empty vertical space between buttons
+butPanel.setLayout(java.awt.FlowLayout(2))    #2 is right align for FlowLayout
+butPanel.add(tstopButton)
+#butPanel.add(javax.swing.Box.createVerticalStrut(20)) #empty vertical space between buttons
+butPanel.setLayout(java.awt.FlowLayout(2))    #2 is right align for FlowLayout
+butPanel.add(quitButton)
+
+# ---------------------------------------------------------------------------------------
+buttonPanel = javax.swing.JPanel()
+buttonPanel.add(butPanel)
+
+# ---------------------------------------------------------------------------------------
+blankPanel = javax.swing.JPanel()
+blankPanel.setLayout(java.awt.BorderLayout())
+
+entryPanel = javax.swing.JPanel()
+entryPanel.setLayout(javax.swing.BoxLayout(entryPanel, javax.swing.BoxLayout.LINE_AXIS))
+####entryPanel.add(temppanel1)
+####entryPanel.add(ckBoxPanel)
+entryPanel.add(buttonPanel)
+entryPanel.add(blankPanel)
+
+# ---------------------------------------------------------------------------------------
+# create the top panel
+# it is a 1,1 GridLayout used to keep all controls stationary when the window is resized
+# ---------------------------------------------------------------------------------------
+topPanel = javax.swing.JPanel()
+topPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 8, 8, 8))
+topPanel.setLayout(java.awt.GridLayout(1, 1))
+topPanel.add(buttonPanel)
+
+# -------------------------------------------------------------------
+# create a bottom panel to give some space under the scrolling field
+# -------------------------------------------------------------------
+bottomPanel = javax.swing.JPanel()
+# bottomPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1,8,1,8))
+
+# ------------------------------------
+# create a time series charting panel
+# ------------------------------------
+# ----------------------------------
+# Put contents in frame and display
+# ----------------------------------
+fr.contentPane.add(topPanel)
+#fr.contentPane.add(midPanel)
+fr.contentPane.add(bottomPanel)
+fr.pack()
+#fr.show() #depreciated
+fr.setVisible(True)
+
+
+
+
 # create a TrolleyAutomation object
-a = TrolleyAutomation()
+automationObject = TrolleyAutomation()
 
 # set the name - This will show in the threat monitor
-a.setName("Trolley Automation Script")
+automationObject.setName("Trolley Automation Script")
+trolleyRoster.setAutomationObject(automationObject)
 
 # Start it running
-a.start()
+#a.start()
 
 logger.info("Building Layout Map")
 buildLayoutMap(layoutMap)  # Build the layout

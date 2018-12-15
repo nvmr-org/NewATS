@@ -36,7 +36,7 @@ except ImportError:
 #        return
 class Messenger(jmri.jmrix.loconet.LocoNetListener):
     iTrace = False #turn enter (In) trace print off/on
-    bTrace = False #turn all (Between) enter and exit traces print off/on 
+    bTrace = True #turn all (Between) enter and exit traces print off/on 
     oTrace = False #turn exit (Out) trace print off/on
     dTrace = False #turn limited section Debug trace print off/on
     lTrace = False #turn msgListener incoming opcode print off/on
@@ -274,6 +274,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         self.sendLnMsg(msgLength,opcode,ARGS)
         if Messenger.sTrace : logger.info("sent Slot Dispatch %s",str(hex(opcode)))
         self.updateSlot(slotId) #sets slot to being FREE
+        time.sleep(1)           # wait for 1 seconds
         return
 
 
@@ -465,7 +466,11 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
             
                     
                 
-                    
+    def destroyListener(self):
+        jmri.InstanceManager.getList(jmri.jmrix.loconet.LocoNetSystemConnectionMemo).get(0).getLnTrafficController().removeLocoNetListener(0xFF, lnListen)
+        return 
+
+                
         ######################################################################################
         ## only listen for OPC_INPUT_REP message from trolley BODs (0xB2) going active (hi) ##
         ######################################################################################
