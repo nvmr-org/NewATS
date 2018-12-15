@@ -112,6 +112,7 @@ class Trolley(object):
     # ***************************************
     def freeSlot(self) :
         self.setSpeed(0) #stop trolley
+        self.slotRequestSent=False
         Trolley.msg.freeSlot(self.slotId)
         self.slotId = None
         return
