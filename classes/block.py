@@ -7,7 +7,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class Block(object):
     """The layout class defines blocks and segments of a layout.  Blocks should be 
     added to the layout in the order in which devices traverse.  The blocks should
@@ -33,7 +32,7 @@ class Block(object):
     """
     blockCount = 0
     segmentCount = 0
-    
+
     def __init__(self, blockAddress=-1, newSegment=False, stopRequired=True, waitTime=15, blockOccupied=False, length=10, description=None):
         """Return a Layout object whose id is *blockAddress* and *segmentAddress* 
         are negative if not provided.  Blocks should be added in the order they
@@ -42,7 +41,7 @@ class Block(object):
         Block.blockCount += 1
         if newSegment == True:
             Block.segmentCount += 1
-        
+
         self.address = blockAddress
         self.segment = Block.segmentCount
         self.occupied = blockOccupied
@@ -52,38 +51,45 @@ class Block(object):
         self.length = length
         self.description = description
         self.next = None
-        logger.info("Block Added: %s - %s", self.address, self.description)
+        logger.info("Block Added - Id:" +str(self.index)+
+                    " Address:"+str(self.address)+
+                    " Segment:"+str(self.segment)+
+                    " Occupied:"+str(self.occupied)+
+                    " StopReqd:"+str(self.stopRequired)+
+                    " WaitTime:"+str(self.waitTime)+
+                    " Length:"+str(self.length)+
+                    " Description:"+str(self.description))
 
 
     def set_blockAddress(self, blockAddress=-1):
         # Set the Layout Block Address.
         self.address = blockAddress
-        
+
 
     def set_segmentAddress(self, segmentAddress=-1):
         # Set the Layout Segment Address.
         self.segment = segmentAddress
-        
+
 
     def set_blockOccupied(self):
         self.occupied = True
-    
+
 
     def set_blockClear(self):
         self.occupied = False
-        
+
 
     def get_blockAddress(self):
         return self.address
-    
+
 
     def get_segmentAddress(self):
         return self.segment
-            
+
 
     def get_layoutLength(self):
         return Block.blockCount
-    
+
 
     def isBlockOccupied(self):
         return self.occupied
@@ -91,8 +97,7 @@ class Block(object):
 
     def isStopRequired(self):
         return self.stopRequired
-    
+
 
     def get_waitTime(self):
         return self.waitTime
-        
