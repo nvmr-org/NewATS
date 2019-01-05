@@ -95,11 +95,6 @@ logger = logging.getLogger("NewATS")
 
 msg = Messenger()
 msg.createListener()
-#msg.enableAllDebug()
-#msg.enableDebug('iTrace')
-#msg.enableDebug('oTrace')
-#msg.enableDebug('eTrace')
-#msg.enableDebug('dTrace')
 
 #Trolley.setMessageManager(msgManager = msg)        
 logger.info("Initialize Empty Layout Map")
@@ -129,7 +124,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             logger.debug("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 trolleyRoster.processAllTrolleyMovement(layoutMap)
-                if enableSimulator : simulateAllMovement(trolleyRoster,layoutMap)
+                if enableSimulator : simulateAllMovement(trolleyRoster)
                 #if event: trolleyRoster.processBlockEvent(event)
                 trolleyRoster.refreshTrolleysSlots()
             else:
@@ -140,15 +135,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         return True
 
 
-    # handle adding to message window
-    def msgText(self, txt) :
-        self.scrollArea.append(txt)
-        if (self.autoScroll.isSelected() == True) :
-            self.scrollArea.setCaretPosition(self.scrollArea.getDocument().getLength())
-        return
-
-
-def simulateAllMovement(trolleyRoster, layoutMap):
+def simulateAllMovement(trolleyRoster):
     event = None
     for trolley in trolleyRoster:
         if trolley.getSpeed() > 0:
@@ -227,9 +214,9 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
     else:
         logger.info("Creating default trolley Roster")
 
-    trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, currentPosition=100))
-    trolleyRoster.append(Trolley(blockMap, address=502, maxSpeed=40, currentPosition=100))
-    trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
+    trolleyRoster.append(Trolley(blockMap, address=105, maxSpeed=50, currentPosition=100))
+    #trolleyRoster.append(Trolley(blockMap, address=50, maxSpeed=40, currentPosition=100))
+    #trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
     #trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
 
 
@@ -299,6 +286,12 @@ def whenCheckboxClicked(event):
     msg.setDebugFlag('dTrace',dMsgDebugCheckBox.isSelected())
     msg.setDebugFlag('iTrace',iMsgDebugCheckBox.isSelected())
     msg.setDebugFlag('oTrace',oMsgDebugCheckBox.isSelected())
+    trolleyRoster.setDebugFlag('eTrace',eRstrDebugCheckBox.isSelected())
+    trolleyRoster.setDebugFlag('dTrace',dRstrDebugCheckBox.isSelected())
+    return
+
+
+def whenEditRosterButtonClicked(event):
     return
 
 
@@ -315,13 +308,12 @@ def addComponent(container, component, gridx, gridy, gridwidth, gridheight, anch
     ipadx = 0
     ipady = 5
     weightx = weighty = 0.0
-    #gbc = GridBagConstraints(gridx, gridy, gridwidth, gridheight, fill, ipadx, ipady, insets, anchor, weightx, weighty)
     gbc = GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill, insets, ipadx, ipady)
     container.add(component, gbc)
 
 
 def getButtonPanel():
-    global tstopButton, tgoButton, simulatorButton, quitButton
+    global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
     # =================================
     # create buttons panel actions
     # =================================
@@ -334,20 +326,24 @@ def getButtonPanel():
     tstopButton.actionPerformed = whenStopAllButtonClicked
     simulatorButtonTxt = "Disable Simulator" if enableSimulator else "Enable Simulator"
     simulatorButton = javax.swing.JButton(simulatorButtonTxt)
-    simulatorButton.setEnabled(enableSimulator)           #button starts as grayed out (disabled)
     simulatorButton.actionPerformed = whenSimulatorButtonClicked
+    editRosterButton = javax.swing.JButton("Edit Roster")
+    editRosterButton.setEnabled(False)
+    editRosterButton.actionPerformed = whenEditRosterButtonClicked
 
     # =================================
     # create button panel
     # =================================
     butPanel = javax.swing.JPanel()
     butPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+    butPanel.add(editRosterButton)
+    butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
     butPanel.add(tgoButton)
     butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
     butPanel.add(tstopButton)
-    butPanel.add(javax.swing.Box.createHorizontalStrut(20))
+    butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
     butPanel.add(simulatorButton)
-    butPanel.add(javax.swing.Box.createHorizontalStrut(20))
+    butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
     butPanel.add(quitButton)
 
     return butPanel
@@ -426,7 +422,12 @@ iMsgDebugCheckBox = javax.swing.JCheckBox("Incoming Messages", actionPerformed =
 iMsgDebugCheckBox.setToolTipText("Display debugging for incoming loconet messages")
 oMsgDebugCheckBox = javax.swing.JCheckBox("Outgoing Messages", actionPerformed = whenCheckboxClicked)
 oMsgDebugCheckBox.setToolTipText("Display debugging for outgoing loconet messages")
-#oMsgDebugCheckBox.setEnabled(False)
+
+eRstrDebugCheckBox = javax.swing.JCheckBox("TrolleyRoster Function Entry/Exit", actionPerformed = whenCheckboxClicked)
+eRstrDebugCheckBox.setToolTipText("Display all Trolley Roster function entry/exit messages")
+dRstrDebugCheckBox = javax.swing.JCheckBox("TrolleyRoster Details", actionPerformed = whenCheckboxClicked)
+dRstrDebugCheckBox.setToolTipText("Display detail debugging for TrolleyRoster")
+dRstrDebugCheckBox.setEnabled(False)
 
 #logLabel2 = javax.swing.JLabel("        ")
 snChgCheckBox = javax.swing.JCheckBox("Show Sn Change")
@@ -435,9 +436,6 @@ snChgCheckBox.setEnabled(False)
 snSpkChgCheckBox = javax.swing.JCheckBox("Speak Sn Change")
 snSpkChgCheckBox.setToolTipText("Speak when a sensor state changes")
 snSpkChgCheckBox.setEnabled(False)
-sigChgCheckBox = javax.swing.JCheckBox("Show Signal Decode Only")
-sigChgCheckBox.setToolTipText("Display when a Signal state changes")
-sigChgCheckBox.setEnabled(False)
 msgSpkCheckBox = javax.swing.JCheckBox("Speak General Messages")
 msgSpkCheckBox.setToolTipText("Speak when a message is sent")
 msgSpkCheckBox.setSelected(True)
@@ -458,10 +456,9 @@ ckBoxPanel2.add(oMsgDebugCheckBox)
 
 ckBoxPanel3 = javax.swing.JPanel()
 ckBoxPanel3.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
-#ckBoxPanel3.add(logLabel2)
-ckBoxPanel3.add(snChgCheckBox)
+ckBoxPanel3.add(eRstrDebugCheckBox)
+ckBoxPanel3.add(dRstrDebugCheckBox)
 ckBoxPanel3.add(snSpkChgCheckBox)
-ckBoxPanel3.add(sigChgCheckBox)
 ckBoxPanel3.add(msgSpkCheckBox)
 
 
