@@ -47,7 +47,7 @@ except ImportError:
 TROLLEY_ROSTER_ADDRESS_FILE = "trolleyRosterAddresses.cfg"
 
 __apNameVersion = "New Automatic Trolley Sequencer"
-enableSimulator = True
+enableSimulator = False
 __fus = jmri.util.FileUtilSupport()
 
 # *************************************************************************
@@ -206,7 +206,7 @@ def buildLayoutMap(layout):
 def buildTrolleyRoster(trolleyRoster, blockMap):
     # When building a roster you need to provide the layout map so that the starting 
     # potisions of the trolleys can be validated. The roster is built prior to sending any
-    # requests to JMRI for slots. Registration should occur in the handler on a one by one
+    # requests to JMRI for slots. Slot registration should occur in the handler on a one by one
     # basis to avoid conflicts.
     trolleyRosterFile = __fus.getUserFilesPath() + TROLLEY_ROSTER_ADDRESS_FILE
     if os.path.isfile(trolleyRosterFile):
@@ -214,10 +214,10 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
     else:
         logger.info("Creating default trolley Roster")
 
-    trolleyRoster.append(Trolley(blockMap, address=105, maxSpeed=50, currentPosition=100))
-    #trolleyRoster.append(Trolley(blockMap, address=50, maxSpeed=40, currentPosition=100))
-    #trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
-    #trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
+    trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, currentPosition=100))
+    trolleyRoster.append(Trolley(blockMap, address=502, maxSpeed=40, currentPosition=100))
+    trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
+    trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
 
 
 # *************************************
