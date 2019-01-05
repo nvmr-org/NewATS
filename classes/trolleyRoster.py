@@ -412,8 +412,9 @@ class TrolleyRoster(object):
             # Move the trolley into the next block
             trolley.advance(self, layoutMap)
             # Check if the trolley should stop at this location
-            if layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
-                trolley.slowStop()
+            if trolley.currentPosition.segment <> trolley.nextPosition.segment: 
+                if layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                    trolley.slowStop()
         else:
             trolley = self.findByNextBlock(sensorId)
             if trolley and trolley.getSpeed() > 0 :
@@ -422,8 +423,9 @@ class TrolleyRoster(object):
                 # Move the trolley into the next block
                 trolley.advance(self, layoutMap)
                 # Check if the trolley should stop at this location
-                if layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
-                    trolley.slowStop()
+                if trolley.currentPosition.segment <> trolley.nextPosition.segment:
+                    if layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                        trolley.slowStop()
         layoutMap.printBlocks(self)
         layoutMap.printSegments(self)
         self.dump()
