@@ -19,6 +19,5 @@ class MessageAnnouncer(object):
         if self.__swingControl is None: return
         if self.__swingControl.isSelected():
             javaexec = getattr(java.lang.Runtime.getRuntime(), "exec")
-            pid = javaexec('nircmd speak text "'+messageToAnnounce+'" -2 100')
-            pid.waitFor()
+            javaexec('nircmd speak text "'+messageToAnnounce+'" 0 100')
         return
