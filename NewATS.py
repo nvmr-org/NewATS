@@ -100,7 +100,7 @@ msg.createListener()
 logger.info("Initialize Empty Layout Map")
 layoutMap = BlockMap() # Initialize and empty block map to define the layout
 logger.info("Initialize Empty Trolley Roster")
-trolleyRoster = TrolleyRoster()  # Initialize an empty roster of trolley devices
+trolleyRoster = TrolleyRoster(layoutMap=layoutMap)  # Initialize an empty roster of trolley devices
 
 
 class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
@@ -123,7 +123,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         if self.isRunning():
             logger.debug("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
-                trolleyRoster.processAllTrolleyMovement(layoutMap)
+                trolleyRoster.processAllTrolleyMovement()
                 if enableSimulator : simulateAllMovement(trolleyRoster)
                 #if event: trolleyRoster.processBlockEvent(event)
                 trolleyRoster.refreshTrolleysSlots()

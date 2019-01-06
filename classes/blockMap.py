@@ -248,7 +248,7 @@ class BlockMap(object):
         __segmentStatusInfo.append("\n")
         for segment in segments:
             if self.isSegmentOccupied(segment)== True:
-                __segmentStatusInfo.append("{0:<4}".format(trolleyRoster.findByCurrentSegment(segment, self).address)+" ")
+                __segmentStatusInfo.append("{0:<4}".format(trolleyRoster.findByCurrentSegment(segment).address)+" ")
             else:
                 __segmentStatusInfo.append("**** ")
         #__segmentStatusInfo.append("\n")

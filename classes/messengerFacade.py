@@ -8,11 +8,9 @@ import sys
 import logging
 import traceback
 from trolleyRoster import TrolleyRoster
-from blockMap import BlockMap
 
 thisfuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 logger= logging.getLogger("NewATS."+__name__)
-layoutMap = BlockMap()
 trolleyRoster = TrolleyRoster()
 
 try:
@@ -54,8 +52,6 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         self.debounce = False #turn track contact loss debounce off/on
         self.eventQueue = None
         self.accumByteCnt = 0
-        #self.trolleyRoster=trolleyRoster
-        #self.layoutMap = layoutMap
         logger.info("Initializing Messenger Listener")
 
 
@@ -419,9 +415,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         if (msg.getOpCode() == jmri.jmrix.loconet.LnConstants.OPC_INPUT_REP) and ((msg.getElement(2) & 0x10) == 0x10) :
             eventAddr = msg.sensorAddr() + 1
             if Messenger.__iTrace : logger.info("== eventAddr = " + str(eventAddr))
-            if layoutMap.findBlockByAddress(eventAddr) :
-                if Messenger.__iTrace : logger.info("Valid Sensor Event Rcvd = " + str(eventAddr) )#gaw-debug
-                trolleyRoster.processBlockEvent(eventAddr)
+            trolleyRoster.processBlockEvent(eventAddr)
 
         #####################################################################
         ## only listen for slot data response message (opcode 231 or 0xE7) ##
