@@ -29,7 +29,7 @@ class Trolley(object):
 
     msg = Messenger()
 
-    def __init__(self, blockMap, address=9999, maxSpeed=0, currentPosition=0):
+    def __init__(self, blockMap, address=9999, maxSpeed=0, soundEnabled=True, currentPosition=0):
         """Return a Trolley object whose id is *id* and starting position and next 
         position are the 0th and 1st blocks if not provided.  Priority should reflect the 
         order of the trolley's on the Layout."""
@@ -39,6 +39,7 @@ class Trolley(object):
         isLong = True if self.address > 100 else False
         self.speed = 0
         self.maxSpeed = maxSpeed
+        self.soundEnabled = soundEnabled
         # Check that the position requested is defined otherwise throw an exception
         currentBlock = blockMap.findBlockByAddress(currentPosition)
         if currentBlock == None:
@@ -98,12 +99,10 @@ class Trolley(object):
         logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
         self.slotId = slotId
         if self.slotId:
-            #self.ringBell()
-            #time.sleep(0.5) #wait 500 milliseconds
-            #self.blinkOn()
-            #time.sleep(0.5) #wait 500 milliseconds
-            pass
-        #Trolley.msg.setSlotInUse(slotId)
+            if self.soundEnabled: 
+                self.ringBell()
+            else:
+                self.blinkOn()
 
 
     # ****************
@@ -175,7 +174,7 @@ class Trolley(object):
     # *********************************************
     def ringBell(self) :
         logger.debug("Enter trolley.ringBell")
-        Trolley.msg.ringBell(self.slotId)
+        if self.soundEnabled: Trolley.msg.ringBell(self.slotId)
         return
 
 

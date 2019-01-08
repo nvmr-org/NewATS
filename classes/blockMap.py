@@ -171,6 +171,14 @@ class BlockMap(object):
         return None
 
 
+    def findBlockByDescription(self,description):
+        logger.debug("Entering blockMap.findBlockByAddress")
+        for block in self._blockmap:
+            if block.description == description:
+                return block
+        return None
+
+
     def findSegmentByAddress(self,address):
         logger.debug("Entering blockMap.findSegmentByAddress")
         for block in self._blockmap:

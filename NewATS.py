@@ -30,9 +30,11 @@ import javax.swing
 import java.awt.Color
 from javax.swing.text import DefaultCaret, StyleConstants
 from javax.swing.border import EmptyBorder
-from java.awt import Font, GridBagConstraints
+from java.awt import Font, GridBagConstraints, BorderLayout
 from java.awt import Insets as awtInsets
-from javax.swing import JLabel
+from javax.swing import JLabel, JScrollPane, JOptionPane
+from javax.swing.table import DefaultTableModel
+from java.awt.event import MouseAdapter
 
 print "ATS Start"
 
@@ -213,11 +215,10 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
         logger.info("Trolley Roster Address File: %s",trolleyRosterFile)
     else:
         logger.info("Creating default trolley Roster")
-
-    trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, currentPosition=100))
-    trolleyRoster.append(Trolley(blockMap, address=502, maxSpeed=40, currentPosition=100))
-    trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, currentPosition=106)) 
-    trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, currentPosition=106)) 
+    trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, soundEnabled=True, currentPosition=100))
+    trolleyRoster.append(Trolley(blockMap, address=502, maxSpeed=40, soundEnabled=False, currentPosition=100))
+    trolleyRoster.append(Trolley(blockMap, address=503, maxSpeed=80, soundEnabled=True, currentPosition=106)) 
+    trolleyRoster.append(Trolley(blockMap, address=504, maxSpeed=50, soundEnabled=False, currentPosition=106)) 
 
 
 # *************************************
@@ -225,7 +226,8 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
 # *************************************
 def whenStopAllButtonClicked(event):
     global automationObject
-    global tstopButton, tgoButton, simulatorButton, quitButton
+    global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
+    editRosterButton.setEnabled(True)
     tstopButton.setEnabled(False)
     tgoButton.setEnabled(True)
     quitButton.setEnabled(True)
@@ -251,7 +253,8 @@ def whenQuitButtonClicked(event):
 
 def whenTgoButtonClicked(event):
     global automationObject
-    global tstopButton, tgoButton, simulatorButton, quitButton
+    global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
+    editRosterButton.setEnabled(False)
     tstopButton.setEnabled(True)           #button starts as grayed out (disabled)
     tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
     quitButton.setEnabled(False)
@@ -292,7 +295,64 @@ def whenCheckboxClicked(event):
 
 
 def whenEditRosterButtonClicked(event):
+    global frameRoster
+    editRosterButton.setEnabled(False)
+    frameRoster = createEditRosterDataFrame(trolleyRoster)
+    #frameRoster.setVisible(True)
     return
+
+
+def whenEditRosterCloseButtonClicked(event):
+    global frameRoster
+    editRosterButton.setEnabled(True)
+    #frameRoster.setVisible(False)
+    frameRoster.dispose()
+    return
+
+
+def whenCancelAddTrolleyButtonClicked(event):
+    global frameAddTrolley
+    #editRosterButton.setEnabled(True)
+    #frameRoster.setVisible(False)
+    frameAddTrolley.dispose()
+    frameRoster.setVisible(True)
+    return
+
+
+def whenSaveAddTrolleyButtonClicked(event):
+    global frameAddTrolley, frameRoster
+    __address = int(addTrolleyAddress.getText())
+    __maxSpeed = int(addTrolleyMaxSpeed.getText())
+    __block = layoutMap.findBlockByDescription(addTrolleyStartingPosition.getSelectedItem())
+    if __block is None : return
+    if not trolleyRoster.isTrolleyAddressValid(__address): return
+    if not trolleyRoster.isTrolleyMaxSpeedValid(__maxSpeed): return
+    print("Address: "+str(__address)+" MaxSpeed: "+
+          str(__maxSpeed)+" SoundEnabled: "+
+          str(addTrolleySoundEnabled.isSelected())+" Starting Position: "+
+          str(__block.address)+" Starting Position Description: "+
+          str(__block.description))
+    trolleyRoster.append(Trolley(layoutMap, address=__address, maxSpeed=__maxSpeed, 
+                                 soundEnabled=addTrolleySoundEnabled.isSelected(), currentPosition=__block.address))
+    #frameRoster.setVisible(False)
+    trolleyRoster.dump()
+    frameAddTrolley.dispose()
+    # The revalidate and repaint methods don't seem to work so for now we just dispose of the
+    # original roster frame and recreate it so the new trolley is displayed.
+    #frameRoster.revalidate() 
+    #frameRoster.repaint()
+    frameRoster.dispose()
+    frameRoster = createEditRosterDataFrame(trolleyRoster)
+    frameRoster.setVisible(True)
+    return
+
+
+def whenAddToRosterButtonClicked(event):
+    global frameAddTrolley
+    frameRoster.setVisible(False)
+    frameAddTrolley = createAddToTrolleyRosterFrame()
+    return
+
 
 
 def sendAudibleMessage(checkboxToMonitor, messageToAnnounce):
@@ -312,6 +372,135 @@ def addComponent(container, component, gridx, gridy, gridwidth, gridheight, anch
     container.add(component, gbc)
 
 
+def setRosterColumnProperties(table, column, width=30, resizable=False):
+    table.getColumnModel().getColumn(column).setPreferredWidth(width)
+    table.getColumnModel().getColumn(column).setResizable(resizable)
+    return
+
+def getAddTrolleyButtonPanel():
+    global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
+    # =================================
+    # create buttons panel actions
+    # =================================
+    saveButton = javax.swing.JButton("Save")
+    saveButton.actionPerformed = whenSaveAddTrolleyButtonClicked 
+    cancelButton = javax.swing.JButton("Cancel")
+    cancelButton.actionPerformed = whenCancelAddTrolleyButtonClicked
+    addTrolleyPanel = javax.swing.JPanel()
+    addTrolleyPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+    addTrolleyPanel.add(saveButton)
+    addTrolleyPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
+    addTrolleyPanel.add(cancelButton)
+    return addTrolleyPanel
+
+
+def getAddTrolleyDataPanel():
+    global addTrolleyAddress, addTrolleyMaxSpeed, addTrolleySoundEnabled, addTrolleyStartingPosition
+    __panel = javax.swing.JPanel()
+    __panel.add(JLabel("Address:"))
+    addTrolleyAddress = javax.swing.JTextField('',5)
+    __panel.add(addTrolleyAddress)
+    __panel.add(JLabel("Max Speed:"))
+    addTrolleyMaxSpeed = javax.swing.JTextField('',5)
+    __panel.add(addTrolleyMaxSpeed)
+    __panel.add(JLabel("Sound Enabled:"))
+    addTrolleySoundEnabled = javax.swing.JCheckBox()
+    __panel.add(addTrolleySoundEnabled)
+    __panel.add(JLabel("Starting Position:"))
+    comboChoices = []
+    for block in layoutMap:
+        comboChoices.append(block.description)
+    addTrolleyStartingPosition = javax.swing.JComboBox(comboChoices)
+    __panel.add(addTrolleyStartingPosition)
+    return __panel
+
+
+def createAddToTrolleyRosterFrame():
+    __EDIT_ROSTER_ROW_HEIGHT = 50
+    frameAddTrolley = jmri.util.JmriJFrame("Add Trolley To Roster")
+    frameAddTrolley.setSize(1800,__EDIT_ROSTER_ROW_HEIGHT+100)
+    frameAddTrolley.setLayout(java.awt.GridBagLayout())
+    addComponent(frameAddTrolley, getAddTrolleyButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE)
+    addComponent(frameAddTrolley, getAddTrolleyDataPanel(), 0, 2, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE)
+    frameAddTrolley.setDefaultCloseOperation(frameRoster.DO_NOTHING_ON_CLOSE); # Disable the Close button
+    #frameAddTrolley.setDefaultCloseOperation(frameRoster.DISPOSE_ON_CLOSE); # Disable the Close button
+    frameAddTrolley.pack()
+    frameAddTrolley.setVisible(True)
+    return frameAddTrolley
+
+
+class DeleteTrolleyButtonListener(MouseAdapter):
+    def mousePressed(self, event):
+        global frameRoster
+        __target = event.getSource()
+        __row = __target.getSelectedRow()
+        __column = __target.getSelectedColumn()
+        if __column == 5: 
+            logger.info("Request to DELETE Trolley Roster item %s - Address: %s", str(__row), str(trolleyRoster[__row].address))
+            __response = deleteTrolleyFromRosterConfirmation("Delete Trolley #"+str(trolleyRoster[__row].address))
+            logger.info("Request to DELETE Trolley: %s - %s", str(trolleyRoster[__row].address),
+                        ("Confirmed" if __response == 0 else "Cancelled"))
+            if __response == 0: 
+                trolleyRoster.delete(__row)
+                trolleyRoster.dump()
+                    # The revalidate and repaint methods don't seem to work so for now we just dispose of the
+                    # original roster frame and recreate it so the new trolley is displayed.
+                    #frameRoster.revalidate() 
+                    #frameRoster.repaint()
+                frameRoster.dispose()
+                frameRoster = createEditRosterDataFrame(trolleyRoster)
+                frameRoster.setVisible(True)
+
+
+def deleteTrolleyFromRosterConfirmation(message):
+    result = JOptionPane.showConfirmDialog(None, message,  "Delete Trolley", JOptionPane.OK_CANCEL_OPTION)
+    return result
+
+
+def createEditRosterDataFrame(trolleyRoster):
+    __EDIT_ROSTER_ROW_HEIGHT = 50
+    frameRoster = jmri.util.JmriJFrame("Trolley Roster")
+    frameRoster.setSize(1800,len(trolleyRoster)*__EDIT_ROSTER_ROW_HEIGHT+100)
+    frameRoster.setLayout(java.awt.BorderLayout())
+    rosterData = []
+    for trolley in trolleyRoster:
+        deleteRosterRowButton = javax.swing.JButton("Delete")
+        deleteRosterRowButton.actionPerformed = None #whenDeleteRosterRowButtonClicked
+        rosterData.append([trolley.address, trolley.maxSpeed, trolley.soundEnabled,
+                           trolley.currentPosition.address, trolley.currentPosition.description,'DELETE'])
+    colNames = ['Address', 'Max Speed', 'Sound', 'Starting Position', 'Position Description', '']
+    dataModel = DefaultTableModel(rosterData,colNames)
+    rosterTable = javax.swing.JTable(dataModel)
+    rosterTable.getTableHeader().setReorderingAllowed(False)
+#    rosterTable.setDefaultRenderer(rosterTable.getColumnClass(5), rosterTable.DefaultTableCellRenderer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER))
+    rosterTable.setRowHeight(__EDIT_ROSTER_ROW_HEIGHT)
+    rosterTable.setEnabled(True)
+    rosterTable.addMouseListener(DeleteTrolleyButtonListener())
+    setRosterColumnProperties(rosterTable, 0)
+    setRosterColumnProperties(rosterTable, 1)
+    setRosterColumnProperties(rosterTable, 2, width=15)
+    setRosterColumnProperties(rosterTable, 3, width=50)
+    setRosterColumnProperties(rosterTable, 4, width=300)
+    setRosterColumnProperties(rosterTable, 5, width=15)
+    rosterScrollPane = JScrollPane()
+    rosterScrollPane.setPreferredSize(java.awt.Dimension(1800,len(trolleyRoster)*__EDIT_ROSTER_ROW_HEIGHT+100))
+    rosterScrollPane.getViewport().setView(rosterTable)
+    rosterPanel = javax.swing.JPanel()
+    rosterPanel.add(rosterScrollPane)
+    rosterAddButton = javax.swing.JButton("Add To Roster - Not Yet Functional")
+    rosterAddButton.actionPerformed = whenAddToRosterButtonClicked
+    rosterAddButton.setEnabled(True)
+    rosterCloseButton = javax.swing.JButton("Close")
+    rosterCloseButton.actionPerformed = whenEditRosterCloseButtonClicked
+    frameRoster.add(rosterAddButton, BorderLayout.PAGE_START)
+    frameRoster.add(rosterPanel, BorderLayout.CENTER)
+    frameRoster.add(rosterCloseButton, BorderLayout.PAGE_END)
+    frameRoster.setDefaultCloseOperation(frameRoster.DO_NOTHING_ON_CLOSE); # Disable the Close button
+    frameRoster.pack()
+    frameRoster.setVisible(True)
+    return frameRoster
+
+
 def getButtonPanel():
     global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
     # =================================
@@ -328,9 +517,8 @@ def getButtonPanel():
     simulatorButton = javax.swing.JButton(simulatorButtonTxt)
     simulatorButton.actionPerformed = whenSimulatorButtonClicked
     editRosterButton = javax.swing.JButton("Edit Roster")
-    editRosterButton.setEnabled(False)
+    editRosterButton.setEnabled(True)
     editRosterButton.actionPerformed = whenEditRosterButtonClicked
-
     # =================================
     # create button panel
     # =================================
@@ -345,34 +533,7 @@ def getButtonPanel():
     butPanel.add(simulatorButton)
     butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
     butPanel.add(quitButton)
-
     return butPanel
-
-
-# -------------------------------------------------------------------
-# create a trolley roster panel to define the trolleys for this run
-# -------------------------------------------------------------------
-def getRosterPanel(trolleyRoster):
-    # =================================
-    # create roster panel actions
-    # =================================
-    removeButton = javax.swing.JButton("Remove")
-    removeButton.actionPerformed = whenRemoveButtonClicked
-
-    rosterPanel = javax.swing.JPanel()
-    rosterPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
-    for trolley in trolleyRoster:
-        rosterPanel.add(javax.swing.JLabel("Address"))
-        rosterPanel.add(javax.swing.JTextField(trolley.address,5))
-        rosterPanel.add(javax.swing.Box.createHorizontalStrut(50))
-        rosterPanel.add(javax.swing.JLabel("Max Speed"))
-        rosterPanel.add(javax.swing.JTextField(trolley.maxSpeed,5))
-        rosterPanel.add(javax.swing.Box.createHorizontalStrut(50))
-        rosterPanel.add(javax.swing.JLabel("Starting Position"))
-        rosterPanel.add(javax.swing.JTextField(trolley.currentPosition,5))
-        rosterPanel.add(javax.swing.Box.createHorizontalStrut(50))
-        rosterPanel.add(removeButton)
-    return rosterPanel
 
 
 def createInfoPane(defaultText, title = None):
@@ -517,6 +678,7 @@ layoutMap.dump()
 logger.info("Building Trolley Roster")
 buildTrolleyRoster(trolleyRoster, layoutMap)  # Build the roster of trolleys
 trolleyRoster.dump()
+#frameRoster = createEditRosterDataFrame(trolleyRoster)
 
 logger.info("Setup Complete  - ")
 layoutMap.printBlocks(trolleyRoster)

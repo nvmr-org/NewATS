@@ -112,7 +112,22 @@ class TrolleyRoster(object):
         return str(self._list)
 
 
+    def delete(self,ii):
+        if TrolleyRoster.__eTrace : logger.info("Enter TrolleyRoster.delete - "+str(ii))
+        currentPosition = self._list[ii].currentPosition
+        if ii > 0:
+            self._list[ii-1].next = self._list[ii-1].next.next
+            self.__delitem__(ii)
+        else:
+            self.__delitem__(ii)
+        otherTrolleyInBlock = self.findByCurrentBlock(currentPosition.address)
+        if otherTrolleyInBlock is None:
+            if TrolleyRoster.__dTrace : logger.info("No other trolleys in block - setting clear")
+            currentPosition.set_blockClear()
+
+
     def insert(self, ii, val):
+        if TrolleyRoster.__eTrace : logger.info("Enter TrolleyRoster.insert")
         # optional: self._acl_check(val)
         self._list.insert(len(self._list), val)
         if self.first is None:
@@ -122,8 +137,6 @@ class TrolleyRoster(object):
             self._list[ii-1].next=self._list[ii]
             self._list[ii].next=self.first
             self.last = val
-            #self.next = self.first
-            #self.next = self.first
         self.last = val
 
 
@@ -131,8 +144,8 @@ class TrolleyRoster(object):
         if TrolleyRoster.__eTrace : logger.debug("Enter trolleyRoster.append")
         # if the block is currently occupied by another trolley set a flag before inserting
         if self.findByAddress(trolley.address) != None:
-            logger.error("Error: Attempt to register multiple trolleys to the same address: %s", trolley.address)
-            sys.exit("Error: Attempt to register multiple trolleys to the same address:" + trolley.address)
+            logger.error("Error: Attempt to register multiple trolleys to the same address: %s", str(trolley.address))
+            sys.exit("Error: Attempt to register multiple trolleys to the same address:" + str(trolley.address))
         self.checkForMultipleTrolleysInOneBlock()
 
         self.insert(len(self._list), trolley)
@@ -160,6 +173,16 @@ class TrolleyRoster(object):
     def setMessageAnnouncer(self,announcer=None):
         global audible
         audible=announcer
+
+
+    def isTrolleyAddressValid(self,address):
+        if address < 1 or address > 9999: return False
+        return True
+
+
+    def isTrolleyMaxSpeedValid(self,speed):
+        if speed < 1 or speed > 99: return False
+        return True
 
 
     def checkForMultipleTrolleysInOneBlock(self):
