@@ -58,10 +58,12 @@ class TrolleyRoster(object):
     __outputMessageInfo = None
     __layoutMap = None
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 120
+    SECONDS_BETWEEN_SLOT_REQUESTS = 10
 
     def __init__(self, trolleyObjects=None, layoutMap=None):
         """Initialize the class"""
         super(TrolleyRoster, self).__init__()
+        self.SlotIdRequestTimer = datetime.datetime.now()
         if trolleyObjects is not None:
             self._list = list(trolleyObjects)
             self.first = None
@@ -308,12 +310,14 @@ class TrolleyRoster(object):
 
     def registerOneTrolley(self):
         if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.registerOneTrolley")
+        if (datetime.datetime.now() - self.SlotIdRequestTimer).seconds < TrolleyRoster.SECONDS_BETWEEN_SLOT_REQUESTS: return
         for trolley in self._list:
             if trolley.slotId: continue
             if trolley.slotRequestSent: 
                 logger.info("Trolley %s - Slot Id not yet assigned", trolley.address)
                 break
             trolley.slotRequestSent = trolley.msg.requestSlot(trolley.address)
+            self.SlotIdRequestTimer = datetime.datetime.now()
             logger.info("Trolley %s  SlotRequestSent=%s", trolley.address, trolley.slotRequestSent)
             break
 
