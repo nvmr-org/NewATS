@@ -156,12 +156,6 @@ def buildLayoutMap(layout):
     # Create a layoutMap map that consists of consecutive blocks representing a complete 
     # circuit. The map also identifies the segment associated with each block. This is
     # done because so a multiple block area can be identified as occupied.
-    #        -100/1--                                                     ---103/3---
-    #      /          \                                                  /            \
-    #     |            -----106/4--------------\                       /              /
-    #      \                                    >--102/3--|---107/3---<_____104/3____/
-    #        ------------101/2-----------------/
-    #
     #    
     #        --100/1--                                                                                      ----103/6---*
     #      /          \                                                                                    /             \
@@ -169,14 +163,14 @@ def buildLayoutMap(layout):
     #     *             \                                                                                *                |
     #      \             --106/10---*----121/9-----*---123/8---*-----120/7----*-\                       /                /
     #       \                                                                    >--102/6--*---107/6---<-*----104/6----/ 
-    #         -----101/2-----*------118/3------*-----116/4-----*-----119/5----*-/
+    #         -----101/2-----*------118/3------*-----116/4-----*-----117/5----*-/
     #
     # Trolley Sequencing
     # Block 100 - Thomas Loop
     # Block 101 - Spencer Station Isle Side
     # Block 118 - Spencer Boulevard Isle Side
     # Block 116 - Traffic Intersection Isle Side
-    # Block 119 - Single Track Signal Block Isle Side
+    # Block 117 - Single Track Signal Block Isle Side
     # Block 102 - Single Track Spencer Side
     # Block 107 - Single Track Majolica Side
     # Block 104 - Majolica Outbound Loop
@@ -192,7 +186,7 @@ def buildLayoutMap(layout):
     layout.append(Block(blockAddress=101, newSegment=True,  stopRequired=False, length=130, description='Spencer Station Isle Side'))
     layout.append(Block(blockAddress=118, newSegment=True,  stopRequired=False, length=30,  description='Spencer Boulevard Isle Side'))
     layout.append(Block(blockAddress=116, newSegment=True,  stopRequired=True,  length=135, description='Traffic Intersection Isle Side'))
-    layout.append(Block(blockAddress=119, newSegment=True,  stopRequired=False, length=20,  description='Single Track Signal Block Isle Side'))
+    layout.append(Block(blockAddress=117, newSegment=True,  stopRequired=False, length=20,  description='Single Track Signal Block Isle Side'))
     layout.append(Block(blockAddress=102, newSegment=True,  stopRequired=False, length=48,  description='Single Track Spencer Side'))
     layout.append(Block(blockAddress=107, newSegment=False, stopRequired=False, length=40,  description='Single Track Majolica Side'))
     layout.append(Block(blockAddress=104, newSegment=False, stopRequired=False, length=40,  description='Majolica Outbound Loop'))
