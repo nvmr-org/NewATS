@@ -328,7 +328,7 @@ def whenSaveAddTrolleyButtonClicked(event):
     global frameAddTrolley, frameRoster
     __address = int(addTrolleyAddress.getText())
     __maxSpeed = int(addTrolleyMaxSpeed.getText())
-    __block = layoutMap.findBlockByDescription(addTrolleyStartingPosition.getSelectedItem())
+    __block = layoutMap.findBlockByAddress(int(addTrolleyStartingPosition.getSelectedItem().split('-')[0]))
     if __block is None : return
     if not trolleyRoster.isTrolleyAddressValid(__address): return
     if not trolleyRoster.isTrolleyMaxSpeedValid(__maxSpeed): return
@@ -414,7 +414,7 @@ def getAddTrolleyDataPanel():
     __panel.add(JLabel("Starting Position:"))
     comboChoices = []
     for block in layoutMap:
-        comboChoices.append(block.description)
+        comboChoices.append(str(block.address)+'-'+block.description)
     addTrolleyStartingPosition = javax.swing.JComboBox(comboChoices)
     __panel.add(addTrolleyStartingPosition)
     return __panel
