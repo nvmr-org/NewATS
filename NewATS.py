@@ -48,7 +48,11 @@ except ImportError:
     print('Failed to import jmir - bypassing')
 
 TROLLEY_ROSTER_ADDRESS_FILE = "trolleyRosterAddresses.cfg"
-
+ATS_MESSAGE_FONT_SIZE = 30
+ATS_MESSAGE_WINDOW_PANE_WIDTH = 2400
+ATS_ROSTER_WINDOW_PANE_WIDTH = 1500
+ATS_MESSAGE_WINDOW_WIDTH = 100
+ATS_ROSTER_ROW_HEIGHT = 30
 __apNameVersion = "New Automatic Trolley Sequencer"
 enableSimulator = False
 __fus = jmri.util.FileUtilSupport()
@@ -290,7 +294,7 @@ def addComponent(container, component, gridx, gridy, gridwidth, gridheight, anch
     container.add(component, gbc)
 
 
-def setRosterColumnProperties(table, column, width=30, resizable=False):
+def setRosterColumnProperties(table, column, width=5, resizable=False):
     table.getColumnModel().getColumn(column).setPreferredWidth(width)
     table.getColumnModel().getColumn(column).setResizable(resizable)
     return
@@ -307,7 +311,7 @@ def getAddTrolleyButtonPanel():
     addTrolleyPanel = javax.swing.JPanel()
     addTrolleyPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
     addTrolleyPanel.add(saveButton)
-    addTrolleyPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
+    addTrolleyPanel.add(javax.swing.Box.createHorizontalStrut(10)) #empty vertical space between buttons
     addTrolleyPanel.add(cancelButton)
     return addTrolleyPanel
 
@@ -334,9 +338,8 @@ def getAddTrolleyDataPanel():
 
 
 def createAddToTrolleyRosterFrame():
-    __EDIT_ROSTER_ROW_HEIGHT = 50
     frameAddTrolley = jmri.util.JmriJFrame("Add Trolley To Roster")
-    frameAddTrolley.setSize(1800,__EDIT_ROSTER_ROW_HEIGHT+100)
+    frameAddTrolley.setSize(ATS_MESSAGE_WINDOW_PANE_WIDTH,ATS_ROSTER_ROW_HEIGHT+50)
     frameAddTrolley.setLayout(java.awt.GridBagLayout())
     addComponent(frameAddTrolley, getAddTrolleyButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE)
     addComponent(frameAddTrolley, getAddTrolleyDataPanel(), 0, 2, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE)
@@ -377,9 +380,8 @@ def deleteTrolleyFromRosterConfirmation(message):
 
 
 def createEditRosterDataFrame(trolleyRoster):
-    __EDIT_ROSTER_ROW_HEIGHT = 50
     frameRoster = jmri.util.JmriJFrame("Trolley Roster")
-    frameRoster.setSize(1800,len(trolleyRoster)*__EDIT_ROSTER_ROW_HEIGHT+100)
+    frameRoster.setSize(ATS_ROSTER_WINDOW_PANE_WIDTH,len(trolleyRoster)*ATS_ROSTER_ROW_HEIGHT+100)
     frameRoster.setLayout(java.awt.BorderLayout())
     rosterData = []
     for trolley in trolleyRoster:
@@ -392,17 +394,17 @@ def createEditRosterDataFrame(trolleyRoster):
     rosterTable = javax.swing.JTable(dataModel)
     rosterTable.getTableHeader().setReorderingAllowed(False)
 #    rosterTable.setDefaultRenderer(rosterTable.getColumnClass(5), rosterTable.DefaultTableCellRenderer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER))
-    rosterTable.setRowHeight(__EDIT_ROSTER_ROW_HEIGHT)
+    rosterTable.setRowHeight(ATS_ROSTER_ROW_HEIGHT)
     rosterTable.setEnabled(True)
     rosterTable.addMouseListener(DeleteTrolleyButtonListener())
     setRosterColumnProperties(rosterTable, 0)
     setRosterColumnProperties(rosterTable, 1)
-    setRosterColumnProperties(rosterTable, 2, width=15)
-    setRosterColumnProperties(rosterTable, 3, width=50)
-    setRosterColumnProperties(rosterTable, 4, width=300)
-    setRosterColumnProperties(rosterTable, 5, width=15)
+    setRosterColumnProperties(rosterTable, 2, width=10)
+    setRosterColumnProperties(rosterTable, 3, width=75)
+    setRosterColumnProperties(rosterTable, 4, width=200)
+    setRosterColumnProperties(rosterTable, 5, width=10)
     rosterScrollPane = JScrollPane()
-    rosterScrollPane.setPreferredSize(java.awt.Dimension(1800,len(trolleyRoster)*__EDIT_ROSTER_ROW_HEIGHT+100))
+    rosterScrollPane.setPreferredSize(java.awt.Dimension(ATS_ROSTER_WINDOW_PANE_WIDTH,len(trolleyRoster)*ATS_ROSTER_ROW_HEIGHT+100))
     rosterScrollPane.getViewport().setView(rosterTable)
     rosterPanel = javax.swing.JPanel()
     rosterPanel.add(rosterScrollPane)
@@ -459,7 +461,7 @@ def createInfoPane(defaultText, title = None):
     __pane = javax.swing.JTextPane()
     __doc = __pane.getStyledDocument()
     __style = __pane.addStyle("Color Style", None)
-    __pane.setFont(Font("monospaced",Font.BOLD,24))
+    __pane.setFont(Font("monospaced",Font.BOLD,ATS_MESSAGE_FONT_SIZE))
     __pane.setBorder(EmptyBorder(10,10,10,10))
     __pane.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.BLACK))
     if title is not None:
@@ -472,9 +474,9 @@ def createInfoPane(defaultText, title = None):
 def createScrollPanel(DefaultText, title = None):
     __panel = javax.swing.JPanel()
     __panel.add(JLabel(title))
-    scrollArea = javax.swing.JTextArea(10, 45)
+    scrollArea = javax.swing.JTextArea(10, ATS_MESSAGE_WINDOW_WIDTH)
     scrollArea.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE); # automatically scroll to last message
-    scrollArea.font=Font("monospaced", Font.PLAIN, 24)
+    scrollArea.font=Font("monospaced", Font.PLAIN, ATS_MESSAGE_FONT_SIZE)
     scrollArea.setText(DefaultText)
     scrollField = javax.swing.JScrollPane(scrollArea) #put text area in scroll field
     scrollField.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
