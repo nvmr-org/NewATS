@@ -8,8 +8,7 @@ import datetime
 import logging
 from classes.messengerFacade import Messenger
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger("ATS."+__name__)
 
 
 class Trolley(object):

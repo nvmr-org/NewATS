@@ -90,10 +90,20 @@ class WinListener(java.awt.event.WindowListener):
         return
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s',
-                    handlers=[logging.FileHandler("{0}/{1}.log".format(__fus.getUserFilesPath(),'NewATS')),
-                    logging.StreamHandler()])
-logger = logging.getLogger("NewATS")
+#logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+logger = logging.getLogger("ATS")
+if not len(logger.handlers):
+    fileHandler = logging.FileHandler("{0}/{1}.log".format(__fus.getUserFilesPath(),'NewATS'))
+    fileHandler.setLevel(logging.INFO)
+    fileHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setLevel(logging.INFO)
+    consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    logger.addHandler(fileHandler)
+    logger.addHandler(consoleHandler)
+    logger.setLevel(logging.INFO)
+
+print("Log File Path:"+__fus.getUserFilesPath())
 
 msg = Messenger()
 msg.createListener()
@@ -229,6 +239,7 @@ def whenStopAllButtonClicked(event):
     msg1t = "Stop All Trolleys button pressed"
     print msg1t
     print
+    logger.info("Stop All Trolleys button pressed")
     trolleyRoster.stopAllTrolleys()
     trolleyRoster.dump()
     return
@@ -253,11 +264,11 @@ def whenTgoButtonClicked(event):
     tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
     quitButton.setEnabled(False)
     automationObject.start()
-    msg1t = "Start Running button pressed"
-    print msg1t
-    print
     while automationObject.isRunning() == False:
-        print "Waiting for Automation to start"
+    trolleyAutomationObject.start()
+    logger.info("Start Running button pressed")
+    while trolleyAutomationObject.isRunning() == False:
+        logger.info("Waiting for Automation to start")
         time.sleep(1.0)
     return
 
@@ -265,7 +276,7 @@ def whenTgoButtonClicked(event):
 def whenSimulatorButtonClicked(event):
     global tstopButton, tgoButton, simulatorButton, quitButton
     global enableSimulator
-    print("Simulator State:"+str(enableSimulator)+"-->"+str(not enableSimulator))
+    logger.info("Simulator State:"+str(enableSimulator)+"-->"+str(not enableSimulator))
     enableSimulator = not enableSimulator
     if enableSimulator:
         simulatorButton.setText("Disable Simulator")
@@ -321,7 +332,7 @@ def whenSaveAddTrolleyButtonClicked(event):
     if __block is None : return
     if not trolleyRoster.isTrolleyAddressValid(__address): return
     if not trolleyRoster.isTrolleyMaxSpeedValid(__maxSpeed): return
-    print("Address: "+str(__address)+" MaxSpeed: "+
+    logger.info("Address: "+str(__address)+" MaxSpeed: "+
           str(__maxSpeed)+" SoundEnabled: "+
           str(addTrolleySoundEnabled.isSelected())+" Starting Position: "+
           str(__block.address)+" Starting Position Description: "+
@@ -424,6 +435,7 @@ def createAddToTrolleyRosterFrame():
 
 
 class DeleteTrolleyButtonListener(MouseAdapter):
+    logger = logging.getLogger(__name__)
     def mousePressed(self, event):
         global frameRoster
         __target = event.getSource()

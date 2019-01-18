@@ -9,8 +9,8 @@ import logging
 import traceback
 from trolleyRoster import TrolleyRoster
 
+logger = logging.getLogger("ATS."+__name__)
 thisfuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
-logger= logging.getLogger("NewATS."+__name__)
 trolleyRoster = TrolleyRoster()
 
 try:
@@ -470,7 +470,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
                     #trolley.ringBell()
                     #trolley.blinkOn()
             else:
-                logger.warn("E7 Opcode Received - But no trolley defined")
+                logger.warn("E7 Opcode Received for address:%s - But no trolley defined",str(address))
         if Messenger.__eTrace : logger.info("<<==exiting %s",thisfuncName())
 
 
@@ -483,7 +483,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
                 Messenger.__lnListen = None
                 logger.warn("JMRI.removeLocoNetListener Removed")
             except:
-                logger.warn("Skipping JMRI.removeLocoNetListener")
+                logger.warn("Unable to remove JMRI.removeLocoNetListener")
                 pass
         if Messenger.__eTrace : logger.info("<<==exiting %s",thisfuncName())
         return 
@@ -498,7 +498,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
                         jmri.InstanceManager.getList(jmri.jmrix.loconet.LocoNetSystemConnectionMemo).get(0).getLnTrafficController().addLocoNetListener(0xFF, Messenger.__lnListen)
                         logger.warn("Created JMRI.addLocoNetListener")
                 except:
-                        logger.warn("Skipping JMRI.addLocoNetListener")
+                        logger.warn("Unable to add JMRI.addLocoNetListener")
                         pass
 
 

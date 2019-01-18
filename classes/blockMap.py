@@ -6,7 +6,7 @@ Created on Nov 18, 2016
 import logging
 import datetime
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ATS."+__name__)
 
 class BlockMap(object):
     """A trolley object that consists of the following properties:
@@ -172,7 +172,7 @@ class BlockMap(object):
 
 
     def findBlockByDescription(self,description):
-        logger.debug("Entering blockMap.findBlockByAddress")
+        logger.debug("Entering blockMap.findBlockByDescription")
         for block in self._blockmap:
             if block.description == description:
                 return block

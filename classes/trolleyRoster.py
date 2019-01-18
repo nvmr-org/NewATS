@@ -8,7 +8,7 @@ import logging
 import datetime
 #from classes.messengerFacade import Messenger
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ATS."+__name__)
 
 class TrolleyLogHandler(logging.StreamHandler):
     """ Not yet working - 
@@ -294,7 +294,7 @@ class TrolleyRoster(object):
         if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkIfAllTrolleysAreRegistered")
         for trolley in self._list:
             if trolley.slotId is None:
-                logger.info("Not all trolleys are registered")
+                logger.debug("Not all trolleys are registered")
                 return False
         logger.debug("All trolleys are registered")
         return True
@@ -327,19 +327,21 @@ class TrolleyRoster(object):
         for trolley in self._list:
             if trolley.getSpeed() == 0:
                 if self.checkIfTrolleyCanMove(trolley):
-                    logger.info("Trolley: %s   Status: Not Moving (%s seconds) in block: %s  Action: Starting",
-                            trolley.address, (datetime.datetime.now() - trolley.stopTime).seconds, trolley.currentPosition.address)
+                    logger.info("Trolley: %s   Status: Not Moving (%s seconds) Action: Starting  Block: %s - %s",
+                            trolley.address, (datetime.datetime.now() - trolley.stopTime).seconds, 
+                            trolley.currentPosition.address, trolley.currentPosition.description)
                     trolley.fullSpeed()
                     self.dump()
             else:
                 if self.checkIfTrolleyShouldStop(trolley):
-                    logger.info("Trolley: %s   Status: Is Running (%s seconds) in block: %s  Action: Stopping",
-                            trolley.address, (datetime.datetime.now() - trolley.startTime).seconds, trolley.currentPosition.address)
+                    logger.info("Trolley: %s   Status: Is Running (%s seconds) Action: Stopping  Block: %s - %s",
+                            trolley.address, (datetime.datetime.now() - trolley.startTime).seconds, 
+                            trolley.currentPosition.address, trolley.currentPosition.description)
                     trolley.slowStop()
                     self.dump()
                 elif self.checkIfTrolleyIsOverdue(trolley):
-                    logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s",
-                            trolley.address, trolley.currentPosition.description)
+                    logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s - %s",
+                            trolley.address, trolley.currentPosition.address, trolley.currentPosition.description)
                     if (datetime.datetime.now() - trolley.lastAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
                         audible.announceMessage("Trolley: "+str(trolley.address)+" Alert: Trolley is Overdue. "+
                                                 "Last seen in "+trolley.currentPosition.description)
@@ -438,6 +440,7 @@ class TrolleyRoster(object):
                 # Check if the trolley should stop at this location
                 if trolley.currentPosition.segment <> trolley.nextPosition.segment: 
                     if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                        logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
                         trolley.slowStop()
             else:
                 trolley = self.findByNextBlock(sensorId)
@@ -449,6 +452,7 @@ class TrolleyRoster(object):
                     # Check if the trolley should stop at this location
                     if trolley.currentPosition.segment <> trolley.nextPosition.segment:
                         if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                            logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
                             trolley.slowStop()
             TrolleyRoster.__layoutMap.printBlocks(self)
             TrolleyRoster.__layoutMap.printSegments(self)

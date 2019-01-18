@@ -5,7 +5,7 @@ Created on Nov 18, 2016
 '''
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ATS."+__name__)
 
 class Block(object):
     """The layout class defines blocks and segments of a layout.  Blocks should be 
