@@ -312,7 +312,9 @@ class TrolleyRoster(object):
         if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.registerOneTrolley")
         if (datetime.datetime.now() - self.SlotIdRequestTimer).seconds < TrolleyRoster.SECONDS_BETWEEN_SLOT_REQUESTS: return
         for trolley in self._list:
-            if trolley.slotId: continue
+            if trolley.slotId:
+                self.dump()
+                continue
             if trolley.slotRequestSent: 
                 logger.info("Trolley %s - Slot Id not yet assigned", trolley.address)
                 break
