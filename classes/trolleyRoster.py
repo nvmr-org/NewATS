@@ -57,7 +57,7 @@ class TrolleyRoster(object):
     __outputRosterInfo = None
     __outputMessageInfo = None
     __layoutMap = None
-    SECONDS_BETWEEN_AUDIBLE_ALERTS = 120
+    SECONDS_BETWEEN_AUDIBLE_ALERTS = 90
     SECONDS_BETWEEN_SLOT_REQUESTS = 10
 
     def __init__(self, trolleyObjects=None, layoutMap=None):

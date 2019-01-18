@@ -15,17 +15,18 @@ Based on ATS.py written by
     Member: Northern Virginia Model Railroad
     URL: http://nvmr.org
 '''
+import time
+import logging
+import os.path
 from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
 from classes.blockMap import BlockMap
 from classes.block import Block
 from classes.announcer import MessageAnnouncer
 from classes.messengerFacade import Messenger
-import datetime
-import time
-import logging
-import os.path
-from random import randint
+from classes.atsWinListener import AtsWinListener
+from classes.atsTrolleyAutomation import TrolleyAutomation
+
 import javax.swing
 import java.awt.Color
 from javax.swing.text import DefaultCaret, StyleConstants
@@ -52,44 +53,6 @@ __apNameVersion = "New Automatic Trolley Sequencer"
 enableSimulator = False
 __fus = jmri.util.FileUtilSupport()
 
-# *************************************************************************
-# WindowListener is a interface class and therefore all of it's           *
-# methods should be implemented even if not used to avoid AttributeErrors *
-# *************************************************************************
-class WinListener(java.awt.event.WindowListener):
-
-    def windowClosing(self, event):
-        global killed
-        killed = True #this will signal scanReporter thread to exit
-        trolleyRoster.destroy()
-        msg.destroyListener()
-        fr.dispose()         #close the pane (window)
-        return
-
-    def windowActivated(self, event):
-        return
-
-    def windowDeactivated(self, event):
-        return
-
-    def windowOpened(self, event):
-        return
-
-    def windowClosed(self, event):
-        trolleyRoster.destroy()
-        time.sleep(3.0) #wait 3 seconds before moving on to allow last free to complete
-        print 'slots freed and exited'
-        msg.destroyListener()
-        fr.dispose()         #close the pane (window)
-        return
-
-    def windowIconified(self, event):
-        return
-
-    def windowDeiconified(self, event):
-        return
-
-
 #logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 logger = logging.getLogger("ATS")
 if not len(logger.handlers):
@@ -107,59 +70,15 @@ print("Log File Path:"+__fus.getUserFilesPath())
 
 msg = Messenger()
 msg.createListener()
+# create a TrolleyAutomation object
+trolleyAutomationObject = TrolleyAutomation()
+
 
 #Trolley.setMessageManager(msgManager = msg)        
 logger.info("Initialize Empty Layout Map")
 layoutMap = BlockMap() # Initialize and empty block map to define the layout
 logger.info("Initialize Empty Trolley Roster")
 trolleyRoster = TrolleyRoster(layoutMap=layoutMap)  # Initialize an empty roster of trolley devices
-
-
-class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
-    def init(self):
-        logger.info("Initialize Trolley Automation")
-        pass
-
-    
-    def handle(self):
-        # handle() is called repeatedly until it returns false.
-        #
-        # We wait until handle gets called to check if trolleys
-        # in the roster have been assigned slots.  If at least 
-        # one trolley is not assigned we register it.  We wait
-        # for all trolleys to be registered before starting the
-        # movement checks.
-        #
-        # This is where we should also check that all the trolleys
-        # in the roster are current.
-        if self.isRunning():
-            logger.debug("Automation is running")
-            if trolleyRoster.checkIfAllTrolleysAreRegistered():
-                trolleyRoster.processAllTrolleyMovement()
-                if enableSimulator : simulateAllMovement(trolleyRoster)
-                #if event: trolleyRoster.processBlockEvent(event)
-                trolleyRoster.refreshTrolleysSlots()
-            else:
-                trolleyRoster.registerOneTrolley()
-        else:
-            logger.info("Automation is NOT running")
-        self.waitMsec(1000)      
-        return True
-
-
-def simulateAllMovement(trolleyRoster):
-    event = None
-    for trolley in trolleyRoster:
-        if trolley.getSpeed() > 0:
-            travelTime = (datetime.datetime.now() - trolley.startTime).seconds
-            if travelTime > (trolley.currentPosition.length / 4):
-                logger.info("Simulating event for SensorID: %s by Trolley: %s", trolley.nextPosition.address, trolley.address)
-                event =  trolley.nextPosition.address
-            # Simulate random noise on used block
-            if randint(0, 999) > 990:
-                event =  trolley.currentPosition.address
-    if event: msg.sendSenorReportMsg(event)
-    return event
 
 
 def buildLayoutMap(layout):
@@ -229,16 +148,13 @@ def buildTrolleyRoster(trolleyRoster, blockMap):
 # start to initialize the display GUI *
 # *************************************
 def whenStopAllButtonClicked(event):
-    global automationObject
+    global trolleyAutomationObject
     global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
     editRosterButton.setEnabled(True)
     tstopButton.setEnabled(False)
     tgoButton.setEnabled(True)
     quitButton.setEnabled(True)
-    automationObject.stop()
-    msg1t = "Stop All Trolleys button pressed"
-    print msg1t
-    print
+    trolleyAutomationObject.stop()
     logger.info("Stop All Trolleys button pressed")
     trolleyRoster.stopAllTrolleys()
     trolleyRoster.dump()
@@ -246,25 +162,23 @@ def whenStopAllButtonClicked(event):
 
 
 def whenQuitButtonClicked(event):
-    global autommationObject
+    global trolleyAutomationObject
     global tstopButton, tgoButton, simulatorButton, quitButton
     tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
     tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
-    if automationObject.isRunning(): automationObject.stop()
+    if trolleyAutomationObject.isRunning(): trolleyAutomationObject.stop()
     trolleyRoster.destroy()
     fr.dispose()         #close the pane (window)
     return
 
 
 def whenTgoButtonClicked(event):
-    global automationObject
+    global trolleyAutomationObject
     global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
     editRosterButton.setEnabled(False)
     tstopButton.setEnabled(True)           #button starts as grayed out (disabled)
     tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
     quitButton.setEnabled(False)
-    automationObject.start()
-    while automationObject.isRunning() == False:
     trolleyAutomationObject.start()
     logger.info("Start Running button pressed")
     while trolleyAutomationObject.isRunning() == False:
@@ -285,7 +199,7 @@ def whenSimulatorButtonClicked(event):
 
 
 def whenRemoveButtonClicked(event):
-    global automationObject
+    global trolleyAutomationObject
     return
 
 
@@ -357,7 +271,6 @@ def whenAddToRosterButtonClicked(event):
     frameRoster.setVisible(False)
     frameAddTrolley = createAddToTrolleyRosterFrame()
     return
-
 
 
 def sendAudibleMessage(checkboxToMonitor, messageToAnnounce):
@@ -508,7 +421,7 @@ def createEditRosterDataFrame(trolleyRoster):
 
 
 def getButtonPanel():
-    global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
+    global trolleyAutomationObject, editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
     # =================================
     # create buttons panel actions
     # =================================
@@ -519,7 +432,7 @@ def getButtonPanel():
     tstopButton = javax.swing.JButton("Stop All Trolleys")
     tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
     tstopButton.actionPerformed = whenStopAllButtonClicked
-    simulatorButtonTxt = "Disable Simulator" if enableSimulator else "Enable Simulator"
+    simulatorButtonTxt = "Disable Simulator" if trolleyAutomationObject.simulatorEnabled else "Enable Simulator"
     simulatorButton = javax.swing.JButton(simulatorButtonTxt)
     simulatorButton.actionPerformed = whenSimulatorButtonClicked
     editRosterButton = javax.swing.JButton("Edit Roster")
@@ -644,7 +557,7 @@ messageInfoPanel = createScrollPanel("Default Message Panel\n"+
 # also create a window listener. This is used mainly to remove the property change listener
 # when the window is closed by clicking on the window close button
 # ------------------------------------------------------------------------------------------
-w = WinListener()
+w = AtsWinListener()
 fr = jmri.util.JmriJFrame(__apNameVersion) #use this in order to get it to appear on webserver
 fr.contentPane.setLayout(java.awt.GridBagLayout())
 addComponent(fr, getButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE);
@@ -660,12 +573,9 @@ fr.addWindowListener(w)
 fr.pack()
 fr.setVisible(True)
 
-# create a TrolleyAutomation object
-automationObject = TrolleyAutomation()
-
 # set the name - This will show in the threat monitor
-automationObject.setName("Trolley Automation Script")
-trolleyRoster.setAutomationObject(automationObject)
+trolleyAutomationObject.setName("Trolley Automation Script")
+trolleyRoster.setAutomationObject(trolleyAutomationObject)
 audible = MessageAnnouncer(msgSpkCheckBox)
 trolleyRoster.setMessageAnnouncer(audible)
 audible.announceMessage("Welcome to the "+__apNameVersion)
