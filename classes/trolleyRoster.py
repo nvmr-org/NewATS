@@ -189,7 +189,7 @@ class TrolleyRoster(object):
 
     def checkForMultipleTrolleysInOneBlock(self):
         if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkForMultipleTrolleysInOneBlock")
-        self.multipleDetectedInBlock = False
+        if self.multipleDetectedInBlock : return self.multipleDetectedInBlock
         for trolley in self._list:
             if self.findByCurrentBlock(trolley.currentPosition.address).address <> trolley.address:
                 logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
