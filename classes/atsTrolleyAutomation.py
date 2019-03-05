@@ -32,8 +32,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             logger.debug("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 trolleyRoster.processAllTrolleyMovement()
-                if self.isSimulatorEnabled : self.simulateAllMovement()
-                #if event: trolleyRoster.processBlockEvent(event)
+                if TrolleyAutomation.simulatorEnabled : self.simulateAllMovement()
                 trolleyRoster.refreshTrolleysSlots()
             else:
                 trolleyRoster.registerOneTrolley()
@@ -60,6 +59,10 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
     def isSimulatorEnabled(self):
         return TrolleyAutomation.simulatorEnabled
+
+
+    def setSimulatorState(self, state):
+        TrolleyAutomation.simulatorEnabled = state
 
 
     def setSimulatorEnabled(self):

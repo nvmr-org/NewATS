@@ -193,10 +193,11 @@ def whenTgoButtonClicked(event):
 
 def whenSimulatorButtonClicked(event):
     global tstopButton, tgoButton, simulatorButton, quitButton
-    global enableSimulator
-    logger.info("Simulator State:"+str(enableSimulator)+"-->"+str(not enableSimulator))
-    enableSimulator = not enableSimulator
-    if enableSimulator:
+    simulatorState = trolleyAutomationObject.isSimulatorEnabled()
+    logger.info("Simulator State:"+str(simulatorState)+"-->"+str(not simulatorState))
+    simulatorState = not simulatorState
+    trolleyAutomationObject.setSimulatorState(simulatorState)
+    if simulatorState:
         simulatorButton.setText("Disable Simulator")
     else:
         simulatorButton.setText("Enable Simulator")
