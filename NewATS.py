@@ -53,7 +53,7 @@ ATS_MESSAGE_WINDOW_PANE_WIDTH = 2400
 ATS_ROSTER_WINDOW_PANE_WIDTH = 1500
 ATS_MESSAGE_WINDOW_WIDTH = 100
 ATS_ROSTER_ROW_HEIGHT = 30
-__apNameVersion = "New Automatic Trolley Sequencer"
+__apNameVersion = "Automatic Trolley Sequencer"
 enableSimulator = False
 __fus = jmri.util.FileUtilSupport()
 
