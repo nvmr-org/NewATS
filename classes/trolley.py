@@ -23,8 +23,8 @@ class Trolley(object):
     #global layoutLength
 
     deviceId = 0
-    THROTTLE_REFRESH_TIME = 100 # Seconds between status updates for throttles on a slot
-    THROTTLE_WAIT_TIME = 100
+    THROTTLE_REFRESH_TIME = 30 # Seconds between status updates for throttles on a slot
+    THROTTLE_WAIT_TIME = 30
 
     msg = Messenger()
 
