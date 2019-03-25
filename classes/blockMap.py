@@ -135,6 +135,7 @@ class BlockMap(object):
         self.__outputBlockDump.append("\n")
         if printFlag:
             print ''.join(self.__outputBlockDump)
+            self.__outputBlockDump = None
         else:
             pass
             #output.scrollArea.setCaretPosition(output.scrollArea.getDocument().getLength())
