@@ -23,7 +23,7 @@ class MessageAnnouncer(object):
         if self.__swingControl is None: return
         if MessageAnnouncer.__textToSpeechCmd and self.__swingControl.isSelected():
             messageCmd = map(lambda x: str.replace(x, "%s", messageToAnnounce) ,MessageAnnouncer.__textToSpeechCmd)
-            subprocess.call(messageCmd, shell=False)
+            subprocess.Popen(messageCmd)
         return
 
 
