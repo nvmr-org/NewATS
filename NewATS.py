@@ -251,6 +251,7 @@ def whenSaveAddTrolleyButtonClicked(event):
     if __block is None : return
     if not trolleyRoster.isTrolleyAddressValid(__address): return
     if not trolleyRoster.isTrolleyMaxSpeedValid(__maxSpeed): return
+    if trolleyRoster.findByAddress(__address): return
     logger.info("Address: "+str(__address)+" MaxSpeed: "+
           str(__maxSpeed)+" SoundEnabled: "+
           str(addTrolleySoundEnabled.isSelected())+" Starting Position: "+
