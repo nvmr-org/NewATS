@@ -57,6 +57,7 @@ class TrolleyRoster(object):
     __outputRosterInfo = None
     __outputMessageInfo = None
     __layoutMap = None
+    SECONDS_BETWEEN_CONSOLE_ALERTS = 2
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 15
     SECONDS_BETWEEN_SLOT_REQUESTS = 10
 
@@ -342,12 +343,14 @@ class TrolleyRoster(object):
                     trolley.slowStop()
                     self.dump()
                 elif self.checkIfTrolleyIsOverdue(trolley):
-                    logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s - %s",
+                    if (datetime.datetime.now() - trolley.lastAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_CONSOLE_ALERTS:
+                        logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s - %s",
                             trolley.address, trolley.currentPosition.address, trolley.currentPosition.description)
-                    if (datetime.datetime.now() - trolley.lastAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
+                        trolley.lastAlertTime = datetime.datetime.now()
+                    if (datetime.datetime.now() - trolley.lastAudibleAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
                         audible.announceMessage("Trolley: "+str(trolley.address)+" Alert: Trolley is Overdue. "+
                                                 "Last seen in "+trolley.currentPosition.description)
-                        trolley.lastAlertTime = datetime.datetime.now()
+                        trolley.lastAudibleAlertTime = datetime.datetime.now()
 
 
     def checkIfTrolleyIsOverdue(self, trolley):

@@ -53,6 +53,7 @@ class Trolley(object):
         self.stopTime = datetime.datetime.now()
         self.startTime = None
         self.lastAlertTime = datetime.datetime.now()
+        self.lastAudibleAlertTime = datetime.datetime.now()
         self.slotId = None
         self.slotRequestSent = None
         #print "Going to add throttle for address: ", self.address, "isLong:", isLong
