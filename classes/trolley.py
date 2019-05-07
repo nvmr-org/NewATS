@@ -25,6 +25,7 @@ class Trolley(object):
     deviceId = 0
     THROTTLE_REFRESH_TIME = 30 # Seconds between status updates for throttles on a slot
     THROTTLE_WAIT_TIME = 30
+    MOMENTUM_DELAY_SEC = 2 # Seconds to allows for momentum to be considered still moving
 
     msg = Messenger()
 
@@ -262,6 +263,16 @@ class Trolley(object):
 #         if self.nextPosition >= layoutLength:
 #             self.nextPosition = 0
 #         print "MOVE:",self.address,self.currentPosition,self.nextPosition
+
+
+    def isMoving(self):
+        return self.speed > 0
+
+
+    def wasMoving(self):
+        speedIsZero = (self.speed == 0)
+        stoppedLessThanMomentumTime = (((datetime.datetime.now() - self.stopTime()).seconds) < Trolley.MOMENTUM_DELAY_SEC)
+        return ( speedIsZero and stoppedLessThanMomentumTime )
 
 
     def getAddress(self):

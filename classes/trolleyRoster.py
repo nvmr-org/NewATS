@@ -437,7 +437,7 @@ class TrolleyRoster(object):
             # already in a segment vs a new one entering the segment.
             eventSegmentId = TrolleyRoster.__layoutMap.findSegmentByAddress(sensorId)
             trolley = self.findByCurrentSegment(eventSegmentId)
-            if trolley and trolley.getSpeed() > 0:
+            if trolley and (trolley.isMoving() or trolley.wasMoving()):
                 # If we get here, this trolley was associated with this event
                 logger.info('Trolley %s found in Segment: %s  for Block: %s',trolley.address , eventSegmentId, sensorId)
                 # Move the trolley into the next block
@@ -449,7 +449,7 @@ class TrolleyRoster(object):
                         trolley.slowStop()
             else:
                 trolley = self.findByNextBlock(sensorId)
-                if trolley and trolley.getSpeed() > 0 :
+                if trolley and (trolley.isMoving() or trolley.wasMoving()):
                     # If we get here, this trolley was associated with this event
                     logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
                     # Move the trolley into the next block
