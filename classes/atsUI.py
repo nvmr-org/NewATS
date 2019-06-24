@@ -303,7 +303,7 @@ class AtsUI(object):
         self.setRosterColumnProperties(rosterTable, 1)
         self.setRosterColumnProperties(rosterTable, 2, width=10)
         self.setRosterColumnProperties(rosterTable, 3, width=75)
-        self.setRosterColumnProperties(rosterTable, 4, width=200)
+        self.setRosterColumnProperties(rosterTable, 4, width=250)
         self.setRosterColumnProperties(rosterTable, 5, width=10)
         rosterScrollPane = JScrollPane()
         rosterScrollPane.setPreferredSize(java.awt.Dimension(ATS_ROSTER_WINDOW_PANE_WIDTH,len(trolleyRoster)*ATS_ROSTER_ROW_HEIGHT+100))
@@ -460,7 +460,7 @@ class AtsUI(object):
             __column = __target.getSelectedColumn()
             if __column == 1:
                 self.updateTrolleyRowMaxSpeed(__row)
-            if __column == 3:
+            if __column == 3 or __column == 4:
                 self.updateTrolleyPosition(__row)
             if __column == 5: 
                 self.deleteTrolleyRowFromRoster(__row)
