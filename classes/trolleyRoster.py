@@ -233,15 +233,13 @@ class TrolleyRoster(object):
         __rosterStatusInfo.append("Roster Size: "+str(self.size())+"\n")
         #print "MultipleState: ",self.multipleDetectedInBlock
         for trolley in self._list:
-            __rosterStatusInfo.append("Id:"+str(trolley.priority)+
-                          " Address:"+str(trolley.address)+
+            __rosterStatusInfo.append("Address:"+str(trolley.address)+
                           " SlotID:"+str(trolley.slotId)+
                           " Speed:"+str(trolley.speed)+
                           " Current Position:"+str(trolley.currentPosition.address)+
                           " Next Position:"+str(trolley.nextPosition.address)+
                           " Next Trolley:"+str(self.getNextTrolley(trolley).address)+"\n")
-            logger.debug("Id:"+str(trolley.priority)+
-                         " Addr:"+str(trolley.address)+
+            logger.debug("Addr:"+str(trolley.address)+
                          " SlotId:"+str(trolley.slotId)+
                          " Spd:"+str(trolley.speed)+
                          " Cur Pos:"+str(trolley.currentPosition.address)+

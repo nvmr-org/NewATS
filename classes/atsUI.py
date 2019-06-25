@@ -190,6 +190,8 @@ class AtsUI(object):
                                      soundEnabled=self.addTrolleySoundEnabled.isSelected(), currentPosition=__block.address))
         #frameRoster.setVisible(False)
         trolleyRoster.dump()
+        layoutMap.printBlocks(trolleyRoster)
+        layoutMap.printSegments(trolleyRoster)
         self.frameAddTrolley.dispose()
         # The revalidate and repaint methods don't seem to work so for now we just dispose of the
         # original roster frame and recreate it so the new trolley is displayed.
@@ -468,14 +470,14 @@ class AtsUI(object):
 
 
         def updateTrolleyRowMaxSpeed(self, row):
-                logger.info("Request to UPDATE SPEED for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
+                logger.info("UPDATE SPEED for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
                 spinner = JSpinner( SpinnerNumberModel( trolleyRoster[row].maxSpeed, 1, 99, 1) )
                 __response = JOptionPane.showOptionDialog(None, spinner, "Update Max Speed", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, None, None, None)
                 #JOptionPane.showOptionDialog(null, spinner, "Enter valid number", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
                 #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address),"Update Trolley")
                 #result = JOptionPane.showInputDialog(None, message,  "Delete Trolley", JOptionPane.OK_CANCEL_OPTION)
                 #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address), "Update Trolley")
-                logger.info("Request to Update Trolley: %s to %s - %s", str(trolleyRoster[row].address),
+                logger.info("UPDATE SPEED for Trolley: %s to %s - %s", str(trolleyRoster[row].address),
                             str(spinner.getValue()), ("Confirmed" if __response == 0 else "Cancelled"))
                 if __response == JOptionPane.OK_OPTION: 
                     trolleyRoster[row].maxSpeed = int(spinner.getValue())
@@ -486,24 +488,31 @@ class AtsUI(object):
 
 
         def updateTrolleyPosition(self, row):
-                logger.info("Request to UPDATE POSITION for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
-                positionChoices = []
+                logger.info("UPDATE POSITION for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
+                __positionChoices = []
                 for block in layoutMap:
-                    positionChoices.append(str(block.address)+'-'+block.description)
-                index = trolleyRoster[row].currentPosition.index
-                spinner = JSpinner( SpinnerListModel( positionChoices ) )
-                __response = JOptionPane.showInputDialog(None, "Choice", "Update Position", JOptionPane.OK_CANCEL_OPTION, None, positionChoices, positionChoices[index])
+                    __positionChoices.append(str(block.address)+'-'+block.description)
+                index = __positionChoices.index(str(trolleyRoster[row].currentPosition.address)+'-'+trolleyRoster[row].currentPosition.description)
+                __response = JOptionPane.showInputDialog(None, "Choice", "Update Position", JOptionPane.OK_CANCEL_OPTION, None, __positionChoices, __positionChoices[index])
                 #JOptionPane.showOptionDialog(null, spinner, "Enter valid number", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
                 #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address),"Update Trolley")
                 #result = JOptionPane.showInputDialog(None, message,  "Delete Trolley", JOptionPane.OK_CANCEL_OPTION)
                 #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address), "Update Trolley")
-                logger.info("Request to UPDATE POSITION Trolley: %s to %s - %s", str(trolleyRoster[row].address),
+                logger.info("UPDATE POSITION Trolley: %s to %s - %s", str(trolleyRoster[row].address),
                             str(__response), ("Confirmed" if __response else "CANCELLED"))
                 if __response: 
                     #trolleyRoster[row].maxSpeed = int(spinner.getValue())
+                    _oldPosition = trolleyRoster[row].currentPosition
+                    logger.info("UPDATE POSITION - Old Position: %s", str(_oldPosition.address))
                     trolleyRoster[row].currentPosition = layoutMap.findBlockByAddress(int(__response.split('-')[0]))
                     trolleyRoster[row].nextPosition = trolleyRoster[row].currentPosition.next
+                    trolleyRoster[row].currentPosition.set_blockOccupied()
+                    if not trolleyRoster.findByCurrentBlock(_oldPosition.address):
+                        logger.info("UPDATE POSITION - Clearing old block: %s", str(_oldPosition.address))
+                        _oldPosition.set_blockClear()
                     trolleyRoster.dump()
+                    layoutMap.printBlocks(trolleyRoster)
+                    layoutMap.printSegments(trolleyRoster)
                     AtsUI.instance.frameRoster.dispose()
                     AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
                     AtsUI.instance.frameRoster.setVisible(True)
@@ -511,13 +520,15 @@ class AtsUI(object):
             
             
         def deleteTrolleyRowFromRoster(self, row):
-                logger.info("Request to DELETE Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
+                logger.info("DELETE Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
                 __response = self.deleteTrolleyFromRosterConfirmation("Delete Trolley #"+str(trolleyRoster[row].address),"Delete Trolley")
-                logger.info("Request to DELETE Trolley: %s - %s", str(trolleyRoster[row].address),
+                logger.info("DELETE Trolley: %s - %s", str(trolleyRoster[row].address),
                             ("Confirmed" if __response == 0 else "Cancelled"))
                 if __response == 0: 
                     trolleyRoster.delete(row)
                     trolleyRoster.dump()
+                    layoutMap.printBlocks(trolleyRoster)
+                    layoutMap.printSegments(trolleyRoster)
                     # The revalidate and repaint methods don't seem to work so for now we just dispose of the
                     # original roster frame and recreate it so the new trolley is displayed.
                     #frameRoster.revalidate() 

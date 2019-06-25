@@ -22,7 +22,6 @@ class Trolley(object):
     """
     #global layoutLength
 
-    deviceId = 0
     THROTTLE_REFRESH_TIME = 30 # Seconds between status updates for throttles on a slot
     THROTTLE_WAIT_TIME = 30
     MOMENTUM_DELAY_SEC = 2 # Seconds to allows for momentum to be considered still moving
@@ -33,8 +32,6 @@ class Trolley(object):
         """Return a Trolley object whose id is *id* and starting position and next 
         position are the 0th and 1st blocks if not provided.  Priority should reflect the 
         order of the trolley's on the Layout."""
-        self.priority = self.deviceId
-        Trolley.deviceId += 1
         self.address = address
         isLong = True if self.address > 100 else False
         self.speed = 0
@@ -113,7 +110,6 @@ class Trolley(object):
         logger.debug("Enter trolley.requestSlot")
         """Request the Trolley's DCC SlotId."""
         logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
-        #self.slotId = deviceID
         Trolley.msg.requestSlot(slotId)
         self.setThrottleLastMsgTime()
         self.setSpeed(0)
