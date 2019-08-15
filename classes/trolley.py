@@ -7,6 +7,7 @@ import time
 import datetime
 import logging
 from classes.messengerFacade import Messenger
+from classes import blockMap
 
 logger = logging.getLogger("ATS."+__name__)
 
@@ -34,8 +35,8 @@ class Trolley(object):
         order of the trolley's on the Layout."""
         self.address = address
         isLong = True if self.address > 100 else False
-        self.speed = 0
-        self.maxSpeed = maxSpeed
+        self.speed = 0              # Current Speed
+        self.maxSpeed = maxSpeed    # Speed when running
         self.soundEnabled = soundEnabled
         # Check that the position requested is defined otherwise throw an exception
         currentBlock = blockMap.findBlockByAddress(currentPosition)
@@ -48,12 +49,13 @@ class Trolley(object):
         self.currentPosition = currentBlock
         self.nextPosition = self.currentPosition.next
         self.next = None
-        self.stopTime = datetime.datetime.now()
-        self.startTime = None
-        self.lastAlertTime = datetime.datetime.now()
-        self.lastAudibleAlertTime = datetime.datetime.now()
+        self.stopTime = datetime.datetime.now()     # Time when unit last stopped
+        self.startTime = None                       # Time when unit last started
+        self.lastAlertTime = datetime.datetime.now()        # Time when console alert was generated
+        self.lastAudibleAlertTime = datetime.datetime.now() # Time when audible alert was generated
         self.slotId = None
         self.slotRequestSent = None
+        self.speedFactor = 1.0  # Default to one inch per second for calculating overdue
         #print "Going to add throttle for address: ", self.address, "isLong:", isLong
         #self.throttle = Trolley.msg.requestThrottle(self.address, isLong, Trolley.THROTTLE_WAIT_TIME)  # address, long address = true
         #print "Return from getThrottle"
@@ -234,10 +236,24 @@ class Trolley(object):
         return
 
 
+    def updateSpeedFactor(self, blockMap):
+        travelTime = (datetime.datetime.now() - self.startTime).total_seconds()
+        if travelTime > 1:
+            realSpeedInBlock = self.currentPosition.length / travelTime
+            historicalSpeed = self.speedFactor
+            weightedSpeed = (historicalSpeed * (len(blockMap) - 1) + realSpeedInBlock ) / len(blockMap)
+            self.speedFactor = weightedSpeed
+            logger.info("UpdatingCompensation for Address:%s TravelTime:%s RealSpeed:%s Historical:%s Weighted:%s blocks:%s", 
+                        self.address,travelTime, str("{:.2f}".format(realSpeedInBlock)),
+                        str("{:.2f}".format(historicalSpeed)),str("{:.2f}".format(weightedSpeed)), len(blockMap))
+        return
+
+
     def advance(self, trolleyRoster, blockMap):
         logger.debug("Enter trolley.advance")
         logger.debug("Advancing Trolley: %s", self.address)
         lastBlock = self.currentPosition
+        self.updateSpeedFactor(blockMap)
         self.currentPosition = self.nextPosition
         self.nextPosition = self.currentPosition.next
         self.currentPosition.set_blockOccupied()

@@ -237,9 +237,10 @@ class TrolleyRoster(object):
             __rosterStatusInfo.append("Address:"+str(trolley.address)+
                           " SlotID:"+str(trolley.slotId)+
                           " Speed:"+str(trolley.speed)+
-                          " Current Position:"+str(trolley.currentPosition.address)+
-                          " Next Position:"+str(trolley.nextPosition.address)+
-                          " Next Trolley:"+str(self.getNextTrolley(trolley).address)+"\n")
+                          " CurrentPosition:"+str(trolley.currentPosition.address)+
+                          " NextPosition:"+str(trolley.nextPosition.address)+
+                          " NextTrolley:"+str(self.getNextTrolley(trolley).address)+
+                          " SpeedFactor:"+str("{:.2f}".format(trolley.speedFactor))+"\n")
             logger.debug("Addr:"+str(trolley.address)+
                          " SlotId:"+str(trolley.slotId)+
                          " Spd:"+str(trolley.speed)+
@@ -248,7 +249,8 @@ class TrolleyRoster(object):
                          " SltReqSnt:"+str(trolley.slotRequestSent)+
                          " StpTime:"+str(trolley.stopTime)+
                          " StrtTime:"+str(trolley.startTime)+
-                         " ThrtleTime:"+str(trolley.throttleLastMsgTime))
+                         " ThrtleTime:"+str(trolley.throttleLastMsgTime)+
+                         " SpFctr:"+str("{:.2f}".format(trolley.speedFactor)))
         #__rosterStatusInfo.append("\n")
         return ''.join(__rosterStatusInfo)
 
@@ -354,8 +356,8 @@ class TrolleyRoster(object):
 
     def checkIfTrolleyIsOverdue(self, trolley):
         if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkIfTrolleyIsOverdue")
-        travelTime = (datetime.datetime.now() - trolley.startTime).seconds
-        if travelTime > (trolley.currentPosition.length): # Assume a worst case of 1 inch per sec
+        travelTime = (datetime.datetime.now() - self.startTime).total_seconds()
+        if (travelTime * trolley.speedFactor) > (trolley.currentPosition.length): # Assume a worst case of 1 inch per sec
             return True
         return False
 

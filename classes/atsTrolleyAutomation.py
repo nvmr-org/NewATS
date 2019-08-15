@@ -46,9 +46,12 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         event = None
         for trolley in trolleyRoster:
             if trolley.getSpeed() > 0:
-                travelTime = (datetime.datetime.now() - trolley.startTime).seconds
-                if travelTime > (trolley.currentPosition.length / 4):
-                    logger.info("Simulating event for SensorID: %s by Trolley: %s", trolley.nextPosition.address, trolley.address)
+                now = datetime.datetime.now()
+                travelTime = (now - trolley.startTime).total_seconds()
+                if travelTime > (trolley.currentPosition.length / 4.0):
+                    realSpeed = trolley.currentPosition.length / travelTime
+                    logger.info("Simulating event for SensorID: %s by Trolley: %s - Time:%s Length:%s RealSpeed:%s", trolley.nextPosition.address, 
+                                trolley.address, travelTime, trolley.currentPosition.length, str("{:.2f}".format(realSpeed)) )
                     event =  trolley.nextPosition.address
                 # Simulate random noise on used block
                 if randint(0, 999) > 990:
