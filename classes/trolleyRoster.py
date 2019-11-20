@@ -356,7 +356,7 @@ class TrolleyRoster(object):
 
     def checkIfTrolleyIsOverdue(self, trolley):
         if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkIfTrolleyIsOverdue")
-        travelTime = (datetime.datetime.now() - self.startTime).total_seconds()
+        travelTime = (datetime.datetime.now() - trolley.startTime).total_seconds()
         if (travelTime * trolley.speedFactor) > (trolley.currentPosition.length): # Assume a worst case of 1 inch per sec
             return True
         return False
