@@ -42,7 +42,8 @@ class Trolley(object):
         currentBlock = blockMap.findBlockByAddress(currentPosition)
         if currentBlock == None:
             logger.error( "Exception: Unable to initialize trolley at unregistered block: %s", str(currentPosition) )
-            sys.exit( "Exception: Unable to initialize trolley at unregistered block: " + str(currentPosition) )
+            raise ValueError
+            #sys.exit( "Exception: Unable to initialize trolley at unregistered block: " + str(currentPosition) )
         # Set the requested block position to occupied
         currentBlock.set_blockOccupied()
         # Go ahead and set the current and next blocks for this trolley
