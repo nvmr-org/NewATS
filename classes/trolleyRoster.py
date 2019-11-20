@@ -61,9 +61,10 @@ class TrolleyRoster(object):
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 15
     SECONDS_BETWEEN_SLOT_REQUESTS = 10
 
-    def __init__(self, trolleyObjects=None, layoutMap=None):
+    def __init__(self, trolleyObjects=None, layoutMap=None, title=None):
         """Initialize the class"""
         super(TrolleyRoster, self).__init__()
+        self.title = title
         self.SlotIdRequestTimer = datetime.datetime.now()
         if trolleyObjects is not None:
             self._list = list(trolleyObjects)

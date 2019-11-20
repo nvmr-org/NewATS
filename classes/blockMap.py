@@ -23,9 +23,10 @@ class BlockMap(object):
     __outputBlockInfo=None
     __outputSegmentInfo=None
 
-    def __init__(self, blockObjects=None):
+    def __init__(self, blockObjects=None, title=None):
         """Initialize the class"""
         super(BlockMap, self).__init__()
+        self.title = title
         if blockObjects is not None:
             self._blockmap = list(blockObjects)
             self.first = None
