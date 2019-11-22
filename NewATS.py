@@ -96,18 +96,18 @@ def loadLayoutMap():
         for block in blocks.iter(tag = 'block'):
             addXmlBlockToLayoutMap(block)
     except Exception, e:
-        logger.error(e)
-        logger.error('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
+        logger.warning(e)
+        logger.warning('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
         buildDefaultLayoutMap()
         layoutXml = layoutMap.getMapAsXml()
         xmlstr = minidom.parseString(ET.tostring(layoutXml)).toprettyxml(indent="   ")
         text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
         prettyXml = text_re.sub('>\g<1></', xmlstr)
         logger.info("%s",prettyXml)
-        xmlDocument = myXmlFile.newDocument(layoutXml)
-        jmriFileUtilSupport.writeFile(layoutMapFile, xmlDocument)
-
-
+        logger.info("Layout Map File Created")
+        text_file = open(layoutMapFile, "w")
+        text_file.write(prettyXml)
+        text_file.close()
 
 
 def addXmlBlockToLayoutMap(block):
@@ -119,8 +119,6 @@ def addXmlBlockToLayoutMap(block):
     length = block.find('length').text
     description = block.find('description').text
     logger.info('address:%s Seg:%s Stop:%s Time:%s Len:%s Description:%s',address,newSegment,stopRequired,waitTime,length,description)
-    for element in block.iter():
-        logger.info("   %s: '%s'" % (element.tag, element.text))
     layoutMap.append(Block(blockAddress=int(address), newSegment=newSegment,
                            stopRequired=stopRequired, waitTime=int(waitTime),
                            length=int(length),  description=description))
