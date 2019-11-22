@@ -48,7 +48,11 @@ class Block(object):
         self.length = length
         self.description = description
         self.next = None
-        logger.info("Block Added - Address:"+str(self.address)+
+        logger.info("Block Added - "+str(self))
+
+
+    def __str__(self):
+        return ("Address:"+str(self.address)+
                     " Segment:"+str(self.segment)+
                     " Occupied:"+str(self.occupied)+
                     " StopReqd:"+str(self.stopRequired)+
