@@ -100,14 +100,18 @@ def loadLayoutMap():
         logger.warning('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
         buildDefaultLayoutMap()
         layoutXml = layoutMap.getMapAsXml()
-        xmlstr = minidom.parseString(ET.tostring(layoutXml)).toprettyxml(indent="   ")
-        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-        prettyXml = text_re.sub('>\g<1></', xmlstr)
-        logger.info("%s",prettyXml)
-        logger.info("Layout Map File Created")
-        text_file = open(layoutMapFile, "w")
-        text_file.write(prettyXml)
+        saveFileAsFormattedXml(layoutMapFile, layoutXml)
+
+
+def saveFileAsFormattedXml(fileName, xmlString):
+    try:
+        text_file = open(fileName, "w")
+        text_file.write(getFormattedXml(xmlString))
         text_file.close()
+        logger.info("File Created: %s", fileName)
+    except Exception, e:
+        logger.error(e)
+        logger.error('Unable to save file: %s', fileName)
 
 
 def addXmlBlockToLayoutMap(block):
@@ -118,11 +122,19 @@ def addXmlBlockToLayoutMap(block):
     waitTime = block.find('waitTime').text
     length = block.find('length').text
     description = block.find('description').text
-    logger.info('address:%s Seg:%s Stop:%s Time:%s Len:%s Description:%s',address,newSegment,stopRequired,waitTime,length,description)
+    logger.info('Addr:%s Seg:%s Stop:%s Time:%s Len:%s Desc:%s',address,newSegment,stopRequired,waitTime,length,description)
     layoutMap.append(Block(blockAddress=int(address), newSegment=newSegment,
                            stopRequired=stopRequired, waitTime=int(waitTime),
                            length=int(length),  description=description))
-    
+
+
+def getFormattedXml(xmlParent):
+    xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
+    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+    prettyXml = text_re.sub('>\g<1></', xmlstr)
+    logger.info("%s", prettyXml)
+    return prettyXml
+
 
 def buildDefaultLayoutMap():
     logger.debug("Entering buildDefaultLayoutMap")

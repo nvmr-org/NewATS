@@ -147,46 +147,6 @@ class BlockMap(object):
             #output.scrollArea.setCaretPosition(output.scrollArea.getDocument().getLength())
 
 
-    def dumpXml(self):
-        logger.debug("Entering blockMap.dumpXml")
-        layoutXml = ET.Element('layoutMap')
-        layoutXml.set('version', '1.0')
-        title = ET.SubElement(layoutXml, 'title')
-        title.text = self.title
-        for individualComment in self.comment:
-            layoutXml.append(ET.Comment(individualComment))
-        dateCreated = ET.SubElement(layoutXml, 'dateCreated')
-        dateCreated.text = str(datetime.datetime.now())
-        dateModified = ET.SubElement(layoutXml, 'dateModified')
-        dateModified.text = str(datetime.datetime.now())
-        blockCount = ET.SubElement(layoutXml,'blockCount')
-        blockCount.text = str(self.size())
-        m = max(self, key=lambda x: x.segment)
-        segmentCount = ET.SubElement(layoutXml,'segmentCount')
-        segmentCount.text = str(m.segment)
-        blocks = ET.SubElement(layoutXml, 'blocks')
-        segment = -1
-        for blk in self._blockmap:
-            block = ET.SubElement(blocks, 'block')
-            address = ET.SubElement(block,'address')
-            address.text = str(blk.address)
-            newSegment = ET.SubElement(block,'newSegment')
-            newSegment.text = str(segment!=blk.segment)
-            stopRequired = ET.SubElement(block,'stopRequired')
-            stopRequired.text = str(blk.stopRequired)
-            waitTime = ET.SubElement(block,'waitTime')
-            waitTime.text = str(blk.waitTime)
-            length = ET.SubElement(block,'length')
-            length.text = str(blk.length)
-            description = ET.SubElement(block,'description')
-            description.text = str(blk.description)
-            segment = blk.segment
-        xmlstr = minidom.parseString(ET.tostring(layoutXml)).toprettyxml(indent="   ")
-        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-        prettyXml = text_re.sub('>\g<1></', xmlstr)
-        logger.info("%s",prettyXml)
-
-
     def getMapAsXml(self):
         layoutXml = ET.Element('layoutMap')
         layoutXml.set('version', '1.0')
@@ -220,13 +180,6 @@ class BlockMap(object):
     def setXmlElementKeyValuePair(self, xmlParent, tagName, tagValue):
         newElement = ET.SubElement(xmlParent, tagName)
         newElement.text = str(tagValue)
-
-
-    def getFormattedXml(self, xmlParent):
-        xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
-        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-        prettyXml = text_re.sub('>\g<1></', xmlstr)
-        return prettyXml
 
 
     def getNextBlock(self, val):
