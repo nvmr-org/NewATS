@@ -104,6 +104,7 @@ def loadLayoutMap():
 
 
 def saveFileAsFormattedXml(fileName, xmlString):
+    logger.debug("Entering saveFileAsFormattedXml")
     try:
         text_file = open(fileName, "w")
         text_file.write(getFormattedXml(xmlString))
@@ -132,7 +133,6 @@ def getFormattedXml(xmlParent):
     xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
     text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
     prettyXml = text_re.sub('>\g<1></', xmlstr)
-    logger.info("%s", prettyXml)
     return prettyXml
 
 
@@ -185,51 +185,48 @@ def buildDefaultLayoutMap():
     layoutMap.append(Block(blockAddress=106, newSegment=True,  stopRequired=True,  length=28,  description='Spencer Station Yard Side'))
 
 
-def loadTrolleyRoster(trolleyRoster):
+def loadTrolleyRoster():
     logger.debug("Entering loadTrolleyRoster")
-    print("User Files Path:"+jmriFileUtilSupport.getUserFilesPath())
+    trolleyRosterFilePath = jmriFileUtilSupport.getUserFilesPath()
+    trolleyRosterFile = trolleyRosterFilePath + TROLLEY_ROSTER_FILE_NAME
+    logger.info("User Files Path: %s" + trolleyRosterFilePath)
+    logger.info("User Files Path:" + trolleyRosterFile)
     try:
-        trolleyRosterFile = jmriFileUtilSupport.getFile(jmriFileUtilSupport.getUserFilesPath()+'ATS_Roster_File.xml')
-        logger.info(trolleyRosterFile)
-        trolleyRosterXml = jmriFileUtilSupport.readFile(trolleyRosterFile)
-        logger.info(trolleyRosterXml)
-        #rootElement = myXmlFile().rootFromName(str(layoutMapFile))
-        layoutMap.dump()
-        parseTrolleyRosterFile(trolleyRoster, trolleyRosterFile)
+        tree = ET.parse(trolleyRosterFile)
+        trolleyRoster.title =  tree.find('title')
+        roster = tree.find('roster')
+        logger.info("Number of Trolleys: %s", len(roster))
+        for trolley in roster.iter(tag = 'trolley'):
+            addXmlTrolleyToRoster(trolley)
     except Exception, e:
-        logger.error(e)
-        logger.error('Unable to open Layout Map: %s - Building Default Layout', trolleyRosterFile)
-        buildDefaultTrolleyRoster(trolleyRoster)  # Build the roster of trolleys
+        logger.warning(e)
+        logger.warning('Unable to open Layout Map: %s - Building Default Layout', trolleyRosterFile)
+        buildDefaultTrolleyRoster()
+        rosterXml = trolleyRoster.getRosterAsXml()
+        saveFileAsFormattedXml(trolleyRosterFile, rosterXml)
 
 
-def parseTrolleyRosterFile(trolleyRoster, trolleyRosterFile):
-    logger.debug("Entering parseTrolleyRosterFile")
-    logger.info("Parsing Trolley Roster file: %s", trolleyRosterFile)
-    tree = ET.parse(trolleyRosterFile)
-    trolleyRoster.title =  tree.find('title')
-    roster = tree.find('roster')
-    logger.info("Number of Trolleys: %s", len(roster))
-    for trolley in roster.iter(tag = 'trolley'):
-        address = int(trolley.find('address').text)
-        maxSpeed = int(trolley.find('maxSpeed').text)
-        soundEnabled = (trolley.find('soundEnabled').text == 'True')
-        currentPosition = int(trolley.find('currentPosition').text)
-        positionDescription  = trolley.find('currentPositionDescription').text
-        logger.info('Address:%s MxSp:%s Sound:%s Pos:%s Description:%s',address,maxSpeed,soundEnabled,currentPosition,positionDescription)
-        trolleyRoster.append(Trolley(layoutMap,address=address, maxSpeed=maxSpeed,
-                               soundEnabled=soundEnabled, currentPosition=currentPosition))
-        #trolleyRoster.append(Trolley(blockMap, address=501, maxSpeed=50, soundEnabled=True, currentPosition=100))
-    
+def addXmlTrolleyToRoster(trolley):
+    logger.debug("Entering addXmlTrolleyToRoster")
+    address = int(trolley.find('address').text)
+    maxSpeed = int(trolley.find('maxSpeed').text)
+    soundEnabled = (trolley.find('soundEnabled').text == 'True')
+    currentPosition = int(trolley.find('currentPosition').text)
+    positionDescription  = trolley.find('currentPositionDescription').text
+    logger.info('Address:%s MxSp:%s Sound:%s Pos:%s Description:%s', address, maxSpeed, soundEnabled, currentPosition, positionDescription)
+    trolleyRoster.append(Trolley(layoutMap,address=address, maxSpeed=maxSpeed,
+                           soundEnabled=soundEnabled, currentPosition=currentPosition))
 
-def buildDefaultTrolleyRoster(trolleyRoster):
+
+def buildDefaultTrolleyRoster():
     logger.debug("Entering buildDefaultTrolleyRoster")
     # When building a roster you need to provide the layout map so that the starting 
     # potisions of the trolleys can be validated. The roster is built prior to sending any
     # requests to JMRI for slots. Slot registration should occur in the handler on a one by one
     # basis to avoid conflicts.
     trolleyRoster.title="NVMR Automated Trolley Roster"
-    trolleyRosterFile = jmriFileUtilSupport.getUserFilesPath() + TROLLEY_ROSTER_ADDRESS_FILE
-    logger.info("Creating default trolley Roster: %s", trolleyRosterFile)
+    trolleyRoster.comment.append(r'Generated by NVMR Automated Trolley Sequencer')
+    trolleyRoster.comment.append(r'Create a trolley roster that consists of consecutive trolleys on a layout')
     trolleyRoster.append(Trolley(layoutMap, address=501, maxSpeed=50, soundEnabled=True, currentPosition=100))
     trolleyRoster.append(Trolley(layoutMap, address=502, maxSpeed=40, soundEnabled=False, currentPosition=100))
     trolleyRoster.append(Trolley(layoutMap, address=503, maxSpeed=80, soundEnabled=True, currentPosition=106)) 
@@ -262,7 +259,7 @@ layoutMap.dump()
 #layoutMap.dumpXml()
 
 logger.info("Building Trolley Roster")
-loadTrolleyRoster(trolleyRoster)  # Build the roster of trolleys
+loadTrolleyRoster()  # Build the roster of trolleys
 trolleyRoster.dump()
 #trolleyRoster.dumpXml()
 #frameRoster = createEditRosterDataFrame(trolleyRoster)
