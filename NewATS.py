@@ -47,6 +47,7 @@ except ImportError:
     print('Failed to import jmir - bypassing')
 
 TROLLEY_ROSTER_ADDRESS_FILE = "trolleyRosterAddresses.cfg"
+TROLLEY_ROSTER_FILE_NAME = 'ATS_Roster_File.xml'
 LAYOUT_MAP_FILE_NAME ='ATS_Layout_Map.xml'
 ATS_MESSAGE_FONT_SIZE = 12
 ATS_MESSAGE_WINDOW_PANE_WIDTH = 1500
