@@ -15,10 +15,8 @@ Based on ATS.py written by
     Member: Northern Virginia Model Railroad
     URL: http://nvmr.org
 '''
-import time
+
 import logging
-import os.path
-import datetime
 import re
 import xml.etree.ElementTree as ET
 from classes.trolley import Trolley
@@ -29,7 +27,6 @@ from classes.announcer import MessageAnnouncer
 from classes.messengerFacade import Messenger
 from classes.atsTrolleyAutomation import TrolleyAutomation
 from classes.atsUI import AtsUI
-from javafx.scene import layout
 from xml.dom import minidom
 
 print "ATS Start"
@@ -49,11 +46,6 @@ except ImportError:
 TROLLEY_ROSTER_ADDRESS_FILE = "trolleyRosterAddresses.cfg"
 TROLLEY_ROSTER_FILE_NAME = 'ATS_Roster_File.xml'
 LAYOUT_MAP_FILE_NAME ='ATS_Layout_Map.xml'
-ATS_MESSAGE_FONT_SIZE = 12
-ATS_MESSAGE_WINDOW_PANE_WIDTH = 1500
-ATS_ROSTER_WINDOW_PANE_WIDTH = 1200
-ATS_MESSAGE_WINDOW_WIDTH = 100
-ATS_ROSTER_ROW_HEIGHT = 30
 __apNameVersion = "Automatic Trolley Sequencer"
 enableSimulator = False
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
