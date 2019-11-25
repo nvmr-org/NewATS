@@ -5,7 +5,6 @@ from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
 from classes.messengerFacade import Messenger
 from classes.blockMap import BlockMap
-from classes.block import Block
 from classes.atsWinListener import AtsWinListener
 
 import javax.swing
@@ -15,10 +14,9 @@ from javax.swing.border import EmptyBorder
 from java.awt import Font, GridBagConstraints, BorderLayout
 from java.awt import Insets as awtInsets
 from javax.swing import JLabel, JScrollPane, JOptionPane, JSpinner,\
-    SpinnerListModel, SpinnerNumberModel
+    SpinnerNumberModel
 from javax.swing.table import DefaultTableModel
 from java.awt.event import MouseAdapter
-from com.sun.beans.editors import NumberEditor
 
 try:
     jmriFlag = True
@@ -60,7 +58,6 @@ class AtsUI(object):
         self.addComponent(self.fr, self.ckBoxPanel1, 0, 1, 1, 2, GridBagConstraints.LINE_START, GridBagConstraints.NONE)
         self.addComponent(self.fr, self.ckBoxPanel2, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.ckBoxPanel3, 1, 2, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
-        #self.addComponent(self.fr, getRosterPanel(trolleyRoster), 0, 4, 1, 1, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.blockInfoPane, 0, 5, 2, 5, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.segmentInfoPane, 0, 15, 2, 5, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.rosterInfoPane, 0, 20, 2, 7, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
@@ -70,7 +67,7 @@ class AtsUI(object):
         self.fr.setVisible(True)
 
 
-    def __new__(cls, automationObject=None, appName=None): # __new__ always a class method
+    def __new__(cls, automationObject=None, appName=None):
         if AtsUI.instance is None:
             logger.info("Creating NEW AtsUI")
             AtsUI.instance = object.__new__(cls, automationObject, appName)
@@ -85,7 +82,6 @@ class AtsUI(object):
 # start to initialize the display GUI *
 # *************************************
     def whenStopAllButtonClicked(self,event):
-        #global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
         self.editRosterButton.setEnabled(True)
         self.tstopButton.setEnabled(False)
         self.tgoButton.setEnabled(True)
@@ -98,20 +94,18 @@ class AtsUI(object):
 
 
     def whenQuitButtonClicked(self,event):
-        #global tstopButton, tgoButton, simulatorButton, quitButton
-        self.tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
-        self.tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
+        self.tstopButton.setEnabled(False)
+        self.tgoButton.setEnabled(False)
         if self.automationObject.isRunning(): self.automationObject.stop()
         trolleyRoster.destroy()
-        self.fr.dispose()         #close the pane (window)
+        self.fr.dispose()
         return
 
 
     def whenTgoButtonClicked(self,event):
-        #global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
         self.editRosterButton.setEnabled(False)
-        self.tstopButton.setEnabled(True)           #button starts as grayed out (disabled)
-        self.tgoButton.setEnabled(False)           #button starts as grayed out (disabled)
+        self.tstopButton.setEnabled(True)
+        self.tgoButton.setEnabled(False)
         self.quitButton.setEnabled(False)
         self.automationObject.start()
         logger.info("Start Running button pressed")
@@ -122,7 +116,6 @@ class AtsUI(object):
 
 
     def whenSimulatorButtonClicked(self,event):
-        #global tstopButton, tgoButton, simulatorButton, quitButton
         simulatorState = self.automationObject.isSimulatorEnabled()
         logger.info("Simulator State:"+str(simulatorState)+"-->"+str(not simulatorState))
         simulatorState = not simulatorState
@@ -148,32 +141,24 @@ class AtsUI(object):
 
 
     def whenEditRosterButtonClicked(self,event):
-        #global frameRoster
         self.editRosterButton.setEnabled(False)
         self.frameRoster = self.createEditRosterDataFrame(trolleyRoster)
-        #frameRoster.setVisible(True)
         return
 
 
     def whenEditRosterCloseButtonClicked(self,event):
-        #global frameRoster
         self.editRosterButton.setEnabled(True)
-        #frameRoster.setVisible(False)
         self.frameRoster.dispose()
         return
 
 
     def whenCancelAddTrolleyButtonClicked(self,event):
-        #global frameAddTrolley
-        #editRosterButton.setEnabled(True)
-        #frameRoster.setVisible(False)
         self.frameAddTrolley.dispose()
         self.frameRoster.setVisible(True)
         return
 
 
     def whenSaveAddTrolleyButtonClicked(self,event):
-        #global frameAddTrolley, frameRoster
         __address = int(self.addTrolleyAddress.getText())
         __maxSpeed = int(self.addTrolleyMaxSpeed.getText())
         __block = layoutMap.findBlockByAddress(int(self.addTrolleyStartingPosition.getSelectedItem().split('-')[0]))
@@ -188,7 +173,6 @@ class AtsUI(object):
               str(__block.description))
         trolleyRoster.append(Trolley(layoutMap, address=__address, maxSpeed=__maxSpeed, 
                                      soundEnabled=self.addTrolleySoundEnabled.isSelected(), currentPosition=__block.address))
-        #frameRoster.setVisible(False)
         trolleyRoster.dump()
         layoutMap.printBlocks(trolleyRoster)
         layoutMap.printSegments(trolleyRoster)
@@ -201,23 +185,22 @@ class AtsUI(object):
         self.frameRoster = self.createEditRosterDataFrame(trolleyRoster)
         self.frameRoster.setVisible(True)
         return
-    
-    
+
+
     def whenAddToRosterButtonClicked(self,event):
-        #global frameAddTrolley
         self.frameRoster.setVisible(False)
         self.frameAddTrolley = self.createAddToTrolleyRosterFrame()
         return
-    
-    
+
+
     def sendAudibleMessage(self,checkboxToMonitor, messageToAnnounce):
         if checkboxToMonitor.isSelected() :
             javaexec = getattr(java.lang.Runtime.getRuntime(), "exec")
             pid = javaexec('nircmd speak text "' + messageToAnnounce +'" -2 100')
             pid.waitFor()
         return
-    
-    
+
+
     def addComponent(self, container, component, gridx, gridy, gridwidth, gridheight, anchor, fill):
         insets=awtInsets(5, 5, 5, 5)
         ipadx = 0
@@ -225,32 +208,26 @@ class AtsUI(object):
         weightx = weighty = 0.0
         gbc = GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill, insets, ipadx, ipady)
         container.add(component, gbc)
-    
-    
+
+
     def setRosterColumnProperties(self, table, column, width=5, resizable=False):
         table.getColumnModel().getColumn(column).setPreferredWidth(width)
         table.getColumnModel().getColumn(column).setResizable(resizable)
         return
-    
+
+
     def getAddTrolleyButtonPanel(self):
-        #global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
-        # =================================
-        # create buttons panel actions
-        # =================================
-        saveButton = javax.swing.JButton("Save")
-        saveButton.actionPerformed = self.whenSaveAddTrolleyButtonClicked 
-        cancelButton = javax.swing.JButton("Cancel")
-        cancelButton.actionPerformed = self.whenCancelAddTrolleyButtonClicked
+        saveButton = self.createButtonWithAction("Save", self.whenSaveAddTrolleyButtonClicked )
+        cancelButton = self.createButtonWithAction("Cancel", self.whenCancelAddTrolleyButtonClicked )
         addTrolleyPanel = javax.swing.JPanel()
         addTrolleyPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
         addTrolleyPanel.add(saveButton)
         addTrolleyPanel.add(javax.swing.Box.createHorizontalStrut(10)) #empty vertical space between buttons
         addTrolleyPanel.add(cancelButton)
         return addTrolleyPanel
-    
-    
+
+
     def getAddTrolleyDataPanel(self):
-        #global addTrolleyAddress, addTrolleyMaxSpeed, addTrolleySoundEnabled, addTrolleyStartingPosition
         __panel = javax.swing.JPanel()
         __panel.add(JLabel("Address:"))
         self.addTrolleyAddress = javax.swing.JTextField('',5)
@@ -268,8 +245,14 @@ class AtsUI(object):
         self.addTrolleyStartingPosition = javax.swing.JComboBox(comboChoices)
         __panel.add(self.addTrolleyStartingPosition)
         return __panel
-    
-    
+
+
+    def createButtonWithAction(self,title,action):
+        button = javax.swing.JButton(title)
+        button.actionPerformed = action
+        return button
+
+
     def createAddToTrolleyRosterFrame(self):
         frameAddTrolley = jmri.util.JmriJFrame("Add Trolley To Roster")
         frameAddTrolley.setSize(ATS_MESSAGE_WINDOW_PANE_WIDTH,ATS_ROSTER_ROW_HEIGHT+50)
@@ -277,7 +260,6 @@ class AtsUI(object):
         self.addComponent(frameAddTrolley, self.getAddTrolleyButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE)
         self.addComponent(frameAddTrolley, self.getAddTrolleyDataPanel(), 0, 2, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE)
         frameAddTrolley.setDefaultCloseOperation(self.frameRoster.DO_NOTHING_ON_CLOSE); # Disable the Close button
-        #frameAddTrolley.setDefaultCloseOperation(frameRoster.DISPOSE_ON_CLOSE); # Disable the Close button
         frameAddTrolley.pack()
         frameAddTrolley.setVisible(True)
         return frameAddTrolley
@@ -297,7 +279,6 @@ class AtsUI(object):
         dataModel = DefaultTableModel(rosterData,colNames)
         rosterTable = javax.swing.JTable(dataModel)
         rosterTable.getTableHeader().setReorderingAllowed(False)
-    #    rosterTable.setDefaultRenderer(rosterTable.getColumnClass(5), rosterTable.DefaultTableCellRenderer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER))
         rosterTable.setRowHeight(ATS_ROSTER_ROW_HEIGHT)
         rosterTable.setEnabled(True)
         rosterTable.addMouseListener(self.DeleteTrolleyButtonListener())
@@ -312,11 +293,9 @@ class AtsUI(object):
         rosterScrollPane.getViewport().setView(rosterTable)
         rosterPanel = javax.swing.JPanel()
         rosterPanel.add(rosterScrollPane)
-        rosterAddButton = javax.swing.JButton("Add To Roster")
-        rosterAddButton.actionPerformed = self.whenAddToRosterButtonClicked
+        rosterAddButton = self.createButtonWithAction("Add To Roster", self.whenAddToRosterButtonClicked)
         rosterAddButton.setEnabled(True)
-        rosterCloseButton = javax.swing.JButton("Close")
-        rosterCloseButton.actionPerformed = self.whenEditRosterCloseButtonClicked
+        rosterCloseButton = self.createButtonWithAction("Close", self.whenEditRosterCloseButtonClicked)
         frameRoster.add(rosterAddButton, BorderLayout.PAGE_START)
         frameRoster.add(rosterPanel, BorderLayout.CENTER)
         frameRoster.add(rosterCloseButton, BorderLayout.PAGE_END)
@@ -324,39 +303,33 @@ class AtsUI(object):
         frameRoster.pack()
         frameRoster.setVisible(True)
         return frameRoster
-    
-    
+
+
     def getButtonPanel(self):
-        #global editRosterButton, tstopButton, tgoButton, simulatorButton, quitButton
         # =================================
         # create buttons panel actions
         # =================================
-        self.quitButton = javax.swing.JButton("Quit")
-        self.quitButton.actionPerformed = self.whenQuitButtonClicked
-        self.tgoButton = javax.swing.JButton("Start Running")
-        self.tgoButton.actionPerformed = self.whenTgoButtonClicked
-        self.tstopButton = javax.swing.JButton("Stop All Trolleys")
+        self.quitButton = self.createButtonWithAction("Quit", self.whenQuitButtonClicked)
+        self.tgoButton = self.createButtonWithAction("Start Running", self.whenTgoButtonClicked)
+        self.tstopButton = self.createButtonWithAction("Stop All Trolleys", self.whenStopAllButtonClicked)
         self.tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
-        self.tstopButton.actionPerformed = self.whenStopAllButtonClicked
         simulatorButtonTxt = "Disable Simulator" if self.automationObject.simulatorEnabled else "Enable Simulator"
-        self.simulatorButton = javax.swing.JButton(simulatorButtonTxt)
-        self.simulatorButton.actionPerformed = self.whenSimulatorButtonClicked
-        self.editRosterButton = javax.swing.JButton("Edit Roster")
+        self.simulatorButton = self.createButtonWithAction(simulatorButtonTxt, self.whenSimulatorButtonClicked)
+        self.editRosterButton = self.createButtonWithAction("Edit Roster", self.whenEditRosterButtonClicked)
         self.editRosterButton.setEnabled(True)
-        self.editRosterButton.actionPerformed = self.whenEditRosterButtonClicked
         # =================================
         # create button panel
         # =================================
         butPanel = javax.swing.JPanel()
         butPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
         butPanel.add(self.editRosterButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
+        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
         butPanel.add(self.tgoButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
+        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
         butPanel.add(self.tstopButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
+        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
         butPanel.add(self.simulatorButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20)) #empty vertical space between buttons
+        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
         butPanel.add(self.quitButton)
         return butPanel
 
@@ -391,7 +364,6 @@ class AtsUI(object):
         return __panel
 
 
-
     def createAtsApplicatinWindowComponents(self):
         self.logLabel1 = javax.swing.JLabel("Logging:")
         self.eMsgDebugCheckBox = javax.swing.JCheckBox("Message Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
@@ -402,13 +374,11 @@ class AtsUI(object):
         self.iMsgDebugCheckBox.setToolTipText("Display debugging for incoming loconet messages")
         self.oMsgDebugCheckBox = javax.swing.JCheckBox("Outgoing Messages", actionPerformed = self.whenCheckboxClicked)
         self.oMsgDebugCheckBox.setToolTipText("Display debugging for outgoing loconet messages")
-        
         self.eRstrDebugCheckBox = javax.swing.JCheckBox("TrolleyRoster Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
         self.eRstrDebugCheckBox.setToolTipText("Display all Trolley Roster function entry/exit messages")
         self.dRstrDebugCheckBox = javax.swing.JCheckBox("TrolleyRoster Details", actionPerformed = self.whenCheckboxClicked)
         self.dRstrDebugCheckBox.setToolTipText("Display detail debugging for TrolleyRoster")
         self.dRstrDebugCheckBox.setEnabled(False)
-        
         #logLabel2 = javax.swing.JLabel("        ")
         self.snChgCheckBox = javax.swing.JCheckBox("Show Sn Change")
         self.snChgCheckBox.setToolTipText("Display when a sensor state changes")
@@ -426,14 +396,14 @@ class AtsUI(object):
         self.ckBoxPanel1 = javax.swing.JPanel()
         self.ckBoxPanel1.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
         self.ckBoxPanel1.add(self.logLabel1)
-        
+
         self.ckBoxPanel2 = javax.swing.JPanel()
         self.ckBoxPanel2.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
         self.ckBoxPanel2.add(self.eMsgDebugCheckBox)
         self.ckBoxPanel2.add(self.dMsgDebugCheckBox)
         self.ckBoxPanel2.add(self.iMsgDebugCheckBox)
         self.ckBoxPanel2.add(self.oMsgDebugCheckBox)
-        
+
         self.ckBoxPanel3 = javax.swing.JPanel()
         self.ckBoxPanel3.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
         self.ckBoxPanel3.add(self.eRstrDebugCheckBox)
@@ -517,8 +487,7 @@ class AtsUI(object):
                     AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
                     AtsUI.instance.frameRoster.setVisible(True)
 
-            
-            
+
         def deleteTrolleyRowFromRoster(self, row):
                 logger.info("DELETE Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
                 __response = self.deleteTrolleyFromRosterConfirmation("Delete Trolley #"+str(trolleyRoster[row].address),"Delete Trolley")
