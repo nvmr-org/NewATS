@@ -81,7 +81,7 @@ class TrolleyRoster(object):
             self.first = None
             self.last = None
             TrolleyRoster.__layoutMap = layoutMap
-        print("LayoutMap = "+str(TrolleyRoster.__layoutMap))
+
 
     def __new__(cls, trolleyObjects=None, layoutMap=None, messageManager=None): # __new__ always a class method
         if TrolleyRoster.__instance is None:
