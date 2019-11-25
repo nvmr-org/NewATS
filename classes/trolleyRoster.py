@@ -9,7 +9,7 @@ import datetime
 import re
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
-#from classes.messengerFacade import Messenger
+from classes.trolley import Trolley
 
 logger = logging.getLogger("ATS."+__name__)
 
@@ -64,12 +64,13 @@ class TrolleyRoster(object):
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 15
     SECONDS_BETWEEN_SLOT_REQUESTS = 10
 
-    def __init__(self, trolleyObjects=None, layoutMap=None, title=None):
+    def __init__(self, trolleyObjects=None, layoutMap=None, title=None, messageManager=None):
         """Initialize the class"""
         super(TrolleyRoster, self).__init__()
         self.title = title
         self.comment = []
         self.SlotIdRequestTimer = datetime.datetime.now()
+        Trolley.msg = messageManager
         if trolleyObjects is not None:
             self._list = list(trolleyObjects)
             self.first = None
@@ -82,7 +83,7 @@ class TrolleyRoster(object):
             TrolleyRoster.__layoutMap = layoutMap
         print("LayoutMap = "+str(TrolleyRoster.__layoutMap))
 
-    def __new__(cls, trolleyObjects=None, layoutMap=None): # __new__ always a class method
+    def __new__(cls, trolleyObjects=None, layoutMap=None, messageManager=None): # __new__ always a class method
         if TrolleyRoster.__instance is None:
             TrolleyRoster.__instance = object.__new__(cls,trolleyObjects)
         return TrolleyRoster.__instance
@@ -254,6 +255,18 @@ class TrolleyRoster(object):
         self.setXmlElementKeyValuePair(trolleyXml, 'currentPosition', trolley.currentPosition.address)
         self.setXmlElementKeyValuePair(trolleyXml, 'currentPositionDescription', trolley.currentPosition.description)
         return trolleyXml
+
+
+    def addXmlTrolleyToRoster(self, trolley):
+        logger.debug("Entering addXmlTrolleyToRoster")
+        address = int(trolley.find('address').text)
+        maxSpeed = int(trolley.find('maxSpeed').text)
+        soundEnabled = (trolley.find('soundEnabled').text == 'True')
+        currentPosition = int(trolley.find('currentPosition').text)
+        positionDescription  = trolley.find('currentPositionDescription').text
+        logger.info('Address:%s MxSp:%s Sound:%s Pos:%s Description:%s', address, maxSpeed, soundEnabled, currentPosition, positionDescription)
+        self.append(Trolley(self.__layoutMap,address=address, maxSpeed=maxSpeed,
+                               soundEnabled=soundEnabled, currentPosition=currentPosition))
 
 
     def setXmlElementKeyValuePair(self, xmlParent, tagName, tagValue):

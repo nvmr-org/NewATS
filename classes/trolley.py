@@ -2,12 +2,9 @@
 Created on Nov 18, 2016
 @author: ttb
 '''
-import sys
 import time
 import datetime
 import logging
-from classes.messengerFacade import Messenger
-from classes import blockMap
 
 logger = logging.getLogger("ATS."+__name__)
 
@@ -27,7 +24,7 @@ class Trolley(object):
     THROTTLE_WAIT_TIME = 30
     MOMENTUM_DELAY_SEC = 2 # Seconds to allows for momentum to be considered still moving
 
-    msg = Messenger()
+    msg = None
 
     def __init__(self, blockMap, address=9999, maxSpeed=0, soundEnabled=True, currentPosition=0):
         """Return a Trolley object whose id is *id* and starting position and next 
@@ -79,6 +76,11 @@ class Trolley(object):
     @staticmethod
     def getMessageManager():
         return Trolley.msg
+
+
+    @staticmethod
+    def setMessageManager(messageManager):
+        Trolley.msg = messageManager
 
 
     @staticmethod

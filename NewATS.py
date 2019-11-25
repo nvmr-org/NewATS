@@ -72,7 +72,7 @@ trolleyAutomationObject = TrolleyAutomation()
 logger.info("Initialize Empty Layout Map")
 layoutMap = BlockMap() # Initialize and empty block map to define the layout
 logger.info("Initialize Empty Trolley Roster")
-trolleyRoster = TrolleyRoster(layoutMap=layoutMap)  # Initialize an empty roster of trolley devices
+trolleyRoster = TrolleyRoster(layoutMap=layoutMap, messageManager=msg)  # Initialize an empty roster of trolley devices
 
 
 def loadLayoutMap():
@@ -87,7 +87,7 @@ def loadLayoutMap():
         blocks = tree.find('blocks')
         logger.info("Number of BLocks: %s", len(blocks))
         for block in blocks.iter(tag = 'block'):
-            addXmlBlockToLayoutMap(block)
+            layoutMap.addXmlBlockToLayoutMap(block)
     except Exception, e:
         logger.warning(e)
         logger.warning('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
@@ -106,20 +106,6 @@ def saveFileAsFormattedXml(fileName, xmlString):
     except Exception, e:
         logger.error(e)
         logger.error('Unable to save file: %s', fileName)
-
-
-def addXmlBlockToLayoutMap(block):
-    logger.debug("Entering addXmlBlockToLayoutMap")
-    address = block.find('address').text
-    newSegment = (block.find('newSegment').text == 'True')
-    stopRequired = (block.find('stopRequired').text == 'True')
-    waitTime = block.find('waitTime').text
-    length = block.find('length').text
-    description = block.find('description').text
-    logger.info('Addr:%s Seg:%s Stop:%s Time:%s Len:%s Desc:%s',address,newSegment,stopRequired,waitTime,length,description)
-    layoutMap.append(Block(blockAddress=int(address), newSegment=newSegment,
-                           stopRequired=stopRequired, waitTime=int(waitTime),
-                           length=int(length),  description=description))
 
 
 def getFormattedXml(xmlParent):
@@ -190,25 +176,13 @@ def loadTrolleyRoster():
         roster = tree.find('roster')
         logger.info("Number of Trolleys: %s", len(roster))
         for trolley in roster.iter(tag = 'trolley'):
-            addXmlTrolleyToRoster(trolley)
+            trolleyRoster.addXmlTrolleyToRoster(trolley)
     except Exception, e:
         logger.warning(e)
         logger.warning('Unable to open Layout Map: %s - Building Default Layout', trolleyRosterFile)
         buildDefaultTrolleyRoster()
         rosterXml = trolleyRoster.getRosterAsXml()
         saveFileAsFormattedXml(trolleyRosterFile, rosterXml)
-
-
-def addXmlTrolleyToRoster(trolley):
-    logger.debug("Entering addXmlTrolleyToRoster")
-    address = int(trolley.find('address').text)
-    maxSpeed = int(trolley.find('maxSpeed').text)
-    soundEnabled = (trolley.find('soundEnabled').text == 'True')
-    currentPosition = int(trolley.find('currentPosition').text)
-    positionDescription  = trolley.find('currentPositionDescription').text
-    logger.info('Address:%s MxSp:%s Sound:%s Pos:%s Description:%s', address, maxSpeed, soundEnabled, currentPosition, positionDescription)
-    trolleyRoster.append(Trolley(layoutMap,address=address, maxSpeed=maxSpeed,
-                           soundEnabled=soundEnabled, currentPosition=currentPosition))
 
 
 def buildDefaultTrolleyRoster():

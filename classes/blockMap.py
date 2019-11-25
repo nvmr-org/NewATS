@@ -7,8 +7,8 @@ import logging
 import datetime
 import re
 import xml.etree.ElementTree as ET
-
 from xml.dom import minidom
+from classes.block import Block
 
 logger = logging.getLogger("ATS."+__name__)
 
@@ -180,6 +180,20 @@ class BlockMap(object):
     def setXmlElementKeyValuePair(self, xmlParent, tagName, tagValue):
         newElement = ET.SubElement(xmlParent, tagName)
         newElement.text = str(tagValue)
+
+
+    def addXmlBlockToLayoutMap(self, block):
+        logger.debug("Entering addXmlBlockToLayoutMap")
+        address = block.find('address').text
+        newSegment = (block.find('newSegment').text == 'True')
+        stopRequired = (block.find('stopRequired').text == 'True')
+        waitTime = block.find('waitTime').text
+        length = block.find('length').text
+        description = block.find('description').text
+        logger.info('Addr:%s Seg:%s Stop:%s Time:%s Len:%s Desc:%s',address,newSegment,stopRequired,waitTime,length,description)
+        self.append(Block(blockAddress=int(address), newSegment=newSegment,
+                               stopRequired=stopRequired, waitTime=int(waitTime),
+                               length=int(length),  description=description))
 
 
     def getNextBlock(self, val):
