@@ -283,16 +283,16 @@ class TrolleyRoster(object):
         self.checkForMultipleTrolleysInOneBlock()
         if self.checkForMultipleTrolleysInOneBlock():
             __rosterStatusInfo.append('Warning: Multiple trolleys registered to the same block.\n')
-        __rosterStatusInfo.append("Roster Size: "+str(self.size())+"\n")
+        __rosterStatusInfo.append("Roster Size: "+str(self.size()))
         #print "MultipleState: ",self.multipleDetectedInBlock
         for trolley in self._list:
-            __rosterStatusInfo.append("Address:"+str(trolley.address)+
+            __rosterStatusInfo.append("\nAddress:"+str(trolley.address)+
                           " SlotID:"+str(trolley.slotId)+
                           " Speed:"+str(trolley.speed)+
                           " CurrentPosition:"+str(trolley.currentPosition.address)+
                           " NextPosition:"+str(trolley.nextPosition.address)+
                           " NextTrolley:"+str(self.getNextTrolley(trolley).address)+
-                          " SpeedFactor:"+str("{:.2f}".format(trolley.speedFactor))+"\n")
+                          " SpeedFactor:"+str("{:.2f}".format(trolley.speedFactor)))
             logger.debug("Addr:"+str(trolley.address)+
                          " SlotId:"+str(trolley.slotId)+
                          " Spd:"+str(trolley.speed)+
