@@ -8,13 +8,11 @@ from classes.blockMap import BlockMap
 from classes.atsWinListener import AtsWinListener
 
 import javax.swing
-import java.awt.Color
+import java.awt.Toolkit
 from javax.swing.text import DefaultCaret, StyleConstants
-from javax.swing.border import EmptyBorder
-from java.awt import Font, GridBagConstraints, BorderLayout
-from java.awt import Insets as awtInsets
-from javax.swing import JLabel, JScrollPane, JOptionPane, JSpinner,\
-    SpinnerNumberModel
+from javax.swing import BorderFactory
+from java.awt import BorderLayout, Color, Font, GridBagConstraints, Insets
+from javax.swing import JLabel, JScrollPane, JOptionPane, JSpinner, SpinnerNumberModel
 from javax.swing.table import DefaultTableModel
 from java.awt.event import MouseAdapter
 
@@ -26,12 +24,6 @@ except ImportError:
     jmriFlag = False
     print('Failed to import jmir - bypassing')
 
-ATS_MESSAGE_FONT_SIZE = 12
-ATS_MESSAGE_WINDOW_PANE_WIDTH = 1500
-ATS_ROSTER_WINDOW_PANE_WIDTH = 1200
-ATS_MESSAGE_WINDOW_WIDTH = 100
-ATS_ROSTER_ROW_HEIGHT = 30
-
 
 logger = logging.getLogger("ATS."+__name__)
 trolleyRoster = TrolleyRoster()
@@ -41,7 +33,20 @@ msg = Messenger()
 class AtsUI(object):
     
     instance = None
-    
+    atsScreenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize()
+    atsWindowWidth = int(float(atsScreenSize.width) * 0.8)
+    atsWindowHeight = int(float(atsScreenSize.height) * 0.8)
+    atsWindowPosX = (atsScreenSize.width - atsWindowWidth) >> 1
+    atsWindowPosY = (atsScreenSize.height - atsWindowHeight) >> 1
+    atsFontSize = int(float(atsScreenSize.height) / 90)
+    atsRowHeight = int(float(atsFontSize) * 1.25)
+    atsMessageWindowWidth = int(float(atsWindowWidth) * 0.9)
+    atsRosterWindowWidth = atsWindowWidth
+    atsBlockStatusMessageWindowHeight= int(5*atsRowHeight)
+    atsSegmentStatusMessageWindowHeight= int(5*atsRowHeight)
+    atsRosterStatusMessageWindowHeight= int(10*atsRowHeight)
+    atsStatusMessageWindowHeight= int(10*atsRowHeight)
+
     def __init__(self, automationObject=None, appName=None):
         # ------------------------------------------------------------------------------------------
         # create a frame to hold the buttons and fields
@@ -49,21 +54,25 @@ class AtsUI(object):
         # when the window is closed by clicking on the window close button
         # ------------------------------------------------------------------------------------------
         super(AtsUI, self).__init__()
+        logger.info("Screen Size - Height:%s Width:%s", AtsUI.atsScreenSize.height, AtsUI.atsScreenSize.width)
         self.automationObject=automationObject
         self.w = AtsWinListener()
-        self.fr = jmri.util.JmriJFrame(appName) #use this in order to get it to appear on webserver
+        atsMainFrameBounds = java.awt.Rectangle(AtsUI.atsWindowPosX, AtsUI.atsWindowPosY, AtsUI.atsWindowWidth, AtsUI.atsWindowHeight)
+        self.fr = jmri.util.JmriJFrame(appName, bounds = atsMainFrameBounds) #use this in order to get it to appear on webserver
+        self.fr.setSaveSize(False)
+        self.fr.setSavePosition(False)
         self.fr.contentPane.setLayout(java.awt.GridBagLayout())
-        self.createAtsApplicatinWindowComponents()
+        self.createApplicationWindowComponents()
         self.addComponent(self.fr, self.getButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE);
-        self.addComponent(self.fr, self.ckBoxPanel1, 0, 1, 1, 2, GridBagConstraints.LINE_START, GridBagConstraints.NONE)
+        self.addComponent(self.fr, self.ckBoxPanel1, 0, 1, 1, 2, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.ckBoxPanel2, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.ckBoxPanel3, 1, 2, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
-        self.addComponent(self.fr, self.blockInfoPane, 0, 5, 2, 5, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
-        self.addComponent(self.fr, self.segmentInfoPane, 0, 15, 2, 5, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
-        self.addComponent(self.fr, self.rosterInfoPane, 0, 20, 2, 7, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
-        self.addComponent(self.fr, self.messageInfoPanel, 0, 30, 2, 7, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
+        self.addComponent(self.fr, self.blockInfoPane, 0, 3, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
+        self.addComponent(self.fr, self.segmentInfoPane, 0, 4, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
+        self.addComponent(self.fr, self.rosterInfoPane, 0, 5, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
+        self.addComponent(self.fr, self.messageInfoPanel, 0, 6, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH)
         self.fr.addWindowListener(self.w)
-        self.fr.pack()
+        #self.fr.pack()
         self.fr.setVisible(True)
 
 
@@ -202,10 +211,11 @@ class AtsUI(object):
 
 
     def addComponent(self, container, component, gridx, gridy, gridwidth, gridheight, anchor, fill):
-        insets=awtInsets(5, 5, 5, 5)
-        ipadx = 0
+        insets=Insets(5, 20, 5, 20)
+        ipadx = 5
         ipady = 5
-        weightx = weighty = 0.0
+        weightx = 1.0
+        weighty = 0.0
         gbc = GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill, insets, ipadx, ipady)
         container.add(component, gbc)
 
@@ -222,7 +232,7 @@ class AtsUI(object):
         addTrolleyPanel = javax.swing.JPanel()
         addTrolleyPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
         addTrolleyPanel.add(saveButton)
-        addTrolleyPanel.add(javax.swing.Box.createHorizontalStrut(10)) #empty vertical space between buttons
+        addTrolleyPanel.add(javax.swing.Box.createHorizontalStrut(10))
         addTrolleyPanel.add(cancelButton)
         return addTrolleyPanel
 
@@ -255,11 +265,13 @@ class AtsUI(object):
 
     def createAddToTrolleyRosterFrame(self):
         frameAddTrolley = jmri.util.JmriJFrame("Add Trolley To Roster")
-        frameAddTrolley.setSize(ATS_MESSAGE_WINDOW_PANE_WIDTH,ATS_ROSTER_ROW_HEIGHT+50)
+        frameAddTrolley.setSize(AtsUI.atsRosterWindowWidth,10*AtsUI.atsRowHeight)
         frameAddTrolley.setLayout(java.awt.GridBagLayout())
         self.addComponent(frameAddTrolley, self.getAddTrolleyButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE)
         self.addComponent(frameAddTrolley, self.getAddTrolleyDataPanel(), 0, 2, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE)
         frameAddTrolley.setDefaultCloseOperation(self.frameRoster.DO_NOTHING_ON_CLOSE); # Disable the Close button
+        frameAddTrolley.setSaveSize(False)
+        frameAddTrolley.setSavePosition(False)
         frameAddTrolley.pack()
         frameAddTrolley.setVisible(True)
         return frameAddTrolley
@@ -267,8 +279,10 @@ class AtsUI(object):
 
     def createEditRosterDataFrame(self,trolleyRoster):
         frameRoster = jmri.util.JmriJFrame("Trolley Roster")
-        frameRoster.setSize(ATS_ROSTER_WINDOW_PANE_WIDTH,len(trolleyRoster)*ATS_ROSTER_ROW_HEIGHT+100)
+        frameRoster.setSize(AtsUI.atsRosterWindowWidth,(len(trolleyRoster)+3)*AtsUI.atsRowHeight)
         frameRoster.setLayout(java.awt.BorderLayout())
+        frameRoster.setSaveSize(False)
+        frameRoster.setSavePosition(False)
         rosterData = []
         for trolley in trolleyRoster:
             deleteRosterRowButton = javax.swing.JButton("Delete")
@@ -279,17 +293,11 @@ class AtsUI(object):
         dataModel = DefaultTableModel(rosterData,colNames)
         rosterTable = javax.swing.JTable(dataModel)
         rosterTable.getTableHeader().setReorderingAllowed(False)
-        rosterTable.setRowHeight(ATS_ROSTER_ROW_HEIGHT)
+        rosterTable.setRowHeight(AtsUI.atsRowHeight)
         rosterTable.setEnabled(True)
         rosterTable.addMouseListener(self.DeleteTrolleyButtonListener())
-        self.setRosterColumnProperties(rosterTable, 0)
-        self.setRosterColumnProperties(rosterTable, 1)
-        self.setRosterColumnProperties(rosterTable, 2, width=10)
-        self.setRosterColumnProperties(rosterTable, 3, width=75)
-        self.setRosterColumnProperties(rosterTable, 4, width=250)
-        self.setRosterColumnProperties(rosterTable, 5, width=10)
         rosterScrollPane = JScrollPane()
-        rosterScrollPane.setPreferredSize(java.awt.Dimension(ATS_ROSTER_WINDOW_PANE_WIDTH,len(trolleyRoster)*ATS_ROSTER_ROW_HEIGHT+100))
+        rosterScrollPane.setPreferredSize(java.awt.Dimension(AtsUI.atsRosterWindowWidth,(len(trolleyRoster)+3)*AtsUI.atsRowHeight))
         rosterScrollPane.getViewport().setView(rosterTable)
         rosterPanel = javax.swing.JPanel()
         rosterPanel.add(rosterScrollPane)
@@ -334,37 +342,37 @@ class AtsUI(object):
         return butPanel
 
 
-    def createInfoPane(self,defaultText, title = None):
+    def createInfoPane(self,defaultText, title=None, paneHeight=15):
         __pane = javax.swing.JTextPane()
         __doc = __pane.getStyledDocument()
         __style = __pane.addStyle("Color Style", None)
-        __pane.setFont(Font("monospaced",Font.BOLD,ATS_MESSAGE_FONT_SIZE))
-        __pane.setBorder(EmptyBorder(10,10,10,10))
-        __pane.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.BLACK))
+        __pane.setFont(Font("monospaced",Font.BOLD,AtsUI.atsFontSize))
+        __pane.setBorder(BorderFactory.createLineBorder(Color.black));
         if title is not None:
             __pane.insertComponent(JLabel(title))
-        StyleConstants.setForeground(__style,java.awt.Color.BLUE)
+        StyleConstants.setForeground(__style, Color.BLUE)
         __doc.insertString(__doc.getLength(),defaultText,__style)
         return __pane
 
 
-    def createScrollPanel(self, DefaultText, title = None):
+    def createScrollPanel(self, DefaultText, title=None, paneHeight=10):
         __panel = javax.swing.JPanel()
         __panel.add(JLabel(title))
-        scrollArea = javax.swing.JTextArea(10, ATS_MESSAGE_WINDOW_WIDTH)
+        scrollArea = javax.swing.JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
         scrollArea.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE); # automatically scroll to last message
-        scrollArea.font=Font("monospaced", Font.PLAIN, ATS_MESSAGE_FONT_SIZE)
+        scrollArea.font=Font("monospaced", Font.PLAIN, AtsUI.atsFontSize)
         scrollArea.setText(DefaultText)
         scrollField = javax.swing.JScrollPane(scrollArea) #put text area in scroll field
         scrollField.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
-        scrollField.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
+        scrollField.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         __panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 8, 1, 8))
         __panel.setLayout(java.awt.BorderLayout())
         __panel.add(scrollField)
+        __panel.setSize(AtsUI.atsMessageWindowWidth, paneHeight)
         return __panel
 
 
-    def createAtsApplicatinWindowComponents(self):
+    def createApplicationWindowComponents(self):
         self.logLabel1 = javax.swing.JLabel("Logging:")
         self.eMsgDebugCheckBox = javax.swing.JCheckBox("Message Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
         self.eMsgDebugCheckBox.setToolTipText("Display all function entry/exit messages")
@@ -379,7 +387,6 @@ class AtsUI(object):
         self.dRstrDebugCheckBox = javax.swing.JCheckBox("TrolleyRoster Details", actionPerformed = self.whenCheckboxClicked)
         self.dRstrDebugCheckBox.setToolTipText("Display detail debugging for TrolleyRoster")
         self.dRstrDebugCheckBox.setEnabled(False)
-        #logLabel2 = javax.swing.JLabel("        ")
         self.snChgCheckBox = javax.swing.JCheckBox("Show Sn Change")
         self.snChgCheckBox.setToolTipText("Display when a sensor state changes")
         self.snChgCheckBox.setEnabled(False)
@@ -394,7 +401,7 @@ class AtsUI(object):
         # create checkboxes panel
         # ====================================
         self.ckBoxPanel1 = javax.swing.JPanel()
-        self.ckBoxPanel1.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+        self.ckBoxPanel1.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.RIGHT))
         self.ckBoxPanel1.add(self.logLabel1)
 
         self.ckBoxPanel2 = javax.swing.JPanel()
@@ -411,7 +418,6 @@ class AtsUI(object):
         self.ckBoxPanel3.add(self.snSpkChgCheckBox)
         self.ckBoxPanel3.add(self.msgSpkCheckBox)
 
-
         # =====================================
         # create text fields for status outputs
         # =====================================
@@ -426,7 +432,6 @@ class AtsUI(object):
     class DeleteTrolleyButtonListener(MouseAdapter):
         logger = logging.getLogger(__name__)
         def mousePressed(self, event):
-            #global frameRoster
             __target = event.getSource()
             __row = __target.getSelectedRow()
             __column = __target.getSelectedColumn()
@@ -443,10 +448,6 @@ class AtsUI(object):
                 logger.info("UPDATE SPEED for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
                 spinner = JSpinner( SpinnerNumberModel( trolleyRoster[row].maxSpeed, 1, 99, 1) )
                 __response = JOptionPane.showOptionDialog(None, spinner, "Update Max Speed", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, None, None, None)
-                #JOptionPane.showOptionDialog(null, spinner, "Enter valid number", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
-                #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address),"Update Trolley")
-                #result = JOptionPane.showInputDialog(None, message,  "Delete Trolley", JOptionPane.OK_CANCEL_OPTION)
-                #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address), "Update Trolley")
                 logger.info("UPDATE SPEED for Trolley: %s to %s - %s", str(trolleyRoster[row].address),
                             str(spinner.getValue()), ("Confirmed" if __response == 0 else "Cancelled"))
                 if __response == JOptionPane.OK_OPTION: 
@@ -464,14 +465,9 @@ class AtsUI(object):
                     __positionChoices.append(str(block.address)+'-'+block.description)
                 index = __positionChoices.index(str(trolleyRoster[row].currentPosition.address)+'-'+trolleyRoster[row].currentPosition.description)
                 __response = JOptionPane.showInputDialog(None, "Choice", "Update Position", JOptionPane.OK_CANCEL_OPTION, None, __positionChoices, __positionChoices[index])
-                #JOptionPane.showOptionDialog(null, spinner, "Enter valid number", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
-                #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address),"Update Trolley")
-                #result = JOptionPane.showInputDialog(None, message,  "Delete Trolley", JOptionPane.OK_CANCEL_OPTION)
-                #__response = self.deleteTrolleyFromRosterConfirmation("Update Trolley #"+str(trolleyRoster[row].address), "Update Trolley")
                 logger.info("UPDATE POSITION Trolley: %s to %s - %s", str(trolleyRoster[row].address),
                             str(__response), ("Confirmed" if __response else "CANCELLED"))
                 if __response: 
-                    #trolleyRoster[row].maxSpeed = int(spinner.getValue())
                     _oldPosition = trolleyRoster[row].currentPosition
                     logger.info("UPDATE POSITION - Old Position: %s", str(_oldPosition.address))
                     trolleyRoster[row].currentPosition = layoutMap.findBlockByAddress(int(__response.split('-')[0]))
