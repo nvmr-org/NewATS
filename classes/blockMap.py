@@ -5,9 +5,7 @@ Created on Nov 18, 2016
 '''
 import logging
 import datetime
-import re
 import xml.etree.ElementTree as ET
-from xml.dom import minidom
 from classes.block import Block
 
 logger = logging.getLogger("ATS."+__name__)

@@ -10,7 +10,6 @@ trolleyRoster = TrolleyRoster()
 msg = Messenger()
 
 class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
-    logger = logging.getLogger(__name__)
     simulatorEnabled = False
     def init(self):
         logger.info("Initialize Trolley Automation")
