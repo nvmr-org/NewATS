@@ -145,18 +145,18 @@ class AtsUI(object):
 
 
     def whenLoadLayoutMapButtonClicked(self,event):
-        layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
-        logger.info("User Files Path: %s" + layoutMapFilePath)
-        fileChooser = JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory())
-        fileFilter =  FileNameExtensionFilter("XML Files", ["XML", "xml"])
-        logger.info("FileFilter:%s",str(fileFilter))
-        fileChooser.setFileFilter(fileFilter)   # addChoosableFileFilter(fileFilter)
-        fileChooser.setCurrentDirectory(java.io.File(layoutMapFilePath))
-        logger.info("LOAD LAYOUT MAP:%s", str(fileChooser))
-        returnValue = fileChooser.showOpenDialog(None);
-        if (returnValue == JFileChooser.APPROVE_OPTION):
-            selectedFile = fileChooser.getSelectedFile();
-            logger.info("Selected File:%s",selectedFile.getAbsolutePath())
+        selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"])
+        if (selectedFile != None):
+            logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
+        layoutMap.loadLayoutMapFromXml(selectedFile)
+        return
+
+
+    def whenLoadRosterButtonClicked(self,event):
+        selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"])
+        if (selectedFile != None):
+            logger.info("Selected Roster File:%s",selectedFile.getAbsolutePath())
+        trolleyRoster.loadRosterFromXmlFile(selectedFile)
         return
 
         
@@ -221,6 +221,19 @@ class AtsUI(object):
         self.frameRoster.setVisible(False)
         self.frameAddTrolley = self.createAddToTrolleyRosterFrame()
         return
+
+
+    def getUserSelectedFile(self, description, extensionFilterList):
+        layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
+        logger.info("User Files Path: %s" + layoutMapFilePath)
+        fileChooser = JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory())
+        fileFilter =  FileNameExtensionFilter(description, extensionFilterList)
+        logger.debug("FileFilter:%s",str(fileFilter))
+        fileChooser.setFileFilter(fileFilter)
+        fileChooser.setCurrentDirectory(java.io.File(layoutMapFilePath))
+        fileChooser.showOpenDialog(None);
+        logger.info("LOADING FILE:%s", str(fileChooser.getSelectedFile()))
+        return fileChooser.getSelectedFile();
 
 
     def sendAudibleMessage(self,checkboxToMonitor, messageToAnnounce):
@@ -335,24 +348,7 @@ class AtsUI(object):
 
 
     def getButtonPanel(self):
-        # =================================
-        # create buttons panel actions
-        # =================================
-        self.quitButton = self.createButtonWithAction("Quit", self.whenQuitButtonClicked)
-        self.loadRosterButton = self.createButtonWithAction("Load Roster", None)
-        self.loadRosterButton.setEnabled(False)
-        self.loadLayoutButton = self.createButtonWithAction("Load Layout Map", self.whenLoadLayoutMapButtonClicked)
-        self.loadLayoutButton.setEnabled(True)
-        self.tgoButton = self.createButtonWithAction("Start Running", self.whenTgoButtonClicked)
-        self.tstopButton = self.createButtonWithAction("Stop All Trolleys", self.whenStopAllButtonClicked)
-        self.tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
-        simulatorButtonTxt = "Disable Simulator" if self.automationObject.simulatorEnabled else "Enable Simulator"
-        self.simulatorButton = self.createButtonWithAction(simulatorButtonTxt, self.whenSimulatorButtonClicked)
-        self.editRosterButton = self.createButtonWithAction("Edit Roster", self.whenEditRosterButtonClicked)
-        self.editRosterButton.setEnabled(True)
-        # =================================
-        # create button panel
-        # =================================
+        self.createButtonPanelButtons()
         butPanel = JPanel()
         butPanel.setLayout(FlowLayout(FlowLayout.LEFT))
         butPanel.add(self.editRosterButton)
@@ -371,7 +367,22 @@ class AtsUI(object):
         return butPanel
 
 
-    def createInfoPane(self,defaultText, title=None, paneHeight=15):
+    def createButtonPanelButtons(self):
+        self.quitButton = self.createButtonWithAction("Quit", self.whenQuitButtonClicked)
+        self.loadRosterButton = self.createButtonWithAction("Load Roster", self.whenLoadRosterButtonClicked)
+        self.loadRosterButton.setEnabled(True)
+        self.loadLayoutButton = self.createButtonWithAction("Load Layout Map", self.whenLoadLayoutMapButtonClicked)
+        self.loadLayoutButton.setEnabled(True)
+        self.tgoButton = self.createButtonWithAction("Start Running", self.whenTgoButtonClicked)
+        self.tstopButton = self.createButtonWithAction("Stop All Trolleys", self.whenStopAllButtonClicked)
+        self.tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
+        simulatorButtonTxt = "Disable Simulator" if self.automationObject.simulatorEnabled else "Enable Simulator"
+        self.simulatorButton = self.createButtonWithAction(simulatorButtonTxt, self.whenSimulatorButtonClicked)
+        self.editRosterButton = self.createButtonWithAction("Edit Roster", self.whenEditRosterButtonClicked)
+        self.editRosterButton.setEnabled(True)
+        return
+
+    def createInfoPane(self,defaultText, title=None):
         __pane = JTextPane()
         __doc = __pane.getStyledDocument()
         __style = __pane.addStyle("Color Style", None)
