@@ -19,10 +19,8 @@ Based on ATS.py written by
 import logging
 import re
 import xml.etree.ElementTree as ET
-from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
 from classes.blockMap import BlockMap
-from classes.block import Block
 from classes.announcer import MessageAnnouncer
 from classes.messengerFacade import Messenger
 from classes.atsTrolleyAutomation import TrolleyAutomation
@@ -83,8 +81,8 @@ def loadAtsConfiguration():
         logger.warning('Unable to open ATS Config File: %s - Creating Default Configuration', configFile)
 
 
-def saveFileAsFormattedXml(fileName, xmlString):
-    logger.debug("Entering saveFileAsFormattedXml")
+def saveFileAsXml(fileName, xmlString):
+    logger.debug("Entering saveFileAsXml")
     try:
         text_file = open(fileName, "w")
         text_file.write(getFormattedXml(xmlString))
