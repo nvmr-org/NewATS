@@ -124,12 +124,20 @@ trolleyRoster.setRosterInfoOutput(output=atsUi.rosterInfoPane)
 trolleyRoster.setMessageInfoOutput(output=atsUi.messageInfoPanel)
 
 logger.info("Loading Layout Map")
-loadLayoutMap()  # Build the layout
+layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
+layoutMapFile = layoutMapFilePath + LAYOUT_MAP_FILE_NAME
+logger.info("User Files Path: %s" + layoutMapFilePath)
+logger.info('Layout Map File: %s', layoutMapFile)
+layoutMap.loadLayoutMapFromXml(layoutMapFile)
 layoutMap.dump()
 #layoutMap.dumpXml()
 
 logger.info("Building Trolley Roster")
-loadTrolleyRoster()  # Build the roster of trolleys
+trolleyRosterFilePath = jmriFileUtilSupport.getUserFilesPath()
+trolleyRosterFile = trolleyRosterFilePath + TROLLEY_ROSTER_FILE_NAME
+logger.info("User Files Path: %s", trolleyRosterFilePath)
+logger.info("Roster File: %s", trolleyRosterFile)
+trolleyRoster.loadRosterFromXmlFile(trolleyRosterFile)
 trolleyRoster.dump()
 #trolleyRoster.dumpXml()
 #frameRoster = createEditRosterDataFrame(trolleyRoster)
