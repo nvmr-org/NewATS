@@ -154,10 +154,10 @@ class TrolleyRoster(object):
         # if the block is currently occupied by another trolley set a flag before inserting
         if self.findByAddress(trolley.address) != None:
             logger.error("Error: Attempt to register multiple trolleys to the same address: %s", str(trolley.address))
-            sys.exit("Error: Attempt to register multiple trolleys to the same address:" + str(trolley.address))
-        self.checkForMultipleTrolleysInOneBlock()
-
-        self.insert(len(self._list), trolley)
+        else:
+            self.checkForMultipleTrolleysInOneBlock()
+            self.insert(len(self._list), trolley)
+        return
 
 
     def setDebugFlag(self,debugFlag,state):
