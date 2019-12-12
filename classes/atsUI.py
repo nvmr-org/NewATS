@@ -1,5 +1,6 @@
 import logging
 import time
+import java.io.File
 
 from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
@@ -7,14 +8,21 @@ from classes.messengerFacade import Messenger
 from classes.blockMap import BlockMap
 from classes.atsWinListener import AtsWinListener
 
-import javax.swing
-import java.awt.Toolkit
+from java.lang import Runtime
+from javax.swing import BorderFactory, Box
+from javax.swing import JButton, JComboBox, JCheckBox, JLabel, JPanel
+from javax.swing import JTextField, JTable, JTextPane, JTextArea
+from javax.swing import JScrollPane, JOptionPane, JSpinner, SpinnerNumberModel
 from javax.swing.text import DefaultCaret, StyleConstants
-from javax.swing import BorderFactory
-from java.awt import BorderLayout, Color, Font, GridBagConstraints, Insets
-from javax.swing import JLabel, JScrollPane, JOptionPane, JSpinner, SpinnerNumberModel
 from javax.swing.table import DefaultTableModel
+from java.awt import BorderLayout, Color, Dimension, FlowLayout, Font
+from java.awt import GridBagConstraints, GridBagLayout, Insets, Toolkit, Rectangle
 from java.awt.event import MouseAdapter
+
+from javax.swing import JFileChooser;
+from javax.swing.filechooser import FileSystemView
+from javax.swing.filechooser import FileNameExtensionFilter
+
 
 try:
     jmriFlag = True
@@ -29,11 +37,12 @@ logger = logging.getLogger("ATS."+__name__)
 trolleyRoster = TrolleyRoster()
 layoutMap = BlockMap()
 msg = Messenger()
+jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
 class AtsUI(object):
     
     instance = None
-    atsScreenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize()
+    atsScreenSize = Toolkit.getDefaultToolkit().getScreenSize()
     atsWindowWidth = int(float(atsScreenSize.width) * 0.8)
     atsWindowHeight = int(float(atsScreenSize.height) * 0.8)
     atsWindowPosX = (atsScreenSize.width - atsWindowWidth) >> 1
@@ -57,11 +66,11 @@ class AtsUI(object):
         logger.info("Screen Size - Height:%s Width:%s", AtsUI.atsScreenSize.height, AtsUI.atsScreenSize.width)
         self.automationObject=automationObject
         self.w = AtsWinListener()
-        atsMainFrameBounds = java.awt.Rectangle(AtsUI.atsWindowPosX, AtsUI.atsWindowPosY, AtsUI.atsWindowWidth, AtsUI.atsWindowHeight)
+        atsMainFrameBounds = Rectangle(AtsUI.atsWindowPosX, AtsUI.atsWindowPosY, AtsUI.atsWindowWidth, AtsUI.atsWindowHeight)
         self.fr = jmri.util.JmriJFrame(appName, bounds = atsMainFrameBounds) #use this in order to get it to appear on webserver
         self.fr.setSaveSize(False)
         self.fr.setSavePosition(False)
-        self.fr.contentPane.setLayout(java.awt.GridBagLayout())
+        self.fr.contentPane.setLayout(GridBagLayout())
         self.createApplicationWindowComponents()
         self.addComponent(self.fr, self.getButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE);
         self.addComponent(self.fr, self.ckBoxPanel1, 0, 1, 1, 2, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL)
@@ -125,16 +134,32 @@ class AtsUI(object):
 
 
     def whenSimulatorButtonClicked(self,event):
-        simulatorState = self.automationObject.isSimulatorEnabled()
-        logger.info("Simulator State:"+str(simulatorState)+"-->"+str(not simulatorState))
-        simulatorState = not simulatorState
-        self.automationObject.setSimulatorState(simulatorState)
-        if simulatorState:
+        __simulatorState = self.automationObject.isSimulatorEnabled()
+        logger.info("Simulator State:"+str(__simulatorState)+"-->"+str(not __simulatorState))
+        __simulatorState = not __simulatorState
+        self.automationObject.setSimulatorState(__simulatorState)
+        if __simulatorState:
             self.simulatorButton.setText("Disable Simulator")
         else:
             self.simulatorButton.setText("Enable Simulator")
 
 
+    def whenLoadLayoutMapButtonClicked(self,event):
+        layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
+        logger.info("User Files Path: %s" + layoutMapFilePath)
+        fileChooser = JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory())
+        fileFilter =  FileNameExtensionFilter("XML Files", ["XML", "xml"])
+        logger.info("FileFilter:%s",str(fileFilter))
+        fileChooser.setFileFilter(fileFilter)   # addChoosableFileFilter(fileFilter)
+        fileChooser.setCurrentDirectory(java.io.File(layoutMapFilePath))
+        logger.info("LOAD LAYOUT MAP:%s", str(fileChooser))
+        returnValue = fileChooser.showOpenDialog(None);
+        if (returnValue == JFileChooser.APPROVE_OPTION):
+            selectedFile = fileChooser.getSelectedFile();
+            logger.info("Selected File:%s",selectedFile.getAbsolutePath())
+        return
+
+        
     def whenRemoveButtonClicked(self,event):
         return
 
@@ -186,10 +211,6 @@ class AtsUI(object):
         layoutMap.printBlocks(trolleyRoster)
         layoutMap.printSegments(trolleyRoster)
         self.frameAddTrolley.dispose()
-        # The revalidate and repaint methods don't seem to work so for now we just dispose of the
-        # original roster frame and recreate it so the new trolley is displayed.
-        #frameRoster.revalidate() 
-        #frameRoster.repaint()
         self.frameRoster.dispose()
         self.frameRoster = self.createEditRosterDataFrame(trolleyRoster)
         self.frameRoster.setVisible(True)
@@ -204,7 +225,7 @@ class AtsUI(object):
 
     def sendAudibleMessage(self,checkboxToMonitor, messageToAnnounce):
         if checkboxToMonitor.isSelected() :
-            javaexec = getattr(java.lang.Runtime.getRuntime(), "exec")
+            javaexec = getattr(Runtime.getRuntime(), "exec")
             pid = javaexec('nircmd speak text "' + messageToAnnounce +'" -2 100')
             pid.waitFor()
         return
@@ -229,44 +250,44 @@ class AtsUI(object):
     def getAddTrolleyButtonPanel(self):
         saveButton = self.createButtonWithAction("Save", self.whenSaveAddTrolleyButtonClicked )
         cancelButton = self.createButtonWithAction("Cancel", self.whenCancelAddTrolleyButtonClicked )
-        addTrolleyPanel = javax.swing.JPanel()
-        addTrolleyPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+        addTrolleyPanel = JPanel()
+        addTrolleyPanel.setLayout(FlowLayout(FlowLayout.LEFT))
         addTrolleyPanel.add(saveButton)
-        addTrolleyPanel.add(javax.swing.Box.createHorizontalStrut(10))
+        addTrolleyPanel.add(Box.createHorizontalStrut(10))
         addTrolleyPanel.add(cancelButton)
         return addTrolleyPanel
 
 
     def getAddTrolleyDataPanel(self):
-        __panel = javax.swing.JPanel()
+        __panel = JPanel()
         __panel.add(JLabel("Address:"))
-        self.addTrolleyAddress = javax.swing.JTextField('',5)
+        self.addTrolleyAddress = JTextField('',5)
         __panel.add(self.addTrolleyAddress)
         __panel.add(JLabel("Max Speed:"))
-        self.addTrolleyMaxSpeed = javax.swing.JTextField('',5)
+        self.addTrolleyMaxSpeed = JTextField('',5)
         __panel.add(self.addTrolleyMaxSpeed)
         __panel.add(JLabel("Sound Enabled:"))
-        self.addTrolleySoundEnabled = javax.swing.JCheckBox()
+        self.addTrolleySoundEnabled = JCheckBox()
         __panel.add(self.addTrolleySoundEnabled)
         __panel.add(JLabel("Starting Position:"))
         comboChoices = []
         for block in layoutMap:
             comboChoices.append(str(block.address)+'-'+block.description)
-        self.addTrolleyStartingPosition = javax.swing.JComboBox(comboChoices)
+        self.addTrolleyStartingPosition = JComboBox(comboChoices)
         __panel.add(self.addTrolleyStartingPosition)
         return __panel
 
 
     def createButtonWithAction(self,title,action):
-        button = javax.swing.JButton(title)
-        button.actionPerformed = action
-        return button
+        __button = JButton(title)
+        __button.actionPerformed = action
+        return __button
 
 
     def createAddToTrolleyRosterFrame(self):
         frameAddTrolley = jmri.util.JmriJFrame("Add Trolley To Roster")
         frameAddTrolley.setSize(AtsUI.atsRosterWindowWidth,10*AtsUI.atsRowHeight)
-        frameAddTrolley.setLayout(java.awt.GridBagLayout())
+        frameAddTrolley.setLayout(GridBagLayout())
         self.addComponent(frameAddTrolley, self.getAddTrolleyButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE)
         self.addComponent(frameAddTrolley, self.getAddTrolleyDataPanel(), 0, 2, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE)
         frameAddTrolley.setDefaultCloseOperation(self.frameRoster.DO_NOTHING_ON_CLOSE); # Disable the Close button
@@ -280,26 +301,26 @@ class AtsUI(object):
     def createEditRosterDataFrame(self,trolleyRoster):
         frameRoster = jmri.util.JmriJFrame("Trolley Roster")
         frameRoster.setSize(AtsUI.atsRosterWindowWidth,(len(trolleyRoster)+3)*AtsUI.atsRowHeight)
-        frameRoster.setLayout(java.awt.BorderLayout())
+        frameRoster.setLayout(BorderLayout())
         frameRoster.setSaveSize(False)
         frameRoster.setSavePosition(False)
         rosterData = []
         for trolley in trolleyRoster:
-            deleteRosterRowButton = javax.swing.JButton("Delete")
+            deleteRosterRowButton = JButton("Delete")
             deleteRosterRowButton.actionPerformed = None #whenDeleteRosterRowButtonClicked
             rosterData.append([trolley.address, trolley.maxSpeed, trolley.soundEnabled,
                                trolley.currentPosition.address, trolley.currentPosition.description,'DELETE'])
         colNames = ['Address', 'Max Speed', 'Sound', 'Starting Position', 'Position Description', '']
         dataModel = DefaultTableModel(rosterData,colNames)
-        rosterTable = javax.swing.JTable(dataModel)
+        rosterTable = JTable(dataModel)
         rosterTable.getTableHeader().setReorderingAllowed(False)
         rosterTable.setRowHeight(AtsUI.atsRowHeight)
         rosterTable.setEnabled(True)
         rosterTable.addMouseListener(self.DeleteTrolleyButtonListener())
         rosterScrollPane = JScrollPane()
-        rosterScrollPane.setPreferredSize(java.awt.Dimension(AtsUI.atsRosterWindowWidth,(len(trolleyRoster)+3)*AtsUI.atsRowHeight))
+        rosterScrollPane.setPreferredSize(Dimension(AtsUI.atsRosterWindowWidth,(len(trolleyRoster)+3)*AtsUI.atsRowHeight))
         rosterScrollPane.getViewport().setView(rosterTable)
-        rosterPanel = javax.swing.JPanel()
+        rosterPanel = JPanel()
         rosterPanel.add(rosterScrollPane)
         rosterAddButton = self.createButtonWithAction("Add To Roster", self.whenAddToRosterButtonClicked)
         rosterAddButton.setEnabled(True)
@@ -318,6 +339,10 @@ class AtsUI(object):
         # create buttons panel actions
         # =================================
         self.quitButton = self.createButtonWithAction("Quit", self.whenQuitButtonClicked)
+        self.loadRosterButton = self.createButtonWithAction("Load Roster", None)
+        self.loadRosterButton.setEnabled(False)
+        self.loadLayoutButton = self.createButtonWithAction("Load Layout Map", self.whenLoadLayoutMapButtonClicked)
+        self.loadLayoutButton.setEnabled(True)
         self.tgoButton = self.createButtonWithAction("Start Running", self.whenTgoButtonClicked)
         self.tstopButton = self.createButtonWithAction("Stop All Trolleys", self.whenStopAllButtonClicked)
         self.tstopButton.setEnabled(False)           #button starts as grayed out (disabled)
@@ -328,22 +353,26 @@ class AtsUI(object):
         # =================================
         # create button panel
         # =================================
-        butPanel = javax.swing.JPanel()
-        butPanel.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+        butPanel = JPanel()
+        butPanel.setLayout(FlowLayout(FlowLayout.LEFT))
         butPanel.add(self.editRosterButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
+        butPanel.add(Box.createHorizontalStrut(20))
         butPanel.add(self.tgoButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
+        butPanel.add(Box.createHorizontalStrut(20))
         butPanel.add(self.tstopButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
+        butPanel.add(Box.createHorizontalStrut(20))
         butPanel.add(self.simulatorButton)
-        butPanel.add(javax.swing.Box.createHorizontalStrut(20))
+        butPanel.add(Box.createHorizontalStrut(40))
+        butPanel.add(self.loadRosterButton)
+        butPanel.add(Box.createHorizontalStrut(20))
+        butPanel.add(self.loadLayoutButton)
+        butPanel.add(Box.createHorizontalStrut(20))
         butPanel.add(self.quitButton)
         return butPanel
 
 
     def createInfoPane(self,defaultText, title=None, paneHeight=15):
-        __pane = javax.swing.JTextPane()
+        __pane = JTextPane()
         __doc = __pane.getStyledDocument()
         __style = __pane.addStyle("Color Style", None)
         __pane.setFont(Font("monospaced",Font.BOLD,AtsUI.atsFontSize))
@@ -356,63 +385,63 @@ class AtsUI(object):
 
 
     def createScrollPanel(self, DefaultText, title=None, paneHeight=10):
-        __panel = javax.swing.JPanel()
+        __panel = JPanel()
         __panel.add(JLabel(title))
-        scrollArea = javax.swing.JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
+        scrollArea = JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
         scrollArea.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE); # automatically scroll to last message
         scrollArea.font=Font("monospaced", Font.PLAIN, AtsUI.atsFontSize)
         scrollArea.setText(DefaultText)
-        scrollField = javax.swing.JScrollPane(scrollArea) #put text area in scroll field
-        scrollField.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
-        scrollField.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
-        __panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 8, 1, 8))
-        __panel.setLayout(java.awt.BorderLayout())
+        scrollField = JScrollPane(scrollArea) #put text area in scroll field
+        scrollField.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+        scrollField.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        __panel.setBorder(BorderFactory.createEmptyBorder(1, 8, 1, 8))
+        __panel.setLayout(BorderLayout())
         __panel.add(scrollField)
         __panel.setSize(AtsUI.atsMessageWindowWidth, paneHeight)
         return __panel
 
 
     def createApplicationWindowComponents(self):
-        self.logLabel1 = javax.swing.JLabel("Logging:")
-        self.eMsgDebugCheckBox = javax.swing.JCheckBox("Message Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
+        self.logLabel1 = JLabel("Logging:")
+        self.eMsgDebugCheckBox = JCheckBox("Message Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
         self.eMsgDebugCheckBox.setToolTipText("Display all function entry/exit messages")
-        self.dMsgDebugCheckBox = javax.swing.JCheckBox("Message Details", actionPerformed = self.whenCheckboxClicked)
+        self.dMsgDebugCheckBox = JCheckBox("Message Details", actionPerformed = self.whenCheckboxClicked)
         self.dMsgDebugCheckBox.setToolTipText("Display detail debugging for messages")
-        self.iMsgDebugCheckBox = javax.swing.JCheckBox("Incoming Messages", actionPerformed = self.whenCheckboxClicked)
+        self.iMsgDebugCheckBox = JCheckBox("Incoming Messages", actionPerformed = self.whenCheckboxClicked)
         self.iMsgDebugCheckBox.setToolTipText("Display debugging for incoming loconet messages")
-        self.oMsgDebugCheckBox = javax.swing.JCheckBox("Outgoing Messages", actionPerformed = self.whenCheckboxClicked)
+        self.oMsgDebugCheckBox = JCheckBox("Outgoing Messages", actionPerformed = self.whenCheckboxClicked)
         self.oMsgDebugCheckBox.setToolTipText("Display debugging for outgoing loconet messages")
-        self.eRstrDebugCheckBox = javax.swing.JCheckBox("TrolleyRoster Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
+        self.eRstrDebugCheckBox = JCheckBox("TrolleyRoster Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
         self.eRstrDebugCheckBox.setToolTipText("Display all Trolley Roster function entry/exit messages")
-        self.dRstrDebugCheckBox = javax.swing.JCheckBox("TrolleyRoster Details", actionPerformed = self.whenCheckboxClicked)
+        self.dRstrDebugCheckBox = JCheckBox("TrolleyRoster Details", actionPerformed = self.whenCheckboxClicked)
         self.dRstrDebugCheckBox.setToolTipText("Display detail debugging for TrolleyRoster")
         self.dRstrDebugCheckBox.setEnabled(False)
-        self.snChgCheckBox = javax.swing.JCheckBox("Show Sn Change")
+        self.snChgCheckBox = JCheckBox("Show Sn Change")
         self.snChgCheckBox.setToolTipText("Display when a sensor state changes")
         self.snChgCheckBox.setEnabled(False)
-        self.snSpkChgCheckBox = javax.swing.JCheckBox("Speak Sn Change")
+        self.snSpkChgCheckBox = JCheckBox("Speak Sn Change")
         self.snSpkChgCheckBox.setToolTipText("Speak when a sensor state changes")
         self.snSpkChgCheckBox.setEnabled(False)
-        self.msgSpkCheckBox = javax.swing.JCheckBox("Speak General Messages")
+        self.msgSpkCheckBox = JCheckBox("Speak General Messages")
         self.msgSpkCheckBox.setToolTipText("Speak when a message is sent")
         self.msgSpkCheckBox.setSelected(True)
 
         # ====================================
         # create checkboxes panel
         # ====================================
-        self.ckBoxPanel1 = javax.swing.JPanel()
-        self.ckBoxPanel1.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.RIGHT))
+        self.ckBoxPanel1 = JPanel()
+        self.ckBoxPanel1.setLayout(FlowLayout(FlowLayout.RIGHT))
         self.ckBoxPanel1.add(self.logLabel1)
 
-        self.ckBoxPanel2 = javax.swing.JPanel()
-        self.ckBoxPanel2.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+        self.ckBoxPanel2 = JPanel()
+        self.ckBoxPanel2.setLayout(FlowLayout(FlowLayout.LEFT))
         self.ckBoxPanel2.add(self.eMsgDebugCheckBox)
         self.ckBoxPanel2.add(self.dMsgDebugCheckBox)
         self.ckBoxPanel2.add(self.iMsgDebugCheckBox)
         self.ckBoxPanel2.add(self.oMsgDebugCheckBox)
 
-        self.ckBoxPanel3 = javax.swing.JPanel()
-        self.ckBoxPanel3.setLayout(java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+        self.ckBoxPanel3 = JPanel()
+        self.ckBoxPanel3.setLayout(FlowLayout(FlowLayout.LEFT))
         self.ckBoxPanel3.add(self.eRstrDebugCheckBox)
         self.ckBoxPanel3.add(self.dRstrDebugCheckBox)
         self.ckBoxPanel3.add(self.snSpkChgCheckBox)
