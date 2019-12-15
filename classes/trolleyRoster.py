@@ -122,6 +122,8 @@ class TrolleyRoster(object):
 
 
     def clearRoster(self):
+        for trolley in self._list:
+            trolley.currentPosition.set_blockClear()
         self._list = list()
         self.first = None
         self.last = None
