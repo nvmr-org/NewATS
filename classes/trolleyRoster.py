@@ -124,11 +124,8 @@ class TrolleyRoster(object):
     def delete(self,ii):
         if TrolleyRoster.__eTrace : logger.info("Enter TrolleyRoster.delete - "+str(ii))
         currentPosition = self._list[ii].currentPosition
-        if ii > 0:
-            self._list[ii-1].next = self._list[ii-1].next.next
-            self.__delitem__(ii)
-        else:
-            self.__delitem__(ii)
+        self._list[ii-1].next = self._list[ii].next
+        self.__delitem__(ii)
         otherTrolleyInBlock = self.findByCurrentBlock(currentPosition.address)
         if otherTrolleyInBlock is None:
             if TrolleyRoster.__dTrace : logger.info("No other trolleys in block - setting clear")
