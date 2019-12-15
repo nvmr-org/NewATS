@@ -121,6 +121,13 @@ class TrolleyRoster(object):
         return str(self._list)
 
 
+    def clearRoster(self):
+        self._list = list()
+        self.first = None
+        self.last = None
+        return
+
+
     def delete(self,ii):
         if TrolleyRoster.__eTrace : logger.info("Enter TrolleyRoster.delete - "+str(ii))
         currentPosition = self._list[ii].currentPosition
@@ -317,6 +324,7 @@ class TrolleyRoster(object):
             if trolley.currentPosition.address == currentPosition:
                 return trolley
         #return find(lambda trolley: trolley.currentPosition == currentPosition, self._list)
+        return None
         
 
     def findByAddress(self, address):
@@ -550,11 +558,23 @@ class TrolleyRoster(object):
             tree = ET.parse(str(trolleyRosterFile))
             self.title =  tree.find('title')
             roster = tree.find('roster')
+            if roster is None:
+                raise Exception('File does not contain a roster.')
             logger.info("Number of Trolleys: %s", len(roster))
-            self._list=[]
+            self.clearRoster()
             for trolley in roster.iter(tag = 'trolley'):
                 self.addXmlTrolleyToRoster(trolley)
         except Exception, e:
             logger.warning(e)
             logger.warning('Unable to open roster file: %s - Building Default Roster', trolleyRosterFile)
             #TrolleyRoster.buildDefaultRoster()
+
+
+    def validatePositions(self, blockMap):
+        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.validatePositions")
+        for trolley in self._list:
+            if blockMap.findBlockByAddress(trolley.currentPosition.address) is None:
+                logger.warning('Warning: Trolleys assigned to invalid block: %s', trolley.currentPosition.address)
+                logger.warning('Warning: Trolleys will be reassigned to first block: %s', blockMap.first.address)
+                trolley.currentPosition = blockMap.first
+        return

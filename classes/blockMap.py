@@ -81,6 +81,13 @@ class BlockMap(object):
         return str(self._blockmap)
 
 
+    def clearBlockMap(self):
+        self._blockmap = list()
+        self.first = None
+        self.last = None
+        return
+
+
     def insert(self, ii, val):
         # optional: self._acl_check(val)
         self._blockmap.insert(len(self._blockmap), val)
@@ -375,7 +382,10 @@ class BlockMap(object):
             logger.info("Setting Title")
             self.title =  tree.find('title')
             blocks = tree.find('blocks')
+            if blocks is None:
+                raise Exception('File does not contain a layout map.')
             logger.info("Number of BLocks: %s", len(blocks))
+            self.clearBlockMap()
             for block in blocks.iter(tag = 'block'):
                 self.addXmlBlockToLayoutMap(block)
         except Exception, e:
