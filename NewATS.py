@@ -73,36 +73,6 @@ logger.info("Initialize Empty Trolley Roster")
 trolleyRoster = TrolleyRoster(layoutMap=layoutMap, messageManager=msg)  # Initialize an empty roster of trolley devices
 
 
-def loadAtsConfiguration():
-    try:
-        tree = ET.parse(configFile)
-    except Exception, e:
-        logger.warning(e)
-        logger.warning('Unable to open ATS Config File: %s - Creating Default Configuration', configFile)
-
-
-def saveFileAsXml(fileName, xmlString):
-    logger.debug("Entering saveFileAsXml")
-    try:
-        text_file = open(fileName, "w")
-        text_file.write(getFormattedXml(xmlString))
-        text_file.close()
-        logger.info("File Created: %s", fileName)
-    except Exception, e:
-        logger.error(e)
-        logger.error('Unable to save file: %s', fileName)
-
-
-def getFormattedXml(xmlParent):
-    xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
-    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-    prettyXml = text_re.sub('>\g<1></', xmlstr)
-    return prettyXml
-
-
-def buildDefaultConfig():
-
-
 # *************************************
 # start to initialize the display GUI *
 # *************************************
