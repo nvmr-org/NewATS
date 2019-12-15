@@ -1,12 +1,15 @@
 import logging
 import time
+import re
 import java.io.File
+import xml.etree.ElementTree as ET
 
 from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
 from classes.messengerFacade import Messenger
 from classes.blockMap import BlockMap
 from classes.atsWinListener import AtsWinListener
+from xml.dom import minidom
 
 from java.lang import Runtime
 from javax.swing import BorderFactory, Box
@@ -156,6 +159,14 @@ class AtsUI(object):
         return
 
 
+    def whenSaveRosterButtonClicked(self,event):
+        selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"], Mode='SAVE')
+        if (selectedFile != None):
+            logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
+        self.saveFileAsXml(selectedFile, layoutMap.getMapAsXml())
+        return
+
+
     def whenLoadRosterButtonClicked(self,event):
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"])
         if (selectedFile != None):
@@ -230,7 +241,7 @@ class AtsUI(object):
         return
 
 
-    def getUserSelectedFile(self, description, extensionFilterList):
+    def getUserSelectedFile(self, description, extensionFilterList, Mode='OPEN'):
         layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
         logger.info("User Files Path: %s" + layoutMapFilePath)
         fileChooser = JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory())
@@ -238,7 +249,8 @@ class AtsUI(object):
         logger.debug("FileFilter:%s",str(fileFilter))
         fileChooser.setFileFilter(fileFilter)
         fileChooser.setCurrentDirectory(java.io.File(layoutMapFilePath))
-        fileChooser.showOpenDialog(None);
+        if Mode == 'OPEN': fileChooser.showOpenDialog(None)
+        if Mode == 'SAVE': fileChooser.showSaveDialog(None)
         logger.info("LOADING FILE:%s", str(fileChooser.getSelectedFile()))
         return fileChooser.getSelectedFile();
 
@@ -368,6 +380,8 @@ class AtsUI(object):
         butPanel.add(Box.createHorizontalStrut(40))
         butPanel.add(self.loadRosterButton)
         butPanel.add(Box.createHorizontalStrut(20))
+        butPanel.add(self.saveRosterButton)
+        butPanel.add(Box.createHorizontalStrut(20))
         butPanel.add(self.loadLayoutButton)
         butPanel.add(Box.createHorizontalStrut(20))
         butPanel.add(self.quitButton)
@@ -378,6 +392,8 @@ class AtsUI(object):
         self.quitButton = self.createButtonWithAction("Quit", self.whenQuitButtonClicked)
         self.loadRosterButton = self.createButtonWithAction("Load Roster", self.whenLoadRosterButtonClicked)
         self.loadRosterButton.setEnabled(True)
+        self.saveRosterButton = self.createButtonWithAction("Save Roster", self.whenSaveRosterButtonClicked)
+        self.saveRosterButton.setEnabled(True)
         self.loadLayoutButton = self.createButtonWithAction("Load Layout Map", self.whenLoadLayoutMapButtonClicked)
         self.loadLayoutButton.setEnabled(True)
         self.tgoButton = self.createButtonWithAction("Start Running", self.whenTgoButtonClicked)
@@ -555,6 +571,23 @@ class AtsUI(object):
             return result
 
 
+    def saveFileAsXml(self, fileName, xmlString):
+        logger.debug("Entering saveFileAsXml")
+        try:
+            text_file = open(fileName, "w")
+            text_file.write(self.getFormattedXml(xmlString))
+            text_file.close()
+            logger.info("File Created: %s", fileName)
+        except Exception, e:
+            logger.error(e)
+            logger.error('Unable to save file: %s', fileName)
+
+
+    def getFormattedXml(self, xmlParent):
+        xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
+        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+        prettyXml = text_re.sub('>\g<1></', xmlstr)
+        return prettyXml
 
 
 
