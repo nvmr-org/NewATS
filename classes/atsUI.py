@@ -163,7 +163,7 @@ class AtsUI(object):
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"], Mode='SAVE')
         if (selectedFile != None):
             logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
-        self.saveFileAsXml(selectedFile, layoutMap.getMapAsXml())
+        self.saveFileAsXml(selectedFile.getAbsolutePath(), trolleyRoster.getRosterAsXml())
         return
 
 
