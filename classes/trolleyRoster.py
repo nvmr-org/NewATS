@@ -551,6 +551,7 @@ class TrolleyRoster(object):
             self.title =  tree.find('title')
             roster = tree.find('roster')
             logger.info("Number of Trolleys: %s", len(roster))
+            self._list=[]
             for trolley in roster.iter(tag = 'trolley'):
                 self.addXmlTrolleyToRoster(trolley)
         except Exception, e:
