@@ -577,4 +577,5 @@ class TrolleyRoster(object):
                 logger.warning('Warning: Trolleys assigned to invalid block: %s', trolley.currentPosition.address)
                 logger.warning('Warning: Trolleys will be reassigned to first block: %s', blockMap.first.address)
                 trolley.currentPosition = blockMap.first
+                trolley.nextPosition = blockMap.first.next
         return
