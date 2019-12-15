@@ -41,10 +41,10 @@ except ImportError:
     jmriFlag = False
     print('Failed to import jmir - bypassing')
 
-TROLLEY_ROSTER_ADDRESS_FILE = "trolleyRosterAddresses.cfg"
+CONFIGURATION_FILE_NAME = "ATS_Config_File.xml"
 TROLLEY_ROSTER_FILE_NAME = 'ATS_Roster_File.xml'
 LAYOUT_MAP_FILE_NAME ='ATS_Layout_Map.xml'
-__apNameVersion = "Automatic Trolley Sequencer"
+APPLICATION_NAME = "Automatic Trolley Sequencer"
 enableSimulator = False
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
@@ -76,15 +76,15 @@ trolleyRoster = TrolleyRoster(layoutMap=layoutMap, messageManager=msg)  # Initia
 # *************************************
 # start to initialize the display GUI *
 # *************************************
-atsUi = AtsUI(automationObject=trolleyAutomationObject, appName=__apNameVersion)
+atsUi = AtsUI(automationObject=trolleyAutomationObject, appName=APPLICATION_NAME)
 
 
 # set the name - This will show in the thread monitor
-trolleyAutomationObject.setName(__apNameVersion)
+trolleyAutomationObject.setName(APPLICATION_NAME)
 trolleyRoster.setAutomationObject(trolleyAutomationObject)
 audible = MessageAnnouncer(atsUi.msgSpkCheckBox)
 trolleyRoster.setMessageAnnouncer(audible)
-audible.announceMessage("Welcome to the "+__apNameVersion)
+audible.announceMessage("Welcome to the "+APPLICATION_NAME)
 
 # Set output locations for 
 #layoutMap.setBlockDumpOutput(output=messageInfoPanel)
@@ -100,7 +100,6 @@ logger.info("User Files Path: %s" + layoutMapFilePath)
 logger.info('Layout Map File: %s', layoutMapFile)
 layoutMap.loadLayoutMapFromXml(layoutMapFile)
 layoutMap.dump()
-#layoutMap.dumpXml()
 
 logger.info("Building Trolley Roster")
 trolleyRosterFilePath = jmriFileUtilSupport.getUserFilesPath()
@@ -109,8 +108,6 @@ logger.info("User Files Path: %s", trolleyRosterFilePath)
 logger.info("Roster File: %s", trolleyRosterFile)
 trolleyRoster.loadRosterFromXmlFile(trolleyRosterFile)
 trolleyRoster.dump()
-#trolleyRoster.dumpXml()
-#frameRoster = createEditRosterDataFrame(trolleyRoster)
 
 logger.info("Setup Complete  - ")
 layoutMap.printBlocks(trolleyRoster)
