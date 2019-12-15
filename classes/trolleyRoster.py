@@ -556,7 +556,7 @@ class TrolleyRoster(object):
         logger.info("Loading Roster File: %s", trolleyRosterFile)
         try:
             tree = ET.parse(str(trolleyRosterFile))
-            self.title =  tree.find('title')
+            self.title =  tree.find('title').text
             roster = tree.find('roster')
             if roster is None:
                 raise Exception('File does not contain a roster.')
