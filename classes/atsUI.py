@@ -149,6 +149,10 @@ class AtsUI(object):
         if (selectedFile != None):
             logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
         layoutMap.loadLayoutMapFromXml(selectedFile)
+        trolleyRoster.validatePositions(layoutMap)
+        trolleyRoster.dump()
+        layoutMap.printBlocks(trolleyRoster)
+        layoutMap.printSegments(trolleyRoster)
         return
 
 
@@ -157,6 +161,9 @@ class AtsUI(object):
         if (selectedFile != None):
             logger.info("Selected Roster File:%s",selectedFile.getAbsolutePath())
         trolleyRoster.loadRosterFromXmlFile(selectedFile)
+        trolleyRoster.dump()
+        layoutMap.printBlocks(trolleyRoster)
+        layoutMap.printSegments(trolleyRoster)
         return
 
         
