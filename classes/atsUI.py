@@ -9,7 +9,9 @@ from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
 from classes.messengerFacade import Messenger
 from classes.blockMap import BlockMap
+from classes.block import Block
 from classes.atsWinListener import AtsWinListener
+from classes.atsTrolleyAutomation import TrolleyAutomation
 from xml.dom import minidom
 
 from java.lang import Runtime
@@ -79,7 +81,7 @@ class AtsUI(object):
         self.fr.setSaveSize(False)
         self.fr.setSavePosition(False)
         self.fr.contentPane.setLayout(GridBagLayout())
-        self.createApplicationWindowComponents()
+        self.createLoggingComponents()
         self.addComponent(self.fr, self.getButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE);
         self.addComponent(self.fr, self.ckBoxPanel1, 0, 1, 1, 2, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.ckBoxPanel2, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
@@ -162,7 +164,9 @@ class AtsUI(object):
         if (selectedFile != None):
             logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
         layoutMap.loadLayoutMapFromXml(selectedFile)
-        trolleyRoster.validatePositions(layoutMap)
+        logger.info("Layout Load Successful - Reload of roster required")
+        trolleyRoster.reset()
+        #trolleyRoster.validatePositions(layoutMap)
         trolleyRoster.dump()
         layoutMap.printBlocks(trolleyRoster)
         layoutMap.printSegments(trolleyRoster)
@@ -462,7 +466,7 @@ class AtsUI(object):
         return __panel
 
 
-    def createApplicationWindowComponents(self):
+    def createLoggingComponents(self):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.logLabel1 = JLabel("Logging:")
         self.eMsgDebugCheckBox = JCheckBox("Message Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
@@ -520,6 +524,26 @@ class AtsUI(object):
                                              title = "Messages")
 
 
+    def saveFileAsXml(self, fileName, xmlString):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        try:
+            text_file = open(fileName, "w")
+            text_file.write(self.getFormattedXml(xmlString))
+            text_file.close()
+            logger.info("File Created: %s", fileName)
+        except Exception, e:
+            logger.error(e)
+            logger.error('Unable to save file: %s', fileName)
+
+
+    def getFormattedXml(self, xmlParent):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
+        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+        prettyXml = text_re.sub('>\g<1></', xmlstr)
+        return prettyXml
+
+
     class DeleteTrolleyButtonListener(MouseAdapter):
         logger = logging.getLogger(__name__)
         def mousePressed(self, event):
@@ -536,86 +560,71 @@ class AtsUI(object):
 
 
         def updateTrolleyRowMaxSpeed(self, row):
-                logger.info("UPDATE SPEED for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
-                spinner = JSpinner( SpinnerNumberModel( trolleyRoster[row].maxSpeed, 1, 99, 1) )
-                __response = JOptionPane.showOptionDialog(None, spinner, "Update Max Speed", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, None, None, None)
-                logger.info("UPDATE SPEED for Trolley: %s to %s - %s", str(trolleyRoster[row].address),
-                            str(spinner.getValue()), ("Confirmed" if __response == 0 else "Cancelled"))
-                if __response == JOptionPane.OK_OPTION: 
-                    trolleyRoster[row].maxSpeed = int(spinner.getValue())
-                    trolleyRoster.dump()
-                    AtsUI.instance.frameRoster.dispose()
-                    AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
-                    AtsUI.instance.frameRoster.setVisible(True)
+            logger.debug("Entering %s.%s", __name__, thisFuncName())
+            logger.info("UPDATE SPEED for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
+            spinner = JSpinner( SpinnerNumberModel( trolleyRoster[row].maxSpeed, 1, 99, 1) )
+            __response = JOptionPane.showOptionDialog(None, spinner, "Update Max Speed", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, None, None, None)
+            logger.info("UPDATE SPEED for Trolley: %s to %s - %s", str(trolleyRoster[row].address),
+                        str(spinner.getValue()), ("Confirmed" if __response == 0 else "Cancelled"))
+            if __response == JOptionPane.OK_OPTION:
+                trolleyRoster[row].maxSpeed = int(spinner.getValue())
+                trolleyRoster.dump()
+                AtsUI.instance.frameRoster.dispose()
+                AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
+                AtsUI.instance.frameRoster.setVisible(True)
 
 
         def updateTrolleyPosition(self, row):
-                logger.info("UPDATE POSITION for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
-                __positionChoices = []
-                for block in layoutMap:
-                    __positionChoices.append(str(block.address)+'-'+block.description)
-                index = __positionChoices.index(str(trolleyRoster[row].currentPosition.address)+'-'+trolleyRoster[row].currentPosition.description)
-                __response = JOptionPane.showInputDialog(None, "Choice", "Update Position", JOptionPane.OK_CANCEL_OPTION, None, __positionChoices, __positionChoices[index])
-                logger.info("UPDATE POSITION Trolley: %s to %s - %s", str(trolleyRoster[row].address),
-                            str(__response), ("Confirmed" if __response else "CANCELLED"))
-                if __response: 
-                    _oldPosition = trolleyRoster[row].currentPosition
-                    logger.info("UPDATE POSITION - Old Position: %s", str(_oldPosition.address))
-                    trolleyRoster[row].currentPosition = layoutMap.findBlockByAddress(int(__response.split('-')[0]))
-                    trolleyRoster[row].nextPosition = trolleyRoster[row].currentPosition.next
-                    trolleyRoster[row].currentPosition.set_blockOccupied()
-                    if not trolleyRoster.findByCurrentBlock(_oldPosition.address):
-                        logger.info("UPDATE POSITION - Clearing old block: %s", str(_oldPosition.address))
-                        _oldPosition.set_blockClear()
-                    trolleyRoster.dump()
-                    layoutMap.printBlocks(trolleyRoster)
-                    layoutMap.printSegments(trolleyRoster)
-                    AtsUI.instance.frameRoster.dispose()
-                    AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
-                    AtsUI.instance.frameRoster.setVisible(True)
+            logger.debug("Entering %s.%s", __name__, thisFuncName())
+            logger.info("UPDATE POSITION for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
+            __positionChoices = []
+            for block in layoutMap:
+                __positionChoices.append(str(block.address)+'-'+block.description)
+            index = __positionChoices.index(str(trolleyRoster[row].currentPosition.address)+'-'+trolleyRoster[row].currentPosition.description)
+            __response = JOptionPane.showInputDialog(None, "Choice", "Update Position", JOptionPane.OK_CANCEL_OPTION, None, __positionChoices, __positionChoices[index])
+            logger.info("UPDATE POSITION Trolley: %s to %s - %s", str(trolleyRoster[row].address),
+                        str(__response), ("Confirmed" if __response else "CANCELLED"))
+            if __response:
+                _oldPosition = trolleyRoster[row].currentPosition
+                logger.info("UPDATE POSITION - Old Position: %s", str(_oldPosition.address))
+                trolleyRoster[row].currentPosition = layoutMap.findBlockByAddress(int(__response.split('-')[0]))
+                trolleyRoster[row].nextPosition = trolleyRoster[row].currentPosition.next
+                trolleyRoster[row].currentPosition.set_blockOccupied()
+                if not trolleyRoster.findByCurrentBlock(_oldPosition.address):
+                    logger.info("UPDATE POSITION - Clearing old block: %s", str(_oldPosition.address))
+                    _oldPosition.set_blockClear()
+                trolleyRoster.dump()
+                layoutMap.printBlocks(trolleyRoster)
+                layoutMap.printSegments(trolleyRoster)
+                AtsUI.instance.frameRoster.dispose()
+                AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
+                AtsUI.instance.frameRoster.setVisible(True)
 
 
         def deleteTrolleyRowFromRoster(self, row):
-                logger.info("DELETE Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
-                __response = self.deleteTrolleyFromRosterConfirmation("Delete Trolley #"+str(trolleyRoster[row].address),"Delete Trolley")
-                logger.info("DELETE Trolley: %s - %s", str(trolleyRoster[row].address),
-                            ("Confirmed" if __response == 0 else "Cancelled"))
-                if __response == 0: 
-                    trolleyRoster.delete(row)
-                    trolleyRoster.dump()
-                    layoutMap.printBlocks(trolleyRoster)
-                    layoutMap.printSegments(trolleyRoster)
-                    # The revalidate and repaint methods don't seem to work so for now we just dispose of the
-                    # original roster frame and recreate it so the new trolley is displayed.
-                    #frameRoster.revalidate() 
-                    #frameRoster.repaint()
-                    AtsUI.instance.frameRoster.dispose()
-                    AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
-                    AtsUI.instance.frameRoster.setVisible(True)
+            logger.debug("Entering %s.%s", __name__, thisFuncName())
+            logger.info("DELETE Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
+            __response = self.deleteTrolleyFromRosterConfirmation("Delete Trolley #"+str(trolleyRoster[row].address),"Delete Trolley")
+            logger.info("DELETE Trolley: %s - %s", str(trolleyRoster[row].address),
+                        ("Confirmed" if __response == 0 else "Cancelled"))
+            if __response == 0:
+                trolleyRoster.delete(row)
+                trolleyRoster.validatePositions(layoutMap)
+                trolleyRoster.dump()
+                layoutMap.printBlocks(trolleyRoster)
+                layoutMap.printSegments(trolleyRoster)
+                # The revalidate and repaint methods don't seem to work so for now we just dispose of the
+                # original roster frame and recreate it so the new trolley is displayed.
+                #frameRoster.revalidate()
+                #frameRoster.repaint()
+                AtsUI.instance.frameRoster.dispose()
+                AtsUI.instance.frameRoster = AtsUI.instance.createEditRosterDataFrame(trolleyRoster)
+                AtsUI.instance.frameRoster.setVisible(True)
 
 
         def deleteTrolleyFromRosterConfirmation(self, message, title):
             result = JOptionPane.showConfirmDialog(None, message,  title, JOptionPane.OK_CANCEL_OPTION)
             return result
-
-
-    def saveFileAsXml(self, fileName, xmlString):
-        logger.debug("Entering saveFileAsXml")
-        try:
-            text_file = open(fileName, "w")
-            text_file.write(self.getFormattedXml(xmlString))
-            text_file.close()
-            logger.info("File Created: %s", fileName)
-        except Exception, e:
-            logger.error(e)
-            logger.error('Unable to save file: %s', fileName)
-
-
-    def getFormattedXml(self, xmlParent):
-        xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
-        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-        prettyXml = text_re.sub('>\g<1></', xmlstr)
-        return prettyXml
 
 
 
