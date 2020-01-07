@@ -1,6 +1,7 @@
 import logging
 import time
 import re
+import sys
 import java.io.File
 import xml.etree.ElementTree as ET
 
@@ -37,6 +38,9 @@ except ImportError:
 
 
 logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
+
 trolleyRoster = TrolleyRoster()
 layoutMap = BlockMap()
 msg = Messenger()
@@ -66,6 +70,7 @@ class AtsUI(object):
         # when the window is closed by clicking on the window close button
         # ------------------------------------------------------------------------------------------
         super(AtsUI, self).__init__()
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         logger.info("Screen Size - Height:%s Width:%s", AtsUI.atsScreenSize.height, AtsUI.atsScreenSize.width)
         self.automationObject=automationObject
         self.w = AtsWinListener()
@@ -103,6 +108,7 @@ class AtsUI(object):
 # start to initialize the display GUI *
 # *************************************
     def whenStopAllButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(True)
         self.tstopButton.setEnabled(False)
         self.tgoButton.setEnabled(True)
@@ -115,6 +121,7 @@ class AtsUI(object):
 
 
     def whenQuitButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.tstopButton.setEnabled(False)
         self.tgoButton.setEnabled(False)
         if self.automationObject.isRunning(): self.automationObject.stop()
@@ -124,6 +131,7 @@ class AtsUI(object):
 
 
     def whenTgoButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(False)
         self.tstopButton.setEnabled(True)
         self.tgoButton.setEnabled(False)
@@ -137,6 +145,7 @@ class AtsUI(object):
 
 
     def whenSimulatorButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         __simulatorState = self.automationObject.isSimulatorEnabled()
         logger.info("Simulator State:"+str(__simulatorState)+"-->"+str(not __simulatorState))
         __simulatorState = not __simulatorState
@@ -148,6 +157,7 @@ class AtsUI(object):
 
 
     def whenLoadLayoutMapButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"])
         if (selectedFile != None):
             logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
@@ -160,6 +170,7 @@ class AtsUI(object):
 
 
     def whenSaveRosterButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"], Mode='SAVE')
         if (selectedFile != None):
             logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
@@ -168,6 +179,7 @@ class AtsUI(object):
 
 
     def whenLoadRosterButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"])
         if (selectedFile != None):
             logger.info("Selected Roster File:%s",selectedFile.getAbsolutePath())
@@ -179,10 +191,12 @@ class AtsUI(object):
 
         
     def whenRemoveButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         return
 
 
     def whenCheckboxClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         msg.setDebugFlag('eTrace',self.eMsgDebugCheckBox.isSelected())
         msg.setDebugFlag('dTrace',self.dMsgDebugCheckBox.isSelected())
         msg.setDebugFlag('iTrace',self.iMsgDebugCheckBox.isSelected())
@@ -193,24 +207,28 @@ class AtsUI(object):
 
 
     def whenEditRosterButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(False)
         self.frameRoster = self.createEditRosterDataFrame(trolleyRoster)
         return
 
 
     def whenEditRosterCloseButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(True)
         self.frameRoster.dispose()
         return
 
 
     def whenCancelAddTrolleyButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.frameAddTrolley.dispose()
         self.frameRoster.setVisible(True)
         return
 
 
     def whenSaveAddTrolleyButtonClicked(self,event):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         __address = int(self.addTrolleyAddress.getText())
         __maxSpeed = int(self.addTrolleyMaxSpeed.getText())
         __block = layoutMap.findBlockByAddress(int(self.addTrolleyStartingPosition.getSelectedItem().split('-')[0]))
@@ -242,6 +260,7 @@ class AtsUI(object):
 
 
     def getUserSelectedFile(self, description, extensionFilterList, Mode='OPEN'):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
         logger.info("User Files Path: %s" + layoutMapFilePath)
         fileChooser = JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory())
@@ -280,6 +299,7 @@ class AtsUI(object):
 
 
     def getAddTrolleyButtonPanel(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         saveButton = self.createButtonWithAction("Save", self.whenSaveAddTrolleyButtonClicked )
         cancelButton = self.createButtonWithAction("Cancel", self.whenCancelAddTrolleyButtonClicked )
         addTrolleyPanel = JPanel()
@@ -291,6 +311,7 @@ class AtsUI(object):
 
 
     def getAddTrolleyDataPanel(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         __panel = JPanel()
         __panel.add(JLabel("Address:"))
         self.addTrolleyAddress = JTextField('',5)
@@ -317,6 +338,7 @@ class AtsUI(object):
 
 
     def createAddToTrolleyRosterFrame(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         frameAddTrolley = jmri.util.JmriJFrame("Add Trolley To Roster")
         frameAddTrolley.setSize(AtsUI.atsRosterWindowWidth,10*AtsUI.atsRowHeight)
         frameAddTrolley.setLayout(GridBagLayout())
@@ -331,6 +353,7 @@ class AtsUI(object):
 
 
     def createEditRosterDataFrame(self,trolleyRoster):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         frameRoster = jmri.util.JmriJFrame("Trolley Roster")
         frameRoster.setSize(AtsUI.atsRosterWindowWidth,(len(trolleyRoster)+3)*AtsUI.atsRowHeight)
         frameRoster.setLayout(BorderLayout())
@@ -367,6 +390,7 @@ class AtsUI(object):
 
 
     def getButtonPanel(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.createButtonPanelButtons()
         butPanel = JPanel()
         butPanel.setLayout(FlowLayout(FlowLayout.LEFT))
@@ -389,6 +413,7 @@ class AtsUI(object):
 
 
     def createButtonPanelButtons(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.quitButton = self.createButtonWithAction("Quit", self.whenQuitButtonClicked)
         self.loadRosterButton = self.createButtonWithAction("Load Roster", self.whenLoadRosterButtonClicked)
         self.loadRosterButton.setEnabled(True)
@@ -406,6 +431,7 @@ class AtsUI(object):
         return
 
     def createInfoPane(self,defaultText, title=None):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         __pane = JTextPane()
         __doc = __pane.getStyledDocument()
         __style = __pane.addStyle("Color Style", None)
@@ -419,6 +445,7 @@ class AtsUI(object):
 
 
     def createScrollPanel(self, DefaultText, title=None, paneHeight=10):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         __panel = JPanel()
         __panel.add(JLabel(title))
         scrollArea = JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
@@ -436,6 +463,7 @@ class AtsUI(object):
 
 
     def createApplicationWindowComponents(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.logLabel1 = JLabel("Logging:")
         self.eMsgDebugCheckBox = JCheckBox("Message Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
         self.eMsgDebugCheckBox.setToolTipText("Display all function entry/exit messages")

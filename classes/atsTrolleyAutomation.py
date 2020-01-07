@@ -6,6 +6,7 @@ from classes.trolleyRoster import TrolleyRoster
 from classes.messengerFacade import Messenger
 
 logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.INFO)
 trolleyRoster = TrolleyRoster()
 msg = Messenger()
 

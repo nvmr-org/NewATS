@@ -12,6 +12,8 @@ from xml.dom import minidom
 from classes.trolley import Trolley
 
 logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
 class TrolleyLogHandler(logging.StreamHandler):
     """ Not yet working - 
@@ -67,6 +69,7 @@ class TrolleyRoster(object):
     def __init__(self, trolleyObjects=None, layoutMap=None, title=None, messageManager=None):
         """Initialize the class"""
         super(TrolleyRoster, self).__init__()
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.title = title
         self.comment = []
         self.SlotIdRequestTimer = datetime.datetime.now()
@@ -131,7 +134,7 @@ class TrolleyRoster(object):
 
 
     def delete(self,ii):
-        if TrolleyRoster.__eTrace : logger.info("Enter TrolleyRoster.delete - "+str(ii))
+        logger.debug("Entering %s.%s - Index:%s", __name__, thisFuncName(),str(ii))
         currentPosition = self._list[ii].currentPosition
         self._list[ii-1].next = self._list[ii].next
         self.__delitem__(ii)
@@ -142,7 +145,7 @@ class TrolleyRoster(object):
 
 
     def insert(self, ii, val):
-        if TrolleyRoster.__eTrace : logger.info("Enter TrolleyRoster.insert")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         # optional: self._acl_check(val)
         self._list.insert(len(self._list), val)
         if self.first is None:
@@ -156,7 +159,7 @@ class TrolleyRoster(object):
 
 
     def append(self, trolley):
-        if TrolleyRoster.__eTrace : logger.debug("Enter trolleyRoster.append")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         # if the block is currently occupied by another trolley set a flag before inserting
         if self.findByAddress(trolley.address) != None:
             logger.error("Error: Attempt to register multiple trolleys to the same address: %s", str(trolley.address))
@@ -201,7 +204,7 @@ class TrolleyRoster(object):
 
 
     def checkForMultipleTrolleysInOneBlock(self):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkForMultipleTrolleysInOneBlock")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if self.findByCurrentBlock(trolley.currentPosition.address).address <> trolley.address:
                 logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
@@ -213,7 +216,7 @@ class TrolleyRoster(object):
 
 
     def destroy(self):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.destroy")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if TrolleyRoster.__dTrace : logger.info('Trolley: %s Free Slot #%s',str(trolley.address),str(trolley.slotId))
             if trolley.slotId:
@@ -224,6 +227,7 @@ class TrolleyRoster(object):
 
 
     def dump(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.dump")
         if self.__outputRosterInfo is None:
             print self.getRosterStatus()
@@ -235,6 +239,7 @@ class TrolleyRoster(object):
 
 
     def getRosterAsXml(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         trolleyXml = ET.Element('trolleyRoster')
         trolleyXml.set('version', '1.0')
         for individualComment in self.comment:
@@ -254,6 +259,7 @@ class TrolleyRoster(object):
 
 
     def getTrolleyAsXml(self, trolley):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         trolleyXml = ET.Element('trolley')
         self.setXmlElementKeyValuePair(trolleyXml, 'address', trolley.address)
         self.setXmlElementKeyValuePair(trolleyXml, 'maxSpeed', trolley.maxSpeed)
@@ -264,7 +270,7 @@ class TrolleyRoster(object):
 
 
     def addXmlTrolleyToRoster(self, trolley):
-        logger.debug("Entering addXmlTrolleyToRoster")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         address = int(trolley.find('address').text)
         maxSpeed = int(trolley.find('maxSpeed').text)
         soundEnabled = (trolley.find('soundEnabled').text == 'True')
@@ -280,8 +286,8 @@ class TrolleyRoster(object):
         newElement.text = str(tagValue)
 
 
-    def getRosterStatus(self):   
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.getRosterStatus")
+    def getRosterStatus(self):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         __rosterStatusInfo = []
         __rosterStatusInfo.append("*********************************************\n")
         __rosterStatusInfo.append(str(datetime.datetime.now())+" - TrolleyRoster\n")
@@ -330,6 +336,7 @@ class TrolleyRoster(object):
         
 
     def findByAddress(self, address):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if trolley.address == address:
                 return trolley
@@ -338,21 +345,22 @@ class TrolleyRoster(object):
 
 
     def findByNextBlock(self, nextPosition):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if trolley.nextPosition.address == nextPosition:
                 return trolley
 
 
     def findByCurrentSegment(self, segment):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.findByCurrentSegment")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if trolley.currentPosition.segment == segment:
-                if TrolleyRoster.__dTrace : logger.info("Trolley %s found in Segment:%s",str(trolley.address),str(segment))
+                logger.debug("Trolley %s found in Segment:%s",str(trolley.address),str(segment))
                 return trolley
 
 
     def checkIfAllTrolleysAreRegistered(self):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkIfAllTrolleysAreRegistered")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if trolley.slotId is None:
                 logger.debug("Not all trolleys are registered")
@@ -362,7 +370,7 @@ class TrolleyRoster(object):
 
 
     def refreshTrolleysSlots(self):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.refreshTrolleysSlots")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if (datetime.datetime.now() - trolley.getThrottleLastMsgTime()).seconds > trolley.THROTTLE_REFRESH_TIME:
                 logger.info("Refreshing trolley:%s Slot:%s", str(trolley.address), str(trolley.slotId))
@@ -370,7 +378,7 @@ class TrolleyRoster(object):
 
 
     def registerOneTrolley(self):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.registerOneTrolley")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         if (datetime.datetime.now() - self.SlotIdRequestTimer).seconds < TrolleyRoster.SECONDS_BETWEEN_SLOT_REQUESTS: return
         for trolley in self._list:
             if trolley.slotId:
@@ -386,7 +394,7 @@ class TrolleyRoster(object):
 
 
     def processAllTrolleyMovement(self):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.processAllTrolleyMovement")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if trolley.getSpeed() == 0:
                 if self.checkIfTrolleyCanMove(trolley):
@@ -414,7 +422,7 @@ class TrolleyRoster(object):
 
 
     def checkIfTrolleyIsOverdue(self, trolley):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkIfTrolleyIsOverdue")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         travelTime = (datetime.datetime.now() - trolley.startTime).total_seconds()
         if (travelTime * trolley.speedFactor) > (trolley.currentPosition.length): # Assume a worst case of 1 inch per sec
             return True
@@ -422,7 +430,7 @@ class TrolleyRoster(object):
 
 
     def checkIfTrolleyShouldStop(self,trolley):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkIfTrolleyShouldStop")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         # If the next segment is occupied return false
         if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
             logger.info("Trolley: %s   Alert: Next segment occupied", trolley.address)
@@ -446,7 +454,7 @@ class TrolleyRoster(object):
 
 
     def checkIfTrolleyCanMove(self, trolley):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.checkIfTrolleyCanMove")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         # If the slotId has not been set return false
         if trolley.slotId is None:
             logger.info("Trolley: %s   Alert: Slot Not Yet Set", trolley.address)
@@ -473,7 +481,7 @@ class TrolleyRoster(object):
 
 
     def __checkRequiredStopTimeMet(self,stopTime, waitTime):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.__checkRequiredStopTimeMet")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         timeSinceStop = (datetime.datetime.now() - stopTime).seconds
         #logger.info("Required Stop Time Met = %s (TimeStopped: %s   waitTime: %s)", timeSinceStop > waitTime, timeSinceStop, waitTime)
         if timeSinceStop > waitTime: return True
@@ -481,7 +489,7 @@ class TrolleyRoster(object):
 
 
     def processBlockEvent(self, sensorId):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.processBlockEvent")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         if not self.__automationObject.isRunning(): return
         # We should only process sensors going HIGH or OCCUPIED
         # A sensor going high indicates that a trolley has moved into that block
@@ -526,20 +534,20 @@ class TrolleyRoster(object):
 
 
     def setAutomationObject(self,automationObject):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.setAutomationObject")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.__automationObject = automationObject
         return
 
 
     def stopAllTrolleys(self):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.stopAllTrolleys")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if trolley.slotId:
                 trolley.eStop()
 
 
     def buildDefaultRoster(self,layoutMap):
-        logger.debug("Entering trolleyRoster.buildDefaultTrolleyRoster")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         # When building a roster you need to provide the layout map so that the starting
         # potisions of the trolleys can be validated. The roster is built prior to sending any
         # requests to JMRI for slots. Slot registration should occur in the handler on a one by one
@@ -554,7 +562,7 @@ class TrolleyRoster(object):
 
 
     def loadRosterFromXmlFile(self, trolleyRosterFile):
-        logger.debug("Entering loadTrolleyRoster")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         logger.info("Loading Roster File: %s", trolleyRosterFile)
         try:
             tree = ET.parse(str(trolleyRosterFile))

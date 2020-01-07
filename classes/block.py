@@ -3,9 +3,12 @@ Created on Nov 18, 2016
 
 @author: ttb
 '''
+import sys
 import logging
 
 logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
 class Block(object):
     """The layout class defines blocks and segments of a layout.  Blocks should be 
@@ -27,7 +30,6 @@ class Block(object):
         description: A verbal description of the block.
         
     Class Properties:
-        blockCount: The total number of blocks
         segmentCount: The total number of segments
     """
     segmentCount = 0
@@ -36,6 +38,7 @@ class Block(object):
         """Return a Layout object whose id is *blockAddress* and *segmentAddress* 
         are negative if not provided.  Blocks should be added in the order they
         will be traversed."""
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         if newSegment == True:
             Block.segmentCount += 1
 
@@ -70,20 +73,22 @@ class Block(object):
 
 
     def set_blockAddress(self, blockAddress=-1):
-        # Set the Layout Block Address.
+        logger.debug("%s.%s: Setting block to address %s to segment %s", __name__, thisFuncName(), self.address)
         self.address = blockAddress
 
 
     def set_segmentAddress(self, segmentAddress=-1):
-        # Set the Layout Segment Address.
+        logger.debug("%s.%s: Setting block %s to segment %s", __name__, thisFuncName(), self.address, self.segment)
         self.segment = segmentAddress
 
 
     def set_blockOccupied(self):
+        logger.debug("%s.%s: Setting block %s to OCCUPIED", __name__, thisFuncName(), self.address)
         self.occupied = True
 
 
     def set_blockClear(self):
+        logger.debug("%s.%s: Setting block %s to CLEAR", __name__, thisFuncName(), self.address)
         self.occupied = False
 
 

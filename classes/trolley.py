@@ -2,12 +2,14 @@
 Created on Nov 18, 2016
 @author: ttb
 '''
+import sys
 import time
 import datetime
 import logging
 
 logger = logging.getLogger("ATS."+__name__)
-
+logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
 class Trolley(object):
     """A trolley object that consists of the following properties:
@@ -30,6 +32,7 @@ class Trolley(object):
         """Return a Trolley object whose id is *id* and starting position and next 
         position are the 0th and 1st blocks if not provided.  Priority should reflect the 
         order of the trolley's on the Layout."""
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.address = address
         isLong = True if self.address > 100 else False
         self.speed = 0              # Current Speed
@@ -97,7 +100,7 @@ class Trolley(object):
     # Set Slot INUSE *
     # ****************
     def setSlotId(self, slotId=None):
-        logger.debug("Enter trolley.setSlotId")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         """Set the Trolley's DCC SlotId."""
         logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
         self.slotId = slotId
@@ -112,7 +115,7 @@ class Trolley(object):
     # Request Slot   *
     # ****************
     def requestSlot(self,slotId):
-        logger.debug("Enter trolley.requestSlot")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         """Request the Trolley's DCC SlotId."""
         logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
         Trolley.msg.requestSlot(slotId)
@@ -124,7 +127,7 @@ class Trolley(object):
     # Free Trolley Slot (Dispatch Trolleys) *
     # ***************************************
     def freeSlot(self) :
-        logger.debug("Enter trolley.freeSlot")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.setSpeed(0) #stop trolley
         #self.slotRequestSent=False
         time.sleep(0.5) #wait 500 milliseconds
@@ -139,7 +142,7 @@ class Trolley(object):
     # Emergency stop trolley *
     # ************************
     def eStop(self) :
-        logger.debug("Enter trolley.eStop")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         #Trolley.msg.eStop(self.slotId)
         self.setSpeed(0)
         self.stopTime = datetime.datetime.now()
@@ -148,7 +151,7 @@ class Trolley(object):
 
     # *******************************************************
     def slowStop(self):
-        logger.debug("Enter trolley.slowStop")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.setSpeed(int(self.maxSpeed * 0.75)) #set speed to 50% of max
         time.sleep(0.25) #wait 500 milliseconds
         self.setSpeed(int(self.maxSpeed * 0.5)) #set speed to 50% of max
@@ -165,7 +168,7 @@ class Trolley(object):
 
     # *******************************************************
     def fullSpeed(self):
-        logger.debug("Enter trolley.fullSpeed")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.ringBell()
         self.setSpeed(self.maxSpeed)
         return
@@ -175,7 +178,7 @@ class Trolley(object):
     # Ring the trolley bell before start and stop *
     # *********************************************
     def ringBell(self) :
-        logger.debug("Enter trolley.ringBell")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         if self.soundEnabled: Trolley.msg.ringBell(self.slotId)
         return
 
@@ -184,7 +187,7 @@ class Trolley(object):
     # Turn light OFF *
     # **************************
     def lightOff(self) :
-        logger.debug("Enter trolley.lightOff")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         Trolley.msg.lightOff(self.slotId)
         return
 
@@ -193,7 +196,7 @@ class Trolley(object):
     # Turn light ON *
     # **************************
     def lightOn(self) :
-        logger.debug("Enter trolley.lightOn")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         Trolley.msg.lightOn(self.slotId)
         return
 
@@ -202,7 +205,7 @@ class Trolley(object):
     # Blink light and leave ON *
     # **************************
     def blinkOn(self) :
-        logger.debug("Enter trolley.blinkOn")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         logger.debug("Blink Lights for Trolley: %s", self.address)
         count = 3
         while (count > 0) :
@@ -215,7 +218,7 @@ class Trolley(object):
 
 
     def setCurrentPosition(self, currentPosition=-1):
-        logger.debug("Enter trolley.setCurrentPosition")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         """Set the Trolley's current position. Note that by setting the current position
         we are implicitly setting the next position"""
         self.currentPosition = currentPosition
@@ -225,7 +228,7 @@ class Trolley(object):
 
     # *******************************************************
     def setSpeed(self, speed=0):
-        logger.debug("Enter trolley.setSpeed")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         if speed == 0 and self.speed > 0:
             logger.debug("Trolley %s - Updating Stop Time")
             self.stopTime = datetime.datetime.now() # Update the stop time if stopping
@@ -240,6 +243,7 @@ class Trolley(object):
 
 
     def updateSpeedFactor(self, blockMap):
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         travelTime = (datetime.datetime.now() - self.startTime).total_seconds()
         if travelTime > 1:
             realSpeedInBlock = self.currentPosition.length / travelTime
@@ -253,7 +257,7 @@ class Trolley(object):
 
 
     def advance(self, trolleyRoster, blockMap):
-        logger.debug("Enter trolley.advance")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         logger.debug("Advancing Trolley: %s", self.address)
         lastBlock = self.currentPosition
         self.updateSpeedFactor(blockMap)
@@ -320,5 +324,5 @@ class Trolley(object):
 
 
     def setThrottleLastMsgTime(self):
-        logger.debug("Enter trolley.setThrottleLastMsgTime")
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.throttleLastMsgTime=datetime.datetime.now()
