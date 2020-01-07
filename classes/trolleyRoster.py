@@ -124,12 +124,23 @@ class TrolleyRoster(object):
         return str(self._list)
 
 
-    def clearRoster(self):
+    def getIndex(self,trolley):
+        return self._list.index(trolley)
+
+
+    def reset(self):
+        self.title = None
+        self.comment = []
         for trolley in self._list:
             trolley.currentPosition.set_blockClear()
+            try:
+                trolley.freeSlot()
+            except:
+                pass
         self._list = list()
         self.first = None
         self.last = None
+        self.multipleDetectedInBlock = False
         return
 
 
@@ -138,10 +149,6 @@ class TrolleyRoster(object):
         currentPosition = self._list[ii].currentPosition
         self._list[ii-1].next = self._list[ii].next
         self.__delitem__(ii)
-        otherTrolleyInBlock = self.findByCurrentBlock(currentPosition.address)
-        if otherTrolleyInBlock is None:
-            if TrolleyRoster.__dTrace : logger.info("No other trolleys in block - setting clear")
-            currentPosition.set_blockClear()
 
 
     def insert(self, ii, val):
@@ -571,7 +578,7 @@ class TrolleyRoster(object):
             if roster is None:
                 raise Exception('File does not contain a roster.')
             logger.info("Number of Trolleys: %s", len(roster))
-            self.clearRoster()
+            self.reset()
             for trolley in roster.iter(tag = 'trolley'):
                 self.addXmlTrolleyToRoster(trolley)
         except Exception, e:
@@ -581,11 +588,16 @@ class TrolleyRoster(object):
 
 
     def validatePositions(self, blockMap):
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.validatePositions")
-        for trolley in self._list:
-            if blockMap.findBlockByAddress(trolley.currentPosition.address) is None:
-                logger.warning('Warning: Trolleys assigned to invalid block: %s', trolley.currentPosition.address)
-                logger.warning('Warning: Trolleys will be reassigned to first block: %s', blockMap.first.address)
-                trolley.currentPosition = blockMap.first
-                trolley.nextPosition = blockMap.first.next
+        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        validationComplete = False
+        while not validationComplete:
+            for trolley in self._list:
+                logger.debug("Checking trolley:%s", trolley.address)
+                if blockMap.findBlockByAddress(trolley.currentPosition.address) is None:
+                    logger.warning('Warning: Trolleys %s assigned to invalid block: %s', trolley.address, trolley.currentPosition.address)
+                    logger.warning('Warning: Trolleys %s will be removed', trolley.address)
+                    self.delete(self.getIndex(trolley))
+                    break
+                trolley.currentPosition.set_blockOccupied()
+                if trolley == self._list[-1]: validationComplete = True
         return
