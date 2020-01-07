@@ -85,10 +85,13 @@ class BlockMap(object):
         return str(self._blockmap)
 
 
-    def clearBlockMap(self):
+    def reset(self):
+        self.title = None
+        self.comment = []
         self._blockmap = list()
         self.first = None
         self.last = None
+        Block.segmentCount = 0
         return
 
 
@@ -385,18 +388,15 @@ class BlockMap(object):
         try:
             logger.info("Loading Layout Tree")
             tree = ET.parse(str(layoutMapFile))
-            logger.info("Setting Title")
-            self.title =  tree.find('title')
             blocks = tree.find('blocks')
             if blocks is None:
                 raise Exception('File does not contain a layout map.')
             logger.info("Number of BLocks: %s", len(blocks))
-            self.clearBlockMap()
+            self.reset()
+            self.title =  tree.find('title')
             for block in blocks.iter(tag = 'block'):
                 self.addXmlBlockToLayoutMap(block)
         except Exception, e:
             logger.warning(e)
             logger.warning('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
-            #BlockMap.buildDefaultLayoutMap()
-            #layoutXml = self.getMapAsXml()
-            #saveFileAsXml(layoutMapFile, layoutXml)
+
