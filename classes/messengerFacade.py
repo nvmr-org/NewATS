@@ -147,11 +147,11 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         snrAddr = sensorId -1
-        in1 = (snrAddr & 0x7F) >> 1 # lower 7 address bits left shifted once
+        in1 = (snrAddr & 0xFF) >> 1 # lower 7 address bits left shifted once
         b2I = (snrAddr % 2) << 5 # remainder odd/even
         b2XL = 0x50 # X = 1 and L = 1
         b2XIL = b2I | b2XL
-        in2 = b2XIL + (snrAddr >> 7) # XIL plus upper 4 address bits
+        in2 = b2XIL + (snrAddr >> 8) # XIL plus upper 4 address bits
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_INPUT_REP #0xB2 OPC_INPUT_REP
         ARGS[1] = in1
