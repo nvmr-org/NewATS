@@ -30,15 +30,12 @@ class Block(object):
         blockCount: The total number of blocks
         segmentCount: The total number of segments
     """
-    blockCount = 0
     segmentCount = 0
 
     def __init__(self, blockAddress=-1, newSegment=False, stopRequired=True, waitTime=15, blockOccupied=False, length=10, description=None):
         """Return a Layout object whose id is *blockAddress* and *segmentAddress* 
         are negative if not provided.  Blocks should be added in the order they
         will be traversed."""
-        self.index = Block.blockCount
-        Block.blockCount += 1
         if newSegment == True:
             Block.segmentCount += 1
 
@@ -51,8 +48,7 @@ class Block(object):
         self.length = length
         self.description = description
         self.next = None
-        logger.info("Block Added - Id:" +str(self.index)+
-                    " Address:"+str(self.address)+
+        logger.info("Block Added - Address:"+str(self.address)+
                     " Segment:"+str(self.segment)+
                     " Occupied:"+str(self.occupied)+
                     " StopReqd:"+str(self.stopRequired)+
@@ -85,10 +81,6 @@ class Block(object):
 
     def get_segmentAddress(self):
         return self.segment
-
-
-    def get_layoutLength(self):
-        return Block.blockCount
 
 
     def isBlockOccupied(self):

@@ -22,9 +22,9 @@ class Trolley(object):
     """
     #global layoutLength
 
-    deviceId = 0
     THROTTLE_REFRESH_TIME = 30 # Seconds between status updates for throttles on a slot
     THROTTLE_WAIT_TIME = 30
+    MOMENTUM_DELAY_SEC = 2 # Seconds to allows for momentum to be considered still moving
 
     msg = Messenger()
 
@@ -32,8 +32,6 @@ class Trolley(object):
         """Return a Trolley object whose id is *id* and starting position and next 
         position are the 0th and 1st blocks if not provided.  Priority should reflect the 
         order of the trolley's on the Layout."""
-        self.priority = self.deviceId
-        Trolley.deviceId += 1
         self.address = address
         isLong = True if self.address > 100 else False
         self.speed = 0
@@ -53,6 +51,7 @@ class Trolley(object):
         self.stopTime = datetime.datetime.now()
         self.startTime = None
         self.lastAlertTime = datetime.datetime.now()
+        self.lastAudibleAlertTime = datetime.datetime.now()
         self.slotId = None
         self.slotRequestSent = None
         #print "Going to add throttle for address: ", self.address, "isLong:", isLong
@@ -111,7 +110,6 @@ class Trolley(object):
         logger.debug("Enter trolley.requestSlot")
         """Request the Trolley's DCC SlotId."""
         logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
-        #self.slotId = deviceID
         Trolley.msg.requestSlot(slotId)
         self.setThrottleLastMsgTime()
         self.setSpeed(0)
@@ -261,6 +259,16 @@ class Trolley(object):
 #         if self.nextPosition >= layoutLength:
 #             self.nextPosition = 0
 #         print "MOVE:",self.address,self.currentPosition,self.nextPosition
+
+
+    def isMoving(self):
+        return self.speed > 0
+
+
+    def wasMoving(self):
+        speedIsZero = (self.speed == 0)
+        stoppedLessThanMomentumTime = (((datetime.datetime.now() - self.stopTime()).seconds) < Trolley.MOMENTUM_DELAY_SEC)
+        return ( speedIsZero and stoppedLessThanMomentumTime )
 
 
     def getAddress(self):

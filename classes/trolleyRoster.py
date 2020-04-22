@@ -57,6 +57,7 @@ class TrolleyRoster(object):
     __outputRosterInfo = None
     __outputMessageInfo = None
     __layoutMap = None
+    SECONDS_BETWEEN_CONSOLE_ALERTS = 2
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 15
     SECONDS_BETWEEN_SLOT_REQUESTS = 10
 
@@ -232,15 +233,13 @@ class TrolleyRoster(object):
         __rosterStatusInfo.append("Roster Size: "+str(self.size())+"\n")
         #print "MultipleState: ",self.multipleDetectedInBlock
         for trolley in self._list:
-            __rosterStatusInfo.append("Id:"+str(trolley.priority)+
-                          " Address:"+str(trolley.address)+
+            __rosterStatusInfo.append("Address:"+str(trolley.address)+
                           " SlotID:"+str(trolley.slotId)+
                           " Speed:"+str(trolley.speed)+
                           " Current Position:"+str(trolley.currentPosition.address)+
                           " Next Position:"+str(trolley.nextPosition.address)+
                           " Next Trolley:"+str(self.getNextTrolley(trolley).address)+"\n")
-            logger.debug("Id:"+str(trolley.priority)+
-                         " Addr:"+str(trolley.address)+
+            logger.debug("Addr:"+str(trolley.address)+
                          " SlotId:"+str(trolley.slotId)+
                          " Spd:"+str(trolley.speed)+
                          " Cur Pos:"+str(trolley.currentPosition.address)+
@@ -342,12 +341,14 @@ class TrolleyRoster(object):
                     trolley.slowStop()
                     self.dump()
                 elif self.checkIfTrolleyIsOverdue(trolley):
-                    logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s - %s",
+                    if (datetime.datetime.now() - trolley.lastAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_CONSOLE_ALERTS:
+                        logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s - %s",
                             trolley.address, trolley.currentPosition.address, trolley.currentPosition.description)
-                    if (datetime.datetime.now() - trolley.lastAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
+                        trolley.lastAlertTime = datetime.datetime.now()
+                    if (datetime.datetime.now() - trolley.lastAudibleAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
                         audible.announceMessage("Trolley: "+str(trolley.address)+" Alert: Trolley is Overdue. "+
                                                 "Last seen in "+trolley.currentPosition.description)
-                        trolley.lastAlertTime = datetime.datetime.now()
+                        trolley.lastAudibleAlertTime = datetime.datetime.now()
 
 
     def checkIfTrolleyIsOverdue(self, trolley):
@@ -434,7 +435,7 @@ class TrolleyRoster(object):
             # already in a segment vs a new one entering the segment.
             eventSegmentId = TrolleyRoster.__layoutMap.findSegmentByAddress(sensorId)
             trolley = self.findByCurrentSegment(eventSegmentId)
-            if trolley and trolley.getSpeed() > 0:
+            if trolley and (trolley.isMoving() or trolley.wasMoving()):
                 # If we get here, this trolley was associated with this event
                 logger.info('Trolley %s found in Segment: %s  for Block: %s',trolley.address , eventSegmentId, sensorId)
                 # Move the trolley into the next block
@@ -446,7 +447,7 @@ class TrolleyRoster(object):
                         trolley.slowStop()
             else:
                 trolley = self.findByNextBlock(sensorId)
-                if trolley and trolley.getSpeed() > 0 :
+                if trolley and (trolley.isMoving() or trolley.wasMoving()):
                     # If we get here, this trolley was associated with this event
                     logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
                     # Move the trolley into the next block

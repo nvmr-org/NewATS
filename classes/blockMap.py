@@ -122,7 +122,6 @@ class BlockMap(object):
         m = max(self, key=lambda x: x.segment)
         self.__outputBlockDump.append("Number of Segments: "+str(m.segment)+"\n")
         for block in self._blockmap:
-            self.__outputBlockDump.append("Id:"+str(block.index))
             self.__outputBlockDump.append(" Address:"+str(block.address))
             self.__outputBlockDump.append(" Segment:"+str(block.segment))
             self.__outputBlockDump.append(" Occupied:"+str(block.occupied))
