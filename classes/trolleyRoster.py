@@ -133,10 +133,10 @@ class TrolleyRoster(object):
         self.comment = []
         for trolley in self._list:
             trolley.currentPosition.set_blockClear()
-            try:
-                trolley.freeSlot()
-            except:
-                pass
+            #try:
+            #    trolley.freeSlot()
+            #except:
+            #    pass
         self._list = list()
         self.first = None
         self.last = None
