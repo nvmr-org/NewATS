@@ -64,6 +64,14 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         return TrolleyAutomation.simulatorEnabled
 
 
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+
+
+    def getDebugLevel(self):
+        return logger.level
+
+
     def setSimulatorState(self, state):
         TrolleyAutomation.simulatorEnabled = state
 

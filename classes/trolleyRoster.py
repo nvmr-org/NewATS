@@ -176,10 +176,12 @@ class TrolleyRoster(object):
         return
 
 
-    def setDebugFlag(self,debugFlag,state):
-        if debugFlag.lower() == 'etrace' : TrolleyRoster.__eTrace = state
-        if debugFlag.lower() == 'dtrace' : TrolleyRoster.__dTrace = state
-        return
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+
+
+    def getDebugLevel(self):
+        return logger.level
 
 
     def setRosterInfoOutput(self,output=None):

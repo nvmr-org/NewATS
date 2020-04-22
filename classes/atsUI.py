@@ -201,12 +201,18 @@ class AtsUI(object):
 
     def whenCheckboxClicked(self,event):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
-        msg.setDebugFlag('eTrace',self.eMsgDebugCheckBox.isSelected())
-        msg.setDebugFlag('dTrace',self.dMsgDebugCheckBox.isSelected())
-        msg.setDebugFlag('iTrace',self.iMsgDebugCheckBox.isSelected())
-        msg.setDebugFlag('oTrace',self.oMsgDebugCheckBox.isSelected())
-        trolleyRoster.setDebugFlag('eTrace',self.eRstrDebugCheckBox.isSelected())
-        trolleyRoster.setDebugFlag('dTrace',self.dRstrDebugCheckBox.isSelected())
+        self.setDebugFlag(self.UiDebugCheckBox.isSelected())
+        layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
+        msg.setDebugFlag(self.MsgDebugCheckBox.isSelected())
+        trolleyRoster.setDebugFlag(self.RosterDebugCheckBox.isSelected())
+        layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
+        trolleyRoster.setDebugFlag(self.RosterDebugCheckBox.isSelected())
+        logger.info("Debug Levels - UI:%s Roster:%s BlockMap:%s Automation:%s Messages:%s",
+                    "DEBUG" if self.getDebugLevel()==logging.DEBUG else "INFO",
+                    "DEBUG" if self.RosterDebugCheckBox.isSelected() else "INFO",
+                    "DEBUG" if self.BlockMapDebugCheckBox.isSelected() else "INFO",
+                    "DEBUG" if self.AutoDebugCheckBox.isSelected() else "INFO",
+                    "DEBUG" if self.MsgDebugCheckBox.isSelected() else "INFO")
         return
 
 
@@ -294,6 +300,14 @@ class AtsUI(object):
         weighty = 0.0
         gbc = GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill, insets, ipadx, ipady)
         container.add(component, gbc)
+
+
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+
+
+    def getDebugLevel(self):
+        return logger.level
 
 
     def setRosterColumnProperties(self, table, column, width=5, resizable=False):
@@ -469,19 +483,27 @@ class AtsUI(object):
     def createLoggingComponents(self):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.logLabel1 = JLabel("Logging:")
-        self.eMsgDebugCheckBox = JCheckBox("Message Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
-        self.eMsgDebugCheckBox.setToolTipText("Display all function entry/exit messages")
-        self.dMsgDebugCheckBox = JCheckBox("Message Details", actionPerformed = self.whenCheckboxClicked)
-        self.dMsgDebugCheckBox.setToolTipText("Display detail debugging for messages")
-        self.iMsgDebugCheckBox = JCheckBox("Incoming Messages", actionPerformed = self.whenCheckboxClicked)
-        self.iMsgDebugCheckBox.setToolTipText("Display debugging for incoming loconet messages")
-        self.oMsgDebugCheckBox = JCheckBox("Outgoing Messages", actionPerformed = self.whenCheckboxClicked)
-        self.oMsgDebugCheckBox.setToolTipText("Display debugging for outgoing loconet messages")
-        self.eRstrDebugCheckBox = JCheckBox("TrolleyRoster Function Entry/Exit", actionPerformed = self.whenCheckboxClicked)
-        self.eRstrDebugCheckBox.setToolTipText("Display all Trolley Roster function entry/exit messages")
-        self.dRstrDebugCheckBox = JCheckBox("TrolleyRoster Details", actionPerformed = self.whenCheckboxClicked)
-        self.dRstrDebugCheckBox.setToolTipText("Display detail debugging for TrolleyRoster")
-        self.dRstrDebugCheckBox.setEnabled(False)
+        self.UiDebugCheckBox = JCheckBox("UI", actionPerformed = self.whenCheckboxClicked)
+        self.UiDebugCheckBox.setToolTipText("Display all UI debug messages")
+        self.UiDebugCheckBox.setSelected(self.getDebugLevel()==logging.DEBUG)
+        self.BlockDebugCheckBox = JCheckBox("Block", actionPerformed = self.whenCheckboxClicked)
+        self.BlockDebugCheckBox.setToolTipText("Display Block debug messages")
+        #self.BlockDebugCheckBox.setSelected(True)
+        self.BlockMapDebugCheckBox = JCheckBox("BlockMap", actionPerformed = self.whenCheckboxClicked)
+        self.BlockMapDebugCheckBox.setToolTipText("Display BlockMap debug messages")
+        self.BlockMapDebugCheckBox.setSelected(layoutMap.getDebugLevel()==logging.DEBUG)
+        self.TrolleyDebugCheckBox = JCheckBox("Trolley", actionPerformed = self.whenCheckboxClicked)
+        self.TrolleyDebugCheckBox.setToolTipText("Display debugging for outgoing loconet messages")
+        #self.TrolleyDebugCheckBox.setSelected(True)
+        self.RosterDebugCheckBox = JCheckBox("TrolleyRoster", actionPerformed = self.whenCheckboxClicked)
+        self.RosterDebugCheckBox.setToolTipText("Display all roster debug messages")
+        self.RosterDebugCheckBox.setSelected(trolleyRoster.getDebugLevel()==logging.DEBUG)
+        self.AutoDebugCheckBox = JCheckBox("Automation", actionPerformed = self.whenCheckboxClicked)
+        self.AutoDebugCheckBox.setToolTipText("Display automation debug messages")
+        self.AutoDebugCheckBox.setSelected(self.automationObject.getDebugLevel()==logging.DEBUG)
+        self.MsgDebugCheckBox = JCheckBox("Messaging", actionPerformed = self.whenCheckboxClicked)
+        self.MsgDebugCheckBox.setToolTipText("Display messaging debug messages")
+        self.MsgDebugCheckBox.setSelected(msg.getDebugLevel()==logging.DEBUG)
         self.snChgCheckBox = JCheckBox("Show Sn Change")
         self.snChgCheckBox.setToolTipText("Display when a sensor state changes")
         self.snChgCheckBox.setEnabled(False)
@@ -501,15 +523,16 @@ class AtsUI(object):
 
         self.ckBoxPanel2 = JPanel()
         self.ckBoxPanel2.setLayout(FlowLayout(FlowLayout.LEFT))
-        self.ckBoxPanel2.add(self.eMsgDebugCheckBox)
-        self.ckBoxPanel2.add(self.dMsgDebugCheckBox)
-        self.ckBoxPanel2.add(self.iMsgDebugCheckBox)
-        self.ckBoxPanel2.add(self.oMsgDebugCheckBox)
+        self.ckBoxPanel2.add(self.UiDebugCheckBox)
+        self.ckBoxPanel2.add(self.BlockMapDebugCheckBox)
+        self.ckBoxPanel2.add(self.RosterDebugCheckBox)
+        self.ckBoxPanel2.add(self.AutoDebugCheckBox)
+        self.ckBoxPanel2.add(self.MsgDebugCheckBox)
 
         self.ckBoxPanel3 = JPanel()
         self.ckBoxPanel3.setLayout(FlowLayout(FlowLayout.LEFT))
-        self.ckBoxPanel3.add(self.eRstrDebugCheckBox)
-        self.ckBoxPanel3.add(self.dRstrDebugCheckBox)
+        #self.ckBoxPanel3.add(self.eRstrDebugCheckBox)
+        #self.ckBoxPanel3.add(self.dRstrDebugCheckBox)
         self.ckBoxPanel3.add(self.snSpkChgCheckBox)
         self.ckBoxPanel3.add(self.msgSpkCheckBox)
 

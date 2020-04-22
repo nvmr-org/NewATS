@@ -17,15 +17,6 @@ Based on ATS.py written by
 '''
 
 import logging
-import re
-import xml.etree.ElementTree as ET
-from classes.trolleyRoster import TrolleyRoster
-from classes.blockMap import BlockMap
-from classes.announcer import MessageAnnouncer
-from classes.messengerFacade import Messenger
-from classes.atsTrolleyAutomation import TrolleyAutomation
-from classes.atsUI import AtsUI
-from xml.dom import minidom
 
 print "ATS Start"
 
@@ -48,7 +39,7 @@ APPLICATION_NAME = "Automatic Trolley Sequencer"
 enableSimulator = False
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
-#logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 logger = logging.getLogger("ATS")
 if not len(logger.handlers):
     fileHandler = logging.FileHandler("{0}/{1}.log".format(jmriFileUtilSupport.getUserFilesPath(),'NewATS'))
@@ -59,7 +50,14 @@ if not len(logger.handlers):
     consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     logger.addHandler(fileHandler)
     logger.addHandler(consoleHandler)
-    logger.setLevel(logging.INFO)
+
+
+from classes.trolleyRoster import TrolleyRoster
+from classes.blockMap import BlockMap
+from classes.announcer import MessageAnnouncer
+from classes.messengerFacade import Messenger
+from classes.atsTrolleyAutomation import TrolleyAutomation
+from classes.atsUI import AtsUI
 
 msg = Messenger()
 msg.createListener()
@@ -96,7 +94,7 @@ trolleyRoster.setMessageInfoOutput(output=atsUi.messageInfoPanel)
 logger.info("Loading Layout Map")
 layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
 layoutMapFile = layoutMapFilePath + LAYOUT_MAP_FILE_NAME
-logger.info("User Files Path: %s" + layoutMapFilePath)
+logger.info("User Files Path: %s", layoutMapFilePath)
 logger.info('Layout Map File: %s', layoutMapFile)
 layoutMap.loadLayoutMapFromXml(layoutMapFile)
 layoutMap.dump()

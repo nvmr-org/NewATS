@@ -116,6 +116,14 @@ class BlockMap(object):
         self.__output=output
 
 
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+
+
+    def getDebugLevel(self):
+        return logger.level
+
+
     def setBlockInfoOutput(self,output=None):
         self.__outputBlockInfo=output
 

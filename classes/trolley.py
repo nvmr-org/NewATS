@@ -217,6 +217,14 @@ class Trolley(object):
             return
 
 
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+
+
+    def getDebugLevel(self):
+        return logger.level
+
+
     def setCurrentPosition(self, currentPosition=-1):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         """Set the Trolley's current position. Note that by setting the current position

@@ -71,6 +71,13 @@ class Block(object):
                     " Len:"+str(self.length)+
                     " Desc:"+str(self.description))
 
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+
+
+    def getDebugLevel(self):
+        return logger.level
+
 
     def set_blockAddress(self, blockAddress=-1):
         logger.debug("%s.%s: Setting block to address %s to segment %s", __name__, thisFuncName(), self.address)

@@ -90,12 +90,12 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         return
 
 
-    def setDebugFlag(self,debugFlag,state):
-        if debugFlag.lower() == 'etrace' : Messenger.__eTrace = state
-        if debugFlag.lower() == 'dtrace' : Messenger.__dTrace = state
-        if debugFlag.lower() == 'itrace' : Messenger.__iTrace = state
-        if debugFlag.lower() == 'otrace' : Messenger.__oTrace = state
-        return
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+
+
+    def getDebugLevel(self):
+        return logger.level
 
 
     def delayForMsec(self, delayInMsec=1000):
