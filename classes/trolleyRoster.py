@@ -144,6 +144,10 @@ class TrolleyRoster(object):
         return
 
 
+    def count(self, iterable):
+        return sum(1 for _ in iterable)
+
+
     def delete(self,ii):
         logger.debug("Entering %s.%s - Index:%s", __name__, thisFuncName(),str(ii))
         currentPosition = self._list[ii].currentPosition
@@ -355,9 +359,20 @@ class TrolleyRoster(object):
 
     def findByNextBlock(self, nextPosition):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
+        numScheduledForBlock = self.count(t for t in self._list if t.nextPosition.address == nextPosition)
+        segmentForNextPosition = TrolleyRoster.__layoutMap.findSegmentByAddress(nextPosition)
+        logger.debug("Number of Trolleys Scheduled for Block  %s: %s", str(nextPosition), str(numScheduledForBlock) )
+        trolleysScheduledForBlock = []
         for trolley in self._list:
             if trolley.nextPosition.address == nextPosition:
-                return trolley
+                logger.debug("Trolley: %s is scheduled for Block: %s", trolley.address, nextPosition)
+                if numScheduledForBlock == 1: return trolley
+                trolleysScheduledForBlock.append(trolley)
+                if trolley.currentPosition.segment == segmentForNextPosition:
+                    logger.debug("Trolley: %s is currently in Segment: %s and will get priority", trolley.address, segmentForNextPosition)
+                    return trolley
+        logger.debug("Multiple Trolleys scheduled for Block:%s - Priority given to Trolley: %s", nextPosition, trolleysScheduledForBlock[0].address)
+        return trolleysScheduledForBlock[0]
 
 
     def findByCurrentSegment(self, segment):
