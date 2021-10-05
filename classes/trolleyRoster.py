@@ -397,14 +397,14 @@ class TrolleyRoster(object):
     def refreshTrolleysSlots(self):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
-            if (datetime.datetime.now() - trolley.getThrottleLastMsgTime()).seconds > trolley.THROTTLE_REFRESH_TIME:
-                logger.info("Refreshing trolley:%s Slot:%s", str(trolley.address), str(trolley.slotId))
+            if (datetime.datetime.now() - trolley.getThrottleLastMsgTime()).total_seconds() > trolley.THROTTLE_REFRESH_TIME:
+                logger.debug("Refreshing trolley:%s Slot:%s", str(trolley.address), str(trolley.slotId))
                 trolley.setSpeed(trolley.speed) # send a speed update message to keep throttle fresh
 
 
     def registerOneTrolley(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
         if (datetime.datetime.now() - self.SlotIdRequestTimer).seconds < TrolleyRoster.SECONDS_BETWEEN_SLOT_REQUESTS: return
+        if (datetime.datetime.now() - self.SlotIdRequestTimer).total_seconds() < TrolleyRoster.SECONDS_BETWEEN_SLOT_REQUESTS: return
         for trolley in self._list:
             if trolley.slotId:
                 self.dump()
@@ -424,23 +424,23 @@ class TrolleyRoster(object):
             if trolley.getSpeed() == 0:
                 if self.checkIfTrolleyCanMove(trolley):
                     logger.info("Trolley: %s   Status: Not Moving (%s seconds) Action: Starting  Block: %s - %s",
-                            trolley.address, (datetime.datetime.now() - trolley.stopTime).seconds, 
+                            trolley.address, (datetime.datetime.now() - trolley.stopTime).total_seconds(),
                             trolley.currentPosition.address, trolley.currentPosition.description)
                     trolley.fullSpeed()
                     self.dump()
             else:
                 if self.checkIfTrolleyShouldStop(trolley):
                     logger.info("Trolley: %s   Status: Is Running (%s seconds) Action: Stopping  Block: %s - %s",
-                            trolley.address, (datetime.datetime.now() - trolley.startTime).seconds, 
+                            trolley.address, (datetime.datetime.now() - trolley.startTime).total_seconds(),
                             trolley.currentPosition.address, trolley.currentPosition.description)
                     trolley.slowStop()
                     self.dump()
                 elif self.checkIfTrolleyIsOverdue(trolley):
-                    if (datetime.datetime.now() - trolley.lastAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_CONSOLE_ALERTS:
+                    if (datetime.datetime.now() - trolley.lastAlertTime).total_seconds() > TrolleyRoster.SECONDS_BETWEEN_CONSOLE_ALERTS:
                         logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s - %s",
                             trolley.address, trolley.currentPosition.address, trolley.currentPosition.description)
                         trolley.lastAlertTime = datetime.datetime.now()
-                    if (datetime.datetime.now() - trolley.lastAudibleAlertTime).seconds > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
+                    if (datetime.datetime.now() - trolley.lastAudibleAlertTime).total_seconds() > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
                         audible.announceMessage("Trolley: "+str(trolley.address)+" Alert: Trolley is Overdue. "+
                                                 "Last seen in "+trolley.currentPosition.description)
                         trolley.lastAudibleAlertTime = datetime.datetime.now()
@@ -448,8 +448,11 @@ class TrolleyRoster(object):
 
     def checkIfTrolleyIsOverdue(self, trolley):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
-        travelTime = (datetime.datetime.now() - trolley.startTime).total_seconds()
-        if (travelTime * trolley.speedFactor) > (trolley.currentPosition.length): # Assume a worst case of 1 inch per sec
+        travelTime = (datetime.datetime.now() - trolley.startTime).total_seconds() - self.SECONDS_BEFORE_OVERDUE
+        logger.debug("Trolley %s: TravelTime:%s SpeedFactor:%s Mult:%s, Length:%s",
+                     trolley.address, travelTime, trolley.speedFactor, travelTime * trolley.speedFactor,
+                     trolley.currentPosition.length)
+        if (travelTime * trolley.speedFactor) > (trolley.currentPosition.length):
             return True
         return False
 
@@ -507,7 +510,7 @@ class TrolleyRoster(object):
 
     def __checkRequiredStopTimeMet(self,stopTime, waitTime):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
-        timeSinceStop = (datetime.datetime.now() - stopTime).seconds
+        timeSinceStop = (datetime.datetime.now() - stopTime).total_seconds()
         #logger.info("Required Stop Time Met = %s (TimeStopped: %s   waitTime: %s)", timeSinceStop > waitTime, timeSinceStop, waitTime)
         if timeSinceStop > waitTime: return True
         return False
