@@ -152,14 +152,15 @@ class Trolley(object):
     # *******************************************************
     def slowStop(self):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
-        self.setSpeed(int(self.maxSpeed * 0.75)) #set speed to 50% of max
-        time.sleep(0.25) #wait 500 milliseconds
-        self.setSpeed(int(self.maxSpeed * 0.5)) #set speed to 50% of max
-        time.sleep(0.25) #wait 500 milliseconds
-        self.setSpeed(int(self.maxSpeed * 0.25)) #set speed to 25% of max
-        time.sleep(0.25) #wait 500 milliseconds
-        self.setSpeed(int(self.maxSpeed * 0.0)) #set speed to 25% of max
-        time.sleep(0.25) #wait half a second after after stop, then ring bell
+        #self.setSpeed(int(self.maxSpeed * 0.75)) #set speed to 50% of max
+        #time.sleep(0.25) #wait 500 milliseconds
+        #self.setSpeed(int(self.maxSpeed * 0.5)) #set speed to 50% of max
+        #time.sleep(0.25) #wait 500 milliseconds
+        #self.setSpeed(int(self.maxSpeed * 0.25)) #set speed to 25% of max
+        #time.sleep(0.25) #wait 500 milliseconds
+        #self.setSpeed(int(self.maxSpeed * 0.0)) #set speed to 25% of max
+        #time.sleep(0.25) #wait half a second after after stop, then ring bell
+        self.setSpeed(0)
         self.ringBell()
         self.stopTime = datetime.datetime.now()
         #if self.tTrace: scrollArea.setText(scrollArea.getText() + "slot " + str(self.slotId) + " trolley stopped\n")
@@ -177,7 +178,7 @@ class Trolley(object):
     # *********************************************
     # Ring the trolley bell before start and stop *
     # *********************************************
-    def ringBell(self) :
+    def ringBell(self):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         if self.soundEnabled: Trolley.msg.ringBell(self.slotId)
         return
@@ -186,7 +187,7 @@ class Trolley(object):
     # **************************
     # Turn light OFF *
     # **************************
-    def lightOff(self) :
+    def lightOff(self):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         Trolley.msg.lightOff(self.slotId)
         return
@@ -195,7 +196,7 @@ class Trolley(object):
     # **************************
     # Turn light ON *
     # **************************
-    def lightOn(self) :
+    def lightOn(self):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         Trolley.msg.lightOn(self.slotId)
         return
