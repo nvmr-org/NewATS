@@ -372,8 +372,10 @@ class TrolleyRoster(object):
                 if trolley.currentPosition.segment == segmentForNextPosition:
                     logger.debug("Trolley: %s is currently in Segment: %s and will get priority", trolley.address, segmentForNextPosition)
                     return trolley
-        logger.debug("Multiple Trolleys scheduled for Block:%s - Priority given to Trolley: %s", nextPosition, trolleysScheduledForBlock[0].address)
-        return trolleysScheduledForBlock[0]
+        if trolleysScheduledForBlock:
+            logger.debug("Multiple Trolleys scheduled for Block:%s - Priority given to Trolley: %s", nextPosition, trolleysScheduledForBlock[0].address)
+            return trolleysScheduledForBlock[0]
+        return None
 
 
     def findByCurrentSegment(self, segment):
