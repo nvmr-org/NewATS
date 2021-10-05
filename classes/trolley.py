@@ -239,15 +239,16 @@ class Trolley(object):
     def setSpeed(self, speed=0):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         if speed == 0 and self.speed > 0:
-            logger.debug("Trolley %s - Updating Stop Time")
+            logger.debug("Trolley %s - Updating Stop Time", self.address)
             self.stopTime = datetime.datetime.now() # Update the stop time if stopping
         Trolley.msg.setSpeed(self.slotId, speed)
         Trolley.msg.setSpeed(self.slotId, speed)  # Send a second time until we figure out why this is needed
         self.setThrottleLastMsgTime()
         if self.speed == 0 and speed > 0:
-            logger.debug("Trolley %s - Updating Start Time")
+            logger.debug("Trolley %s - Updating Start Time", self.address)
             self.startTime = datetime.datetime.now() # Update the start time if starting
         self.speed = speed
+        logger.debug("Trolley %s - Speed Set to %s", self.address, speed)
         return
 
 
@@ -259,7 +260,7 @@ class Trolley(object):
             historicalSpeed = self.speedFactor
             weightedSpeed = (historicalSpeed * (len(blockMap) - 1) + realSpeedInBlock ) / len(blockMap)
             self.speedFactor = weightedSpeed
-            logger.info("UpdatingCompensation for Address:%s TravelTime:%s RealSpeed:%s Historical:%s Weighted:%s blocks:%s", 
+            logger.debug("Trolley %s - TravelTime:%s RealSpeed:%s Historical:%s Weighted:%s blocks:%s",
                         self.address,travelTime, str("{:.2f}".format(realSpeedInBlock)),
                         str("{:.2f}".format(historicalSpeed)),str("{:.2f}".format(weightedSpeed)), len(blockMap))
         return
