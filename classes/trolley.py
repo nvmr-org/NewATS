@@ -22,7 +22,7 @@ class Trolley(object):
     """
     #global layoutLength
 
-    THROTTLE_REFRESH_TIME = 30 # Seconds between status updates for throttles on a slot
+    THROTTLE_REFRESH_TIME = 2 # Seconds between status updates for throttles on a slot
     THROTTLE_WAIT_TIME = 30
     MOMENTUM_DELAY_SEC = 2 # Seconds to allows for momentum to be considered still moving
 
