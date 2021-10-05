@@ -65,6 +65,7 @@ class TrolleyRoster(object):
     SECONDS_BETWEEN_CONSOLE_ALERTS = 2
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 15
     SECONDS_BETWEEN_SLOT_REQUESTS = 10
+    SECONDS_BEFORE_OVERDUE = 5
 
     def __init__(self, trolleyObjects=None, layoutMap=None, title=None, messageManager=None):
         """Initialize the class"""
