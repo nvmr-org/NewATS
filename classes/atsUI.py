@@ -202,15 +202,18 @@ class AtsUI(object):
     def whenCheckboxClicked(self,event):
         logger.debug("Entering %s.%s", __name__, thisFuncName())
         self.setDebugFlag(self.UiDebugCheckBox.isSelected())
+        layoutMap[0].setDebugFlag(self.BlockDebugCheckBox.isSelected())
         layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
         msg.setDebugFlag(self.MsgDebugCheckBox.isSelected())
+        trolleyRoster[0].setDebugFlag(self.TrolleyDebugCheckBox.isSelected())
         trolleyRoster.setDebugFlag(self.RosterDebugCheckBox.isSelected())
-        layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
-        trolleyRoster.setDebugFlag(self.RosterDebugCheckBox.isSelected())
-        logger.info("Debug Levels - UI:%s Roster:%s BlockMap:%s Automation:%s Messages:%s",
+        self.automationObject.setDebugFlag(self.AutoDebugCheckBox.isSelected())
+        logger.info("Debug Levels - UI:%s Block:%s BlockMap:%s Trolley:%s Roster:%s Automation:%s Messages:%s",
                     "DEBUG" if self.getDebugLevel()==logging.DEBUG else "INFO",
-                    "DEBUG" if self.RosterDebugCheckBox.isSelected() else "INFO",
+                    "DEBUG" if self.BlockDebugCheckBox.isSelected() else "INFO",
                     "DEBUG" if self.BlockMapDebugCheckBox.isSelected() else "INFO",
+                    "DEBUG" if self.TrolleyDebugCheckBox.isSelected() else "INFO",
+                    "DEBUG" if self.RosterDebugCheckBox.isSelected() else "INFO",
                     "DEBUG" if self.AutoDebugCheckBox.isSelected() else "INFO",
                     "DEBUG" if self.MsgDebugCheckBox.isSelected() else "INFO")
         return
@@ -524,7 +527,9 @@ class AtsUI(object):
         self.ckBoxPanel2 = JPanel()
         self.ckBoxPanel2.setLayout(FlowLayout(FlowLayout.LEFT))
         self.ckBoxPanel2.add(self.UiDebugCheckBox)
+        self.ckBoxPanel2.add(self.BlockDebugCheckBox)
         self.ckBoxPanel2.add(self.BlockMapDebugCheckBox)
+        self.ckBoxPanel2.add(self.TrolleyDebugCheckBox)
         self.ckBoxPanel2.add(self.RosterDebugCheckBox)
         self.ckBoxPanel2.add(self.AutoDebugCheckBox)
         self.ckBoxPanel2.add(self.MsgDebugCheckBox)
