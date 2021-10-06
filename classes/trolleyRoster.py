@@ -15,21 +15,6 @@ logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
 thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
-class TrolleyLogHandler(logging.StreamHandler):
-    """ Not yet working - 
-        Handler to redirect logging messages to the scroll text area in the application window
-    """
-    __outputMessageInfo = None
-    def emit(self, record):
-        if TrolleyLogHandler.__outputMessageInfo is not None:
-            TrolleyLogHandler.__outputMessageInfo.append(str(record))
-
-
-    def setMessageInfoOutput(self,output=None):
-        self.__outputMessageInfo=output
-        trolleyLogHandler = TrolleyLogHandler()
-        logger.addHandler(trolleyLogHandler)
-
 
 class TrolleyRoster(object):
     """A TrolleyRoster object is essentially a linked list of trolley objects that 
@@ -467,21 +452,21 @@ class TrolleyRoster(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         # If the next segment is occupied return false
         if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
-            logger.info("Trolley: %s   Alert: Next segment occupied", trolley.address)
+            logger.info("Trolley: %s   Status: Next segment occupied", trolley.address)
             return True
         # If this trolley is in a block that requires a stop and has not been stopped long enough return true
         if trolley.currentPosition.stopRequired:
             if not self.__checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
-                logger.info("Trolley: %s   Alert: Required stop time has not been met", trolley.address)
+                logger.info("Trolley: %s   Status: Required stop time has not been met", trolley.address)
                 return True
         # If this trolley is not the next one scheduled for the next block return true
         if trolley.address != self.findByNextBlock(trolley.nextPosition.address).address: 
             # The exception to this is if the next block is part of the current segment the trolley is already in
             if trolley.currentPosition.segment != trolley.nextPosition.segment:
-                logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
+                logger.info("Trolley: %s   Status: Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
                 return True
             else:
-                logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s - ******* CONTINUE IN SEGMENT CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
+                logger.info("Trolley: %s   Status: Not the first trolley scheduled for Block %s - ******* CONTINUE IN SEGMENT CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
             #return True
         #print "Reason: is allowed to move"
         return False
@@ -495,21 +480,21 @@ class TrolleyRoster(object):
             return False
         # If the next segment is occupied return false
         if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and (trolley.currentPosition.segment != trolley.nextPosition.segment) : 
-            if TrolleyRoster.__dTrace : logger.info("Trolley: %s   Alert: Next segment occupied", trolley.address)
+            logger.debug("Trolley: %s   Status: Next segment occupied", trolley.address)
             return False
         # If this trolley is in a block that requires a stop and has not been stopped long enough return false
         if trolley.currentPosition.stopRequired:
             if not self.__checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
-                if TrolleyRoster.__dTrace : logger.info("Trolley: %s   Alert: Required stop time has not been met", trolley.address)
+                logger.debug("Trolley: %s   Status: Required stop time has not been met", trolley.address)
                 return False
         # If this trolley is not the next one scheduled for the next block return false
         if trolley.address != self.findByNextBlock(trolley.nextPosition.address).address:
             # The exception to this is if the next block is part of the current segment the trolley is already in
             if trolley.currentPosition.segment != trolley.nextPosition.segment:
-                if TrolleyRoster.__dTrace : logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition().address)
+                logger.debug("Trolley: %s   Status: Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition().address)
                 return False
             else:
-                logger.info("Trolley: %s   Alert: Not the first trolley scheduled for Block %s - ******* START CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
+                logger.info("Trolley: %s   Status: Not the first trolley scheduled for Block %s - ******* START CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
         #print "Reason: is allowed to move"
         return True
 

@@ -38,7 +38,6 @@ except ImportError:
     jmriFlag = False
     print('Failed to import jmir - bypassing')
 
-
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
 thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
@@ -89,7 +88,7 @@ class AtsUI(object):
         self.addComponent(self.fr, self.blockInfoPane, 0, 3, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.segmentInfoPane, 0, 4, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.rosterInfoPane, 0, 5, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
-        self.addComponent(self.fr, self.messageInfoPanel, 0, 6, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH)
+        self.addComponent(self.fr, self.messageInfoPane, 0, 6, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH)
         self.fr.addWindowListener(self.w)
         #self.fr.pack()
         self.fr.setVisible(True)
@@ -469,17 +468,20 @@ class AtsUI(object):
         return __pane
 
 
-    def createScrollPanel(self, DefaultText, title=None, paneHeight=10):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+    def createMessagePane(self, DefaultText, title=None, paneHeight=10):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         __panel = JPanel()
         __panel.add(JLabel(title))
-        scrollArea = JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
-        scrollArea.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE); # automatically scroll to last message
-        scrollArea.font=Font("monospaced", Font.PLAIN, AtsUI.atsFontSize)
-        scrollArea.setText(DefaultText)
-        scrollField = JScrollPane(scrollArea) #put text area in scroll field
+        self.messageInfoText = JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
+        self.messageInfoText.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE) # automatically scroll to last message
+        self.messageInfoText.font=Font("monospaced", Font.PLAIN, AtsUI.atsFontSize)
+        #scrollArea.setLineWrap(True) # Lines will be wrapped if they are too long
+        #scrollArea.setWrapStyleWord(True) # Lines will be wrapped at word boundaries
+        #scrollArea.setEditable(False) # we don't want our Text Area to be editable
+        self.messageInfoText.setText(DefaultText)
+        scrollField = JScrollPane(self.messageInfoText) #put text area in scroll field
         scrollField.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
-        scrollField.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollField.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
         __panel.setBorder(BorderFactory.createEmptyBorder(1, 8, 1, 8))
         __panel.setLayout(BorderLayout())
         __panel.add(scrollField)
@@ -495,13 +497,11 @@ class AtsUI(object):
         self.UiDebugCheckBox.setSelected(self.getDebugLevel()==logging.DEBUG)
         self.BlockDebugCheckBox = JCheckBox("Block", actionPerformed = self.whenCheckboxClicked)
         self.BlockDebugCheckBox.setToolTipText("Display Block debug messages")
-        #self.BlockDebugCheckBox.setSelected(True)
         self.BlockMapDebugCheckBox = JCheckBox("BlockMap", actionPerformed = self.whenCheckboxClicked)
         self.BlockMapDebugCheckBox.setToolTipText("Display BlockMap debug messages")
         self.BlockMapDebugCheckBox.setSelected(layoutMap.getDebugLevel()==logging.DEBUG)
         self.TrolleyDebugCheckBox = JCheckBox("Trolley", actionPerformed = self.whenCheckboxClicked)
         self.TrolleyDebugCheckBox.setToolTipText("Display debugging for outgoing loconet messages")
-        #self.TrolleyDebugCheckBox.setSelected(True)
         self.RosterDebugCheckBox = JCheckBox("TrolleyRoster", actionPerformed = self.whenCheckboxClicked)
         self.RosterDebugCheckBox.setToolTipText("Display all roster debug messages")
         self.RosterDebugCheckBox.setSelected(trolleyRoster.getDebugLevel()==logging.DEBUG)
@@ -540,8 +540,6 @@ class AtsUI(object):
 
         self.ckBoxPanel3 = JPanel()
         self.ckBoxPanel3.setLayout(FlowLayout(FlowLayout.LEFT))
-        #self.ckBoxPanel3.add(self.eRstrDebugCheckBox)
-        #self.ckBoxPanel3.add(self.dRstrDebugCheckBox)
         self.ckBoxPanel3.add(self.snSpkChgCheckBox)
         self.ckBoxPanel3.add(self.msgSpkCheckBox)
 
@@ -551,7 +549,7 @@ class AtsUI(object):
         self.blockInfoPane = self.createInfoPane(layoutMap.getBlockStatus(trolleyRoster), title="Block Status")
         self.segmentInfoPane = self.createInfoPane(layoutMap.getSegmentStatus(trolleyRoster), title="Segment Status")
         self.rosterInfoPane = self.createInfoPane(trolleyRoster.getRosterStatus(), title="Trolley Roster Status")
-        self.messageInfoPanel = self.createScrollPanel("Default Message Panel\n"+
+        self.messageInfoPane = self.createMessagePane("Default Message Panel\n"+
                                              "Currently All messages will be written to the Script Output window",
                                              title = "Messages")
 
@@ -576,7 +574,6 @@ class AtsUI(object):
 
 
     class DeleteTrolleyButtonListener(MouseAdapter):
-        #logger = logging.getLogger(__name__)
         def mousePressed(self, event):
             __target = event.getSource()
             __row = __target.getSelectedRow()

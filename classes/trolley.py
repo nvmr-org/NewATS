@@ -252,8 +252,9 @@ class Trolley(object):
         if self.speed == 0 and speed > 0:
             logger.debug("Trolley %s - Updating Start Time", self.address)
             self.startTime = datetime.datetime.now() # Update the start time if starting
-        self.speed = speed
-        logger.debug("Trolley %s - Speed Set to %s", self.address, speed)
+        if self.speed != speed:
+            logger.debug("Trolley %s - Speed Changed from %s to %s", self.address, self.speed, speed)
+            self.speed = speed
         return
 
 
@@ -273,7 +274,7 @@ class Trolley(object):
 
     def advance(self, trolleyRoster, blockMap):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        logger.debug("Advancing Trolley: %s", self.address)
+        logger.debug("Trolley %s - Advancing to next block", self.address)
         lastBlock = self.currentPosition
         self.updateSpeedFactor(blockMap)
         self.currentPosition = self.nextPosition
@@ -282,7 +283,7 @@ class Trolley(object):
         self.stopTime = datetime.datetime.now()
         self.startTime = datetime.datetime.now()
         if trolleyRoster.findByCurrentBlock(lastBlock.address) == None:
-            logger.debug("Setting block %s to CLEAR",str(lastBlock.address))
+            logger.debug("Trolley %s - Setting block %s to CLEAR", self.address, str(lastBlock.address))
             lastBlock.set_blockClear()
         return                
 

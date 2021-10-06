@@ -81,7 +81,6 @@ trolleyRoster = TrolleyRoster(layoutMap=layoutMap, messageManager=msg)  # Initia
 # *************************************
 atsUi = AtsUI(automationObject=trolleyAutomationObject, appName=APPLICATION_NAME)
 
-
 # set the name - This will show in the thread monitor
 trolleyAutomationObject.setName(APPLICATION_NAME)
 trolleyRoster.setAutomationObject(trolleyAutomationObject)
@@ -90,11 +89,11 @@ trolleyRoster.setMessageAnnouncer(audible)
 audible.announceMessage("Welcome to the "+APPLICATION_NAME)
 
 # Set output locations for 
-#layoutMap.setBlockDumpOutput(output=messageInfoPanel)
+#layoutMap.setBlockDumpOutput(output=messageInfoPane)
 layoutMap.setBlockInfoOutput(output=atsUi.blockInfoPane)
 layoutMap.setSegmentInfoOutput(output=atsUi.segmentInfoPane)
 trolleyRoster.setRosterInfoOutput(output=atsUi.rosterInfoPane)
-trolleyRoster.setMessageInfoOutput(output=atsUi.messageInfoPanel)
+trolleyRoster.setMessageInfoOutput(output=atsUi.messageInfoPane)
 
 logger.info("Loading Layout Map")
 layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
