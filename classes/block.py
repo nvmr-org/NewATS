@@ -38,7 +38,7 @@ class Block(object):
         """Return a Layout object whose id is *blockAddress* and *segmentAddress* 
         are negative if not provided.  Blocks should be added in the order they
         will be traversed."""
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         if newSegment == True:
             Block.segmentCount += 1
 

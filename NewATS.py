@@ -39,18 +39,23 @@ APPLICATION_NAME = "Automatic Trolley Sequencer"
 enableSimulator = False
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+# Configure logging and add TRACE level
 logger = logging.getLogger("ATS")
+TRACE = logging.DEBUG - 5
+logging.addLevelName(TRACE, 'TRACE')
+def trace(self, message, *args, **kws):
+    # Yes, logger takes its '*args' as 'args'.
+    self._log(TRACE, message, args, **kws) 
+logging.Logger.trace = trace
 if not len(logger.handlers):
     fileHandler = logging.FileHandler("{0}/{1}.log".format(jmriFileUtilSupport.getUserFilesPath(),'NewATS'))
     fileHandler.setLevel(logging.INFO)
     fileHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     consoleHandler = logging.StreamHandler()
-    consoleHandler.setLevel(logging.INFO)
+    consoleHandler.setLevel(logging.WARNING)
     consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     logger.addHandler(fileHandler)
     logger.addHandler(consoleHandler)
-
 
 from classes.trolleyRoster import TrolleyRoster
 from classes.blockMap import BlockMap

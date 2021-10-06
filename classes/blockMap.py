@@ -7,11 +7,13 @@ import logging
 import datetime
 import sys
 import xml.etree.ElementTree as ET
-from classes.block import Block
 
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
 thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
+
+from classes.block import Block
+
 
 class BlockMap(object):
     """A trolley object that consists of the following properties:
@@ -32,7 +34,7 @@ class BlockMap(object):
     def __init__(self, blockObjects=None, title=None):
         """Initialize the class"""
         super(BlockMap, self).__init__()
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.title = title
         self.comment = []
         if blockObjects is not None:
@@ -137,7 +139,7 @@ class BlockMap(object):
 
 
     def dump(self):
-        logger.debug("Entering %s.%s - output=%s", __name__, thisFuncName(), str(self.__outputBlockDump))
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         printFlag = False
         if self.__outputBlockDump is None:
             printFlag = True
@@ -168,7 +170,7 @@ class BlockMap(object):
 
 
     def getMapAsXml(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         layoutXml = ET.Element('layoutMap')
         layoutXml.set('version', '1.0')
         for individualComment in self.comment:
@@ -188,7 +190,7 @@ class BlockMap(object):
 
 
     def getBlockAsXml(self, block, segment):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         blockXml = ET.Element('block')
         self.setXmlElementKeyValuePair(blockXml, 'address', block.address)
         self.setXmlElementKeyValuePair(blockXml, 'newSegment', segment!=block.segment)
@@ -205,7 +207,7 @@ class BlockMap(object):
 
 
     def addXmlBlockToLayoutMap(self, block):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         address = block.find('address').text
         newSegment = (block.find('newSegment').text == 'True')
         stopRequired = (block.find('stopRequired').text == 'True')
@@ -230,7 +232,7 @@ class BlockMap(object):
 
 
     def isSegmentOccupied(self, segment):
-        logger.debug("Entering %s %s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         for block in self._blockmap:
             if block.segment == segment:
                 if block.occupied == True:
@@ -241,7 +243,7 @@ class BlockMap(object):
 
 
     def findBlockByAddress(self,address):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         for block in self._blockmap:
             if block.address == address:
                 logger.debug("Block found for address %s",str(block.address))
@@ -250,7 +252,7 @@ class BlockMap(object):
 
 
     def findBlockByDescription(self,description):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         for block in self._blockmap:
             if block.description == description:
                 return block
@@ -258,7 +260,7 @@ class BlockMap(object):
 
 
     def findSegmentByAddress(self,address):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         for block in self._blockmap:
             if block.address == address:
                 logger.debug("Segment found for address %s",str(block.address))
@@ -267,7 +269,7 @@ class BlockMap(object):
 
 
     def findNextBlockByAddress(self,address):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         for block in self._blockmap:
             if block.address == address:
                 return block.next
@@ -275,7 +277,7 @@ class BlockMap(object):
 
 
     def printBlocks(self,trolleyRoster):
-        logger.debug("Entering %s.%s - output=%s", __name__, thisFuncName(), str(self.__outputBlockInfo is None))
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputBlockInfo is None:
             print self.getBlockStatus(trolleyRoster)
         else:
@@ -286,7 +288,7 @@ class BlockMap(object):
 
   
     def getBlockStatus(self,trolleyRoster):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         __blockStatusInfo = []
         __blockStatusInfo.append("*******************************************\n")
         __blockStatusInfo.append(str(datetime.datetime.now())+" - BlockStatus\n")
@@ -310,7 +312,7 @@ class BlockMap(object):
 
 
     def printSegments(self,trolleyRoster):
-        logger.debug("Entering %s.%s - output=%s", __name__, thisFuncName(), str(self.__outputSegmentInfo is None))
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputSegmentInfo is None:
             print self.getSegmentStatus(trolleyRoster)
         else:
@@ -320,8 +322,8 @@ class BlockMap(object):
             __doc.insertString(__doc.getLength(), self.getSegmentStatus(trolleyRoster), __style)
 
   
-    def getSegmentStatus(self,trolleyRoster):   
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+    def getSegmentStatus(self,trolleyRoster):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         __segmentStatusInfo = []
         __segmentStatusInfo.append("*********************************************\n")
         __segmentStatusInfo.append(str(datetime.datetime.now())+" - SegmentStatus\n")
@@ -342,7 +344,7 @@ class BlockMap(object):
 
 
     def buildDefaultLayoutMap(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.title="NVMR Automated Trolley Layout"
         self.comment.append(r'# Generated by NVMR Automated Trolley Sequencer')
         self.comment.append(r'# Create a layoutMap map that consists of consecutive blocks representing a complete')
@@ -391,7 +393,7 @@ class BlockMap(object):
 
 
     def loadLayoutMapFromXml(self, layoutMapFile):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         logger.info('Layout Map File: %s', layoutMapFile)
         try:
             logger.info("Loading Layout Tree")

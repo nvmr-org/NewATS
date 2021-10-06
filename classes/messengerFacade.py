@@ -51,7 +51,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     __lnListen = None
 
     def __init__(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.debounce = False #turn track contact loss debounce off/on
         self.eventQueue = None
         self.accumByteCnt = 0

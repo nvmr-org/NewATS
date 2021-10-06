@@ -72,7 +72,7 @@ class AtsUI(object):
         # when the window is closed by clicking on the window close button
         # ------------------------------------------------------------------------------------------
         super(AtsUI, self).__init__()
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         logger.info("Screen Size - Height:%s Width:%s", AtsUI.atsScreenSize.height, AtsUI.atsScreenSize.width)
         self.automationObject=automationObject
         self.w = AtsWinListener()
@@ -110,7 +110,7 @@ class AtsUI(object):
 # start to initialize the display GUI *
 # *************************************
     def whenStopAllButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(True)
         self.tstopButton.setEnabled(False)
         self.tgoButton.setEnabled(True)
@@ -123,7 +123,7 @@ class AtsUI(object):
 
 
     def whenQuitButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.tstopButton.setEnabled(False)
         self.tgoButton.setEnabled(False)
         if self.automationObject.isRunning(): self.automationObject.stop()
@@ -133,7 +133,7 @@ class AtsUI(object):
 
 
     def whenTgoButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(False)
         self.tstopButton.setEnabled(True)
         self.tgoButton.setEnabled(False)
@@ -147,7 +147,7 @@ class AtsUI(object):
 
 
     def whenSimulatorButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         __simulatorState = self.automationObject.isSimulatorEnabled()
         logger.info("Simulator State:"+str(__simulatorState)+"-->"+str(not __simulatorState))
         __simulatorState = not __simulatorState
@@ -159,7 +159,7 @@ class AtsUI(object):
 
 
     def whenLoadLayoutMapButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"])
         if (selectedFile != None):
             logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
@@ -174,7 +174,7 @@ class AtsUI(object):
 
 
     def whenSaveRosterButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"], Mode='SAVE')
         if (selectedFile != None):
             logger.info("Selected LayoutMap File:%s",selectedFile.getAbsolutePath())
@@ -183,7 +183,7 @@ class AtsUI(object):
 
 
     def whenLoadRosterButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         selectedFile = self.getUserSelectedFile("XML Files",["XML", "xml"])
         if (selectedFile != None):
             logger.info("Selected Roster File:%s",selectedFile.getAbsolutePath())
@@ -195,12 +195,12 @@ class AtsUI(object):
 
         
     def whenRemoveButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         return
 
 
     def whenCheckboxClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.setDebugFlag(self.UiDebugCheckBox.isSelected())
         layoutMap[0].setDebugFlag(self.BlockDebugCheckBox.isSelected())
         layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
@@ -220,28 +220,28 @@ class AtsUI(object):
 
 
     def whenEditRosterButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(False)
         self.frameRoster = self.createEditRosterDataFrame(trolleyRoster)
         return
 
 
     def whenEditRosterCloseButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.editRosterButton.setEnabled(True)
         self.frameRoster.dispose()
         return
 
 
     def whenCancelAddTrolleyButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.frameAddTrolley.dispose()
         self.frameRoster.setVisible(True)
         return
 
 
     def whenSaveAddTrolleyButtonClicked(self,event):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         __address = int(self.addTrolleyAddress.getText())
         __maxSpeed = int(self.addTrolleyMaxSpeed.getText())
         __block = layoutMap.findBlockByAddress(int(self.addTrolleyStartingPosition.getSelectedItem().split('-')[0]))
@@ -267,13 +267,14 @@ class AtsUI(object):
 
 
     def whenAddToRosterButtonClicked(self,event):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.frameRoster.setVisible(False)
         self.frameAddTrolley = self.createAddToTrolleyRosterFrame()
         return
 
 
     def getUserSelectedFile(self, description, extensionFilterList, Mode='OPEN'):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
         logger.info("User Files Path: %s" + layoutMapFilePath)
         fileChooser = JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory())
@@ -320,7 +321,7 @@ class AtsUI(object):
 
 
     def getAddTrolleyButtonPanel(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         saveButton = self.createButtonWithAction("Save", self.whenSaveAddTrolleyButtonClicked )
         cancelButton = self.createButtonWithAction("Cancel", self.whenCancelAddTrolleyButtonClicked )
         addTrolleyPanel = JPanel()
@@ -332,7 +333,7 @@ class AtsUI(object):
 
 
     def getAddTrolleyDataPanel(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         __panel = JPanel()
         __panel.add(JLabel("Address:"))
         self.addTrolleyAddress = JTextField('',5)
@@ -359,7 +360,7 @@ class AtsUI(object):
 
 
     def createAddToTrolleyRosterFrame(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         frameAddTrolley = jmri.util.JmriJFrame("Add Trolley To Roster")
         frameAddTrolley.setSize(AtsUI.atsRosterWindowWidth,10*AtsUI.atsRowHeight)
         frameAddTrolley.setLayout(GridBagLayout())
@@ -374,7 +375,7 @@ class AtsUI(object):
 
 
     def createEditRosterDataFrame(self,trolleyRoster):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         frameRoster = jmri.util.JmriJFrame("Trolley Roster")
         frameRoster.setSize(AtsUI.atsRosterWindowWidth,(len(trolleyRoster)+3)*AtsUI.atsRowHeight)
         frameRoster.setLayout(BorderLayout())
@@ -411,7 +412,7 @@ class AtsUI(object):
 
 
     def getButtonPanel(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.createButtonPanelButtons()
         butPanel = JPanel()
         butPanel.setLayout(FlowLayout(FlowLayout.LEFT))
@@ -434,7 +435,7 @@ class AtsUI(object):
 
 
     def createButtonPanelButtons(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.quitButton = self.createButtonWithAction("Quit", self.whenQuitButtonClicked)
         self.loadRosterButton = self.createButtonWithAction("Load Roster", self.whenLoadRosterButtonClicked)
         self.loadRosterButton.setEnabled(True)
@@ -452,7 +453,7 @@ class AtsUI(object):
         return
 
     def createInfoPane(self,defaultText, title=None):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         __pane = JTextPane()
         __doc = __pane.getStyledDocument()
         __style = __pane.addStyle("Color Style", None)
@@ -484,7 +485,7 @@ class AtsUI(object):
 
 
     def createLoggingComponents(self):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.logLabel1 = JLabel("Logging:")
         self.UiDebugCheckBox = JCheckBox("UI", actionPerformed = self.whenCheckboxClicked)
         self.UiDebugCheckBox.setToolTipText("Display all UI debug messages")
@@ -553,7 +554,7 @@ class AtsUI(object):
 
 
     def saveFileAsXml(self, fileName, xmlString):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         try:
             text_file = open(fileName, "w")
             text_file.write(self.getFormattedXml(xmlString))
@@ -588,7 +589,7 @@ class AtsUI(object):
 
 
         def updateTrolleyRowMaxSpeed(self, row):
-            logger.debug("Entering %s.%s", __name__, thisFuncName())
+            logger.trace("Entering %s.%s", __name__, thisFuncName())
             logger.info("UPDATE SPEED for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
             spinner = JSpinner( SpinnerNumberModel( trolleyRoster[row].maxSpeed, 1, 99, 1) )
             __response = JOptionPane.showOptionDialog(None, spinner, "Update Max Speed", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, None, None, None)
@@ -603,7 +604,7 @@ class AtsUI(object):
 
 
         def updateTrolleyPosition(self, row):
-            logger.debug("Entering %s.%s", __name__, thisFuncName())
+            logger.trace("Entering %s.%s", __name__, thisFuncName())
             logger.info("UPDATE POSITION for Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
             __positionChoices = []
             for block in layoutMap:
@@ -630,7 +631,7 @@ class AtsUI(object):
 
 
         def deleteTrolleyRowFromRoster(self, row):
-            logger.debug("Entering %s.%s", __name__, thisFuncName())
+            logger.trace("Entering %s.%s", __name__, thisFuncName())
             logger.info("DELETE Trolley Roster item %s - Address: %s", str(row), str(trolleyRoster[row].address))
             __response = self.deleteTrolleyFromRosterConfirmation("Delete Trolley #"+str(trolleyRoster[row].address),"Delete Trolley")
             logger.info("DELETE Trolley: %s - %s", str(trolleyRoster[row].address),
@@ -651,6 +652,7 @@ class AtsUI(object):
 
 
         def deleteTrolleyFromRosterConfirmation(self, message, title):
+            logger.trace("Entering %s.%s", __name__, thisFuncName())
             result = JOptionPane.showConfirmDialog(None, message,  title, JOptionPane.OK_CANCEL_OPTION)
             return result
 
