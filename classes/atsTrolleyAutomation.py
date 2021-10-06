@@ -12,6 +12,9 @@ msg = Messenger()
 
 class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
     simulatorEnabled = False
+    SIMULATOR_TIME_MULTIPLIER = 4.0
+    HANDLER_TIME_SLICE_MILLISEC = 250
+
     def init(self):
         logger.info("Initialize Trolley Automation")
         pass
@@ -32,13 +35,13 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             logger.debug("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 trolleyRoster.processAllTrolleyMovement()
-                if TrolleyAutomation.simulatorEnabled : self.simulateAllMovement()
+                if self.simulatorEnabled : self.simulateAllMovement()
                 trolleyRoster.refreshTrolleysSlots()
             else:
                 trolleyRoster.registerOneTrolley()
-        else:
-            logger.info("Automation is NOT running")
-        self.waitMsec(250)
+        #else:
+            #logger.trace("Automation is NOT running")
+        self.waitMsec(self.HANDLER_TIME_SLICE_MILLISEC)
         return True
 
 
@@ -48,7 +51,9 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             if trolley.getSpeed() > 0:
                 now = datetime.datetime.now()
                 travelTime = (now - trolley.startTime).total_seconds()
-                if travelTime > (trolley.currentPosition.length / 4.0):
+                travelLength = travelTime * self.SIMULATOR_TIME_MULTIPLIER
+                logger.debug("Simulator - Trolley: %s - travelTime: %s TravelLength:%s",trolley.address, travelTime, travelLength)
+                if travelLength > (trolley.currentPosition.length):
                     realSpeed = trolley.currentPosition.length / travelTime
                     logger.info("Simulating event for SensorID: %s by Trolley: %s - Time:%s Length:%s RealSpeed:%s", trolley.nextPosition.address, 
                                 trolley.address, travelTime, trolley.currentPosition.length, str("{:.2f}".format(realSpeed)) )
@@ -61,7 +66,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
     def isSimulatorEnabled(self):
-        return TrolleyAutomation.simulatorEnabled
+        return self.simulatorEnabled
 
 
     def setDebugFlag(self,state):
@@ -73,12 +78,13 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
     def setSimulatorState(self, state):
-        TrolleyAutomation.simulatorEnabled = state
+        self.simulatorEnabled = state
+        logger.info("AUTOMATION - Set Simulator State: %s, %s",state, self.simulatorEnabled)
 
 
     def setSimulatorEnabled(self):
-        TrolleyAutomation.simulatorEnabled = True
+        self.simulatorEnabled = True
 
 
     def setSimulatorDisabled(self):
-        TrolleyAutomation.simulatorEnabled = False
+        self.simulatorEnabled = False
