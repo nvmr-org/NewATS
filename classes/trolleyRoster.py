@@ -183,6 +183,9 @@ class TrolleyRoster(object):
 
     def setDebugFlag(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
 
 
     def getDebugLevel(self):

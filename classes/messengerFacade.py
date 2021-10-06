@@ -69,9 +69,9 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Set Event Queue for Simulations
     # **********************
     def createEventQueue(self, eventQueue = None):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.eventQueue = eventQueue
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -92,6 +92,9 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
 
     def setDebugFlag(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
 
 
     def getDebugLevel(self):
@@ -103,8 +106,8 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
 
 
     def createPacket(self,msgLength,opcode,ARGS):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
-        if Messenger.__oTrace : logger.info("MsgLen: %s  OpCode: %s  ARGS: %s" ,msgLength, hex(opcode), ARGS)
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.debug("MsgLen: %s  OpCode: %s  ARGS: %s" ,msgLength, hex(opcode), ARGS)
         try:
             if __jmriFlag: packet = jmri.jmrix.loconet.LocoNetMessage(msgLength)
             packet.setElement(0, opcode)
@@ -117,7 +120,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
             logger.warn("Message Send Failed")
             traceback.print_exc()
             raise
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return packet
 
 
@@ -127,7 +130,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     def sendLnMsg(self,msgLength,opcode,ARGS) :
         # format and send the specific LocoNet message
         # send up to 16 bytes in the message - includes checksum
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         packet = self.createPacket(msgLength,opcode,ARGS)
         if Messenger.__oTrace : logger.info("Just prior to send message - jmriFlag = %s", __jmriFlag)
         if Messenger.__oTrace : logger.info("Packet ==>> %s", packet)           # print packet to Script Output window
@@ -144,7 +147,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # * Create and send a sensor report *
     # ***********************************
     def sendSenorReportMsg(self,sensorId):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         snrAddr = sensorId -1
         in1 = (snrAddr & 0xFF) >> 1 # lower 7 address bits left shifted once
@@ -157,8 +160,8 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS[1] = in1
         ARGS[2] = in2
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("Sent Sensor Message for SensorId:" + str(sensorId))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("Sent Sensor Message for SensorId:" + str(sensorId))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -166,15 +169,15 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Send Emergency stop 
     # ************************
     def eStop(self, slotId) :
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_LOCO_SPD #0xA0 OPC_LOCO_SPD
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = 0x01
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent Estop %s" ,str(hex(opcode)))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent Estop %s" ,str(hex(opcode)))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
     
     
@@ -182,7 +185,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Ring the trolley bell before start and stop *
     # *********************************************
     def ringBell(self, slotId) :
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         #print "Ring Bell for Trolley:", self.address, "Throttle:", self.throttle
         #if self.throttle == None: return
         #ringBell 1st time by setting F1 = ON
@@ -200,13 +203,13 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS[1] = slotId
         ARGS[2] = 0x10 #OFF with direction forward and light ON
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent ring bell %s", str(hex(opcode)))
+        logger.debug("sent ring bell %s", str(hex(opcode)))
         #time.sleep(3) #wait 3 sec before returning
         #self.throttle.setF1(True)     # turn on bell
         #self.waitMsec(1000)           # wait for 1 seconds
         #self.throttle.setF1(False)    # turn off bell
         #self.waitMsec(1000)           # wait for 1 second
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -214,15 +217,15 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Turn light OFF *
     # **************************
     def lightOff(self,slotId) :
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_LOCO_DIRF #0xA1 OPC_LOCO_DIRF
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = 0x00 #light OFF, direction forward
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent light OFF ",str(hex(opcode)))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent light OFF: %s ",str(hex(opcode)))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -230,30 +233,30 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Turn light ON *
     # **************************
     def lightOn(self,slotId) :
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_LOCO_DIRF #0xA1 OPC_LOCO_DIRF
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = 0x00 #light OFF, direction forward
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent light OFF ",str(hex(opcode)))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent light OFF: %s",str(hex(opcode)))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
     def setSpeed(self, slotId, speed):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_LOCO_SPD #0xA0 OPC_LOCO_SPD
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = speed
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent Set Speed %s",str(hex(opcode)))
+        logger.debug("sent Set Speed %s",str(hex(opcode)))
         #self.throttle.setSpeedSetting(speed)
         #self.speed = speed
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -261,7 +264,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Free Trolley Slot (Dispatch Trolleys) *
     # ***************************************
     def freeSlot(self,slotId) :
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         global ARGS
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_SLOT_STAT1 #0xB5 OPC_SLOT_STAT1
@@ -269,16 +272,16 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS[1] = slotId
         ARGS[2] = 0x13 #update status to Not Consisted, Common slot
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent Slot Not Consisted & Common %s", str(hex(opcode)))
+        logger.debug("sent Slot Not Consisted & Common %s", str(hex(opcode)))
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_MOVE_SLOTS #0xBA OPC_MOVE_SLOTS
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = 0x00 #mark slot as DISPATCHED
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent Slot Dispatch %s",str(hex(opcode)))
+        logger.debug("sent Slot Dispatch %s",str(hex(opcode)))
         time.sleep(1)           # wait for 1 seconds
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -286,15 +289,15 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Update Slot STAT1 *
     # *******************
     def updateSlot(self, slotId) :
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_SLOT_STAT1 #0xB5 OPC_SLOT_STAT1
         ARGS = [0]*14 # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
         ARGS[1] = slotId
         ARGS[2] = 0x03
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent Slot Stat1 Update ", str(hex(opcode)))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent Slot Stat1 Update ", str(hex(opcode)))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -302,15 +305,15 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Request Trolley Slot (acquire Trolleys)
     # *******************************************************
     def requestThrottle(self,address, isLong, throttleWaitTime) : #sends 0xBF with loco address
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         if Messenger.__dTrace : logger.info("requested address = %s",str(address))
         try:
             throttle = jmri.jmrit.automat.AbstractAutomaton.getThrottle(address, isLong)  # address, long address = true
         except:
             throttle = None
             logger.warn("Unable to get throttle")
-        if Messenger.__dTrace : logger.info("sent throttle request: "+str(throttle))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent throttle request: "+str(throttle))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return throttle
 
 
@@ -318,16 +321,16 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # Request Trolley Slot (acquire Trolleys)
     # *******************************************************
     def requestSlot(self,slotId) : #sends 0xBF with loco address
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         if Messenger.__dTrace : logger.info("requested slot = %s",str(slotId))
         #self.noSlotID = True
         self.lastDeviceID = slotId
         self.dtxAddress = int(slotId)    # get address from entry field for LocoNet
         self.hiAddrByte = self.dtxAddress - ((self.dtxAddress / 128) * 128) #most significant address byte
         self.loAddrByte = self.dtxAddress / 128 #least significant address byte
-        if Messenger.__dTrace : logger.info("dtxAddress: %s  hiAddrByte: %s  loAddrByte: %s", self.dtxAddress, self.hiAddrByte, self.loAddrByte)
+        logger.debug("dtxAddress: %s  hiAddrByte: %s  loAddrByte: %s", self.dtxAddress, self.hiAddrByte, self.loAddrByte)
         #msg.prepLnAddr(deviceID)
-        if Messenger.__dTrace : logger.info("prep return = %s %s",hex(self.hiAddrByte),hex(self.loAddrByte))
+        logger.debug("prep return = %s %s",hex(self.hiAddrByte),hex(self.loAddrByte))
         #request Loco data slot
         msgLength = 4
         opcode = jmri.jmrix.loconet.LnConstants.OPC_LOCO_ADR #0xBF OPC_LOCO_ADR request current slot assigned, if not create slot
@@ -336,13 +339,13 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS[2] = self.hiAddrByte
         self.sendLnMsg(msgLength,opcode,ARGS)
         #self.bfSent = True #turn on to allow E7 response to be read for slotID (flag set must be after send!)
-        if Messenger.__dTrace : logger.info("sent Slot Request %s",str(hex(opcode)))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent Slot Request %s",str(hex(opcode)))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return True
 
 
     def setSlotInUse(self, slotId):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         """Set the Trolley's DCC SlotId."""
         # ****************
         # Set Slot INUSE *
@@ -353,15 +356,15 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS[1] = slotId
         ARGS[2] = slotId
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent Slot INUSE %s", str(hex(opcode)))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent Slot INUSE %s", str(hex(opcode)))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
 
 
     # ****************
     # Write Slot Data *
     # ****************
     def writeSlotData(self, ARGS=[0]*14) :
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         msgLength = 14
         opcode = jmri.jmrix.loconet.LnConstants.OPC_WR_SL_DATA #0xEF OPC_WR_SL_DATA
         #ARGS = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] # args 0 thru 15 filled later (0 ignored, 1 thru 14 args + cksum)
@@ -370,13 +373,13 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ARGS[3] = 0x33 #change from 0x03 to refresh INUSE
         #use rest of ARGS from last 0xE7 response
         self.sendLnMsg(msgLength,opcode,ARGS)
-        if Messenger.__dTrace : logger.info("sent Slot Data Update %s", str(hex(opcode)))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("sent Slot Data Update %s", str(hex(opcode)))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
     def getArgsFromMessage(self,msg):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         i = 1
         ARGS=[0]*14
         logger.debug("Getting ARGS from message - msgLen:%s",str(msg.getNumDataElements()))
@@ -384,8 +387,8 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
             ARGS[i] = msg.getElement(i)
             #logger.info("Arg[%s]:%s ", str(i),str(hex(msg.getElement(i))))
             i+=1
-        if Messenger.__dTrace : logger.info("ARGS from message - ARGS:%s",str(ARGS))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.debug("ARGS from message - ARGS:%s",str(ARGS))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return ARGS
 
 
@@ -403,14 +406,14 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
 #                                                  *
 # **************************************************
     def message(self, msg):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         newMsgOpCodeHex = msg.getOpCodeHex()
         newMsgLength = msg.getNumDataElements()
         self.accumByteCnt += newMsgLength
         # Note: accumByteCnt background task will read and be reset to zero and plotted every 1 second
         
-        if Messenger.__iTrace : logger.info("rcvd " + str(newMsgOpCodeHex))
-        if Messenger.__iTrace : logger.info("len = "+str(newMsgLength) + " msg = " + str(msg))
+        logger.trace("rcvd " + str(newMsgOpCodeHex))
+        logger.trace("len = "+str(newMsgLength) + " msg = " + str(msg))
 
         ######################################################################################
         ## only listen for OPC_INPUT_REP message from trolley BODs (0xB2) going active (hi) ##
@@ -432,13 +435,13 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
             hiAddrByte = msg.getElement(9)
             address = hiAddrByte*128+loAddrByte
             #trolley = trolleyRoster.findByAddress(address)
-            if Messenger.__iTrace : logger.info("E7 Opcode Received - Hi:"+str(hex(hiAddrByte))+" Lo:"+ str(hex(loAddrByte))
+            logger.trace("E7 Opcode Received - Hi:"+str(hex(hiAddrByte))+" Lo:"+ str(hex(loAddrByte))
                         +" address:"+str(address)+" slot:"+str(slotId)
                         +" Status:"+str(hex(status)))
             # See if this 0xE7 message is for a device in the trolleyRoster that sent a slot request
             trolley = trolleyRoster.findByAddress(address)
             if trolley and trolley.slotRequestSent:
-                if Messenger.__iTrace : logger.info("Trolley: "+str(address)+" SlotId:"+str(slotId)+" Status:"+str(status))
+                logger.trace("Trolley: "+str(address)+" SlotId:"+str(slotId)+" Status:"+str(status))
                 # Per the LocoNet specs, check the D5 & D4 bits of the STATUS1 byte to determine the state of the slot
                 # 11=IN_USE, 10=IDLE, 01=COMMON, 00=FREE SLOT and respond
                 if ((status >> 4) & 0x03) < 3: # if status is IDLE, COMMON, or FREE
@@ -456,7 +459,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
                         # We really should never get here because that means a slot was already assigned to the 
                         # trollet but we somehow received a slot request anyway.  So just write the slot data back
                         # out to refresh the slot.
-                        if Messenger.__iTrace : logger.info("Trolley: "+str(address)+" Slot was IDLE, COMMON, or FREE")
+                        logger.debug("Trolley: "+str(address)+" Slot was IDLE, COMMON, or FREE")
                         logger.warn("Trolley %s SlotId = %s - STRANGE CONDITION",str(address), str(slotId))
                         self.writeSlotData(self.getArgsFromMessage(msg))
                         #trolley.ringBell()
@@ -474,11 +477,11 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
                     #trolley.blinkOn()
             else:
                 logger.warn("E7 Opcode Received for address:%s - But no trolley defined",str(address))
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
 
 
     def destroyListener(self):
-        if Messenger.__eTrace : logger.info("==>>entering %s",thisFuncName())
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         Messenger.__instance = None
         if __jmriFlag: 
             try:
@@ -488,7 +491,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
             except:
                 logger.warn("Unable to remove JMRI.removeLocoNetListener")
                 pass
-        if Messenger.__eTrace : logger.info("<<==exiting %s",thisFuncName())
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return 
 
 

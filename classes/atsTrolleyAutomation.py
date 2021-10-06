@@ -1,5 +1,6 @@
 import datetime
 import logging
+import sys
 import jmri
 from random import randint
 from classes.trolleyRoster import TrolleyRoster
@@ -7,6 +8,7 @@ from classes.messengerFacade import Messenger
 
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 trolleyRoster = TrolleyRoster()
 msg = Messenger()
 
@@ -32,7 +34,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         # This is where we should also check that all the trolleys
         # in the roster are current.
         if self.isRunning():
-            logger.debug("Automation is running")
+            logger.trace("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 trolleyRoster.processAllTrolleyMovement()
                 if self.simulatorEnabled : self.simulateAllMovement()
@@ -71,6 +73,9 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
     def setDebugFlag(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
 
 
     def getDebugLevel(self):

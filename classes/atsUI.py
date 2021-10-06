@@ -308,6 +308,9 @@ class AtsUI(object):
 
     def setDebugFlag(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
 
 
     def getDebugLevel(self):
@@ -566,7 +569,6 @@ class AtsUI(object):
 
 
     def getFormattedXml(self, xmlParent):
-        logger.debug("Entering %s.%s", __name__, thisFuncName())
         xmlstr = minidom.parseString(ET.tostring(xmlParent)).toprettyxml(indent="   ")
         text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
         prettyXml = text_re.sub('>\g<1></', xmlstr)
@@ -574,7 +576,7 @@ class AtsUI(object):
 
 
     class DeleteTrolleyButtonListener(MouseAdapter):
-        logger = logging.getLogger(__name__)
+        #logger = logging.getLogger(__name__)
         def mousePressed(self, event):
             __target = event.getSource()
             __row = __target.getSelectedRow()

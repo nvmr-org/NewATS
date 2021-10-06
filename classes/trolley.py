@@ -220,6 +220,11 @@ class Trolley(object):
 
     def setDebugFlag(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
+        logger.info("Logger:%s Now at Level: %s", __name__, str(logger.level))
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+            logger.info("Handler %s Logger:%s Now at Level: %s", handler, __name__, str(handler.level))
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
 
 
     def getDebugLevel(self):
