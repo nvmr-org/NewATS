@@ -39,6 +39,26 @@ APPLICATION_NAME = "Automatic Trolley Sequencer"
 enableSimulator = False
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
+class ATSLogHandler(logging.StreamHandler):
+#class ATSLogHandler(logging.Handler):
+    """ Not yet working -
+        Handler to redirect logging messages to the scroll text area in the application window
+    """
+    MAXLINES = 1000
+    def emit(self, record):
+        try:
+            log_entry = self.format(record)
+            AtsUI.instance.messageInfoText.append(log_entry+"\n")
+            length = AtsUI.instance.messageInfoText.getLineCount()
+            if length > ATSLogHandler.MAXLINES:
+                end = AtsUI.instance.messageInfoText.getLineEndOffset(0)
+                AtsUI.instance.messageInfoText.replaceRange("", 0, end)
+                AtsUI.instance.messageInfoText.setCaretPosition(AtsUI.instance.messageInfoText.getLineStartOffset(AtsUI.instance.messageInfoText.getLineCount() - 1))
+        except Exception as e:
+            print("ATSLogHandler Exception - %s",e)
+            #pass
+
+
 # Configure logging and add TRACE level
 logger = logging.getLogger("ATS")
 TRACE = logging.DEBUG - 5
@@ -51,11 +71,16 @@ if not len(logger.handlers):
     fileHandler = logging.FileHandler("{0}/{1}.log".format(jmriFileUtilSupport.getUserFilesPath(),'NewATS'))
     fileHandler.setLevel(logging.INFO)
     fileHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
-    consoleHandler = logging.StreamHandler()
-    consoleHandler.setLevel(logging.WARNING)
-    consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    #consoleHandler = logging.StreamHandler()
+    #consoleHandler.setLevel(logging.WARNING)
+    #consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    atsLogHandler = ATSLogHandler()
+    atsLogHandler.setLevel(logging.INFO)
+    atsLogHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    
     logger.addHandler(fileHandler)
-    logger.addHandler(consoleHandler)
+    #logger.addHandler(consoleHandler)
+    logger.addHandler(atsLogHandler)
 
 from classes.trolleyRoster import TrolleyRoster
 from classes.blockMap import BlockMap
@@ -114,3 +139,5 @@ trolleyRoster.dump()
 logger.info("Setup Complete  - ")
 layoutMap.printBlocks(trolleyRoster)
 layoutMap.printSegments(trolleyRoster)
+
+

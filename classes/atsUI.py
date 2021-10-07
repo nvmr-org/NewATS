@@ -63,6 +63,7 @@ class AtsUI(object):
     atsSegmentStatusMessageWindowHeight= int(5*atsRowHeight)
     atsRosterStatusMessageWindowHeight= int(10*atsRowHeight)
     atsStatusMessageWindowHeight= int(10*atsRowHeight)
+    messageInfoText = None
 
     def __init__(self, automationObject=None, appName=None):
         # ------------------------------------------------------------------------------------------
@@ -475,10 +476,10 @@ class AtsUI(object):
         self.messageInfoText = JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
         self.messageInfoText.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE) # automatically scroll to last message
         self.messageInfoText.font=Font("monospaced", Font.PLAIN, AtsUI.atsFontSize)
-        #scrollArea.setLineWrap(True) # Lines will be wrapped if they are too long
-        #scrollArea.setWrapStyleWord(True) # Lines will be wrapped at word boundaries
-        #scrollArea.setEditable(False) # we don't want our Text Area to be editable
         self.messageInfoText.setText(DefaultText)
+        #self.messageInfoText.setLineWrap(True)      # Lines will be wrapped if they are too long
+        #self.messageInfoText.setWrapStyleWord(True) # Lines will be wrapped at word boundaries
+        #self.messageInfoText.setEditable(False)     # we don't want our Text Area to be editable
         scrollField = JScrollPane(self.messageInfoText) #put text area in scroll field
         scrollField.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
         scrollField.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
@@ -550,7 +551,7 @@ class AtsUI(object):
         self.segmentInfoPane = self.createInfoPane(layoutMap.getSegmentStatus(trolleyRoster), title="Segment Status")
         self.rosterInfoPane = self.createInfoPane(trolleyRoster.getRosterStatus(), title="Trolley Roster Status")
         self.messageInfoPane = self.createMessagePane("Default Message Panel\n"+
-                                             "Currently All messages will be written to the Script Output window",
+                                             "Currently All messages will be written to the Script Output window\n",
                                              title = "Messages")
 
 
