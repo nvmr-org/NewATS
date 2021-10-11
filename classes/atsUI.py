@@ -55,7 +55,7 @@ class AtsUI(object):
     atsWindowHeight = int(float(atsScreenSize.height) * 0.8)
     atsWindowPosX = (atsScreenSize.width - atsWindowWidth) >> 1
     atsWindowPosY = (atsScreenSize.height - atsWindowHeight) >> 1
-    atsFontSize = int(float(atsScreenSize.height) / 90)
+    atsFontSize = int(float(atsScreenSize.height) / 60)
     atsRowHeight = int(float(atsFontSize) * 1.25)
     atsMessageWindowWidth = int(float(atsWindowWidth) * 0.9)
     atsRosterWindowWidth = atsWindowWidth
@@ -482,12 +482,13 @@ class AtsUI(object):
         self.messageInfoText.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE) # automatically scroll to last message
         self.messageInfoText.font=Font("monospaced", Font.PLAIN, AtsUI.atsFontSize)
         self.messageInfoText.setText(DefaultText)
-        #self.messageInfoText.setLineWrap(True)      # Lines will be wrapped if they are too long
-        #self.messageInfoText.setWrapStyleWord(True) # Lines will be wrapped at word boundaries
-        #self.messageInfoText.setEditable(False)     # we don't want our Text Area to be editable
+        self.messageInfoText.setLineWrap(True)      # Lines will be wrapped if they are too long
+        self.messageInfoText.setWrapStyleWord(True) # Lines will be wrapped at word boundaries
+        self.messageInfoText.setEditable(False)     # we don't want our Text Area to be editable
         scrollField = JScrollPane(self.messageInfoText) #put text area in scroll field
         scrollField.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
         scrollField.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
+        scrollField.setMinimumSize(Dimension(AtsUI.atsMessageWindowWidth, int(paneHeight*AtsUI.atsFontSize*1.4)))
         __panel.setBorder(BorderFactory.createEmptyBorder(1, 8, 1, 8))
         __panel.setLayout(BorderLayout())
         __panel.add(scrollField)
