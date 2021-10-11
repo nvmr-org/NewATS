@@ -53,10 +53,12 @@ class ATSLogHandler(logging.StreamHandler):
             if length > ATSLogHandler.MAXLINES:
                 end = AtsUI.instance.messageInfoText.getLineEndOffset(0)
                 AtsUI.instance.messageInfoText.replaceRange("", 0, end)
-                AtsUI.instance.messageInfoText.setCaretPosition(AtsUI.instance.messageInfoText.getLineStartOffset(AtsUI.instance.messageInfoText.getLineCount() - 1))
+                AtsUI.instance.messageInfoText.setCaretPosition(
+                    AtsUI.instance.messageInfoText.getLineStartOffset(
+                        AtsUI.instance.messageInfoText.getLineCount() - 1))
         except Exception as e:
-            print("ATSLogHandler Exception - %s",e)
-            #pass
+            #print("ATSLogHandler Exception - %s",e)
+            pass
 
 
 # Configure logging and add TRACE level

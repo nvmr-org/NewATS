@@ -513,7 +513,7 @@ class TrolleyRoster(object):
         # We should only process sensors going HIGH or OCCUPIED
         # A sensor going high indicates that a trolley has moved into that block
         if TrolleyRoster.__layoutMap.findBlockByAddress(sensorId) :
-            logger.info('Processing event for SensorID = %s', sensorId)
+            logger.debug('Processing event for SensorID = %s', sensorId)
             # check if this event is associated with a trolley that is already in this block
             # if it is, then treat the event as a bouncy sensor reading
             if self.findByCurrentBlock(sensorId):
