@@ -85,7 +85,6 @@ class AtsUI(object):
         self.addComponent(self.fr, self.getButtonPanel(), 0, 0, 2, 1, GridBagConstraints.PAGE_START, GridBagConstraints.NONE);
         self.addComponent(self.fr, self.ckBoxPanel1, 0, 1, 1, 2, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.ckBoxPanel2, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
-        self.addComponent(self.fr, self.ckBoxPanel3, 1, 2, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.blockInfoPane, 0, 3, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.segmentInfoPane, 0, 4, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
         self.addComponent(self.fr, self.rosterInfoPane, 0, 5, 2, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL)
@@ -115,6 +114,9 @@ class AtsUI(object):
         self.tstopButton.setEnabled(False)
         self.tgoButton.setEnabled(True)
         self.quitButton.setEnabled(True)
+        self.loadRosterButton.setEnabled(True)
+        self.saveRosterButton.setEnabled(True)
+        self.loadLayoutButton.setEnabled(True)
         self.automationObject.stop()
         logger.info("Stop All Trolleys button pressed")
         trolleyRoster.stopAllTrolleys()
@@ -138,6 +140,9 @@ class AtsUI(object):
         self.tstopButton.setEnabled(True)
         self.tgoButton.setEnabled(False)
         self.quitButton.setEnabled(False)
+        self.loadRosterButton.setEnabled(False)
+        self.saveRosterButton.setEnabled(False)
+        self.loadLayoutButton.setEnabled(False)
         self.automationObject.start()
         logger.info("Start Running button pressed")
         while self.automationObject.isRunning() == False:
@@ -512,14 +517,8 @@ class AtsUI(object):
         self.MsgDebugCheckBox = JCheckBox("Messaging", actionPerformed = self.whenCheckboxClicked)
         self.MsgDebugCheckBox.setToolTipText("Display messaging debug messages")
         self.MsgDebugCheckBox.setSelected(msg.getDebugLevel()==logging.DEBUG)
-        self.snChgCheckBox = JCheckBox("Show Sn Change")
-        self.snChgCheckBox.setToolTipText("Display when a sensor state changes")
-        self.snChgCheckBox.setEnabled(False)
-        self.snSpkChgCheckBox = JCheckBox("Speak Sn Change")
-        self.snSpkChgCheckBox.setToolTipText("Speak when a sensor state changes")
-        self.snSpkChgCheckBox.setEnabled(False)
-        self.msgSpkCheckBox = JCheckBox("Speak General Messages")
-        self.msgSpkCheckBox.setToolTipText("Speak when a message is sent")
+        self.msgSpkCheckBox = JCheckBox("Announcer")
+        self.msgSpkCheckBox.setToolTipText("Speak when alert is sent")
         self.msgSpkCheckBox.setSelected(True)
 
         # ====================================
@@ -538,11 +537,7 @@ class AtsUI(object):
         self.ckBoxPanel2.add(self.RosterDebugCheckBox)
         self.ckBoxPanel2.add(self.AutoDebugCheckBox)
         self.ckBoxPanel2.add(self.MsgDebugCheckBox)
-
-        self.ckBoxPanel3 = JPanel()
-        self.ckBoxPanel3.setLayout(FlowLayout(FlowLayout.LEFT))
-        self.ckBoxPanel3.add(self.snSpkChgCheckBox)
-        self.ckBoxPanel3.add(self.msgSpkCheckBox)
+        self.ckBoxPanel2.add(self.msgSpkCheckBox)
 
         # =====================================
         # create text fields for status outputs
