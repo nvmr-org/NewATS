@@ -412,4 +412,5 @@ class BlockMap(object):
         except Exception, e:
             logger.warning(e)
             logger.warning('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
+            self.buildDefaultLayoutMap()
 
