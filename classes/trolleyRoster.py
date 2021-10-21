@@ -98,6 +98,7 @@ class TrolleyRoster(object):
 
     def __delitem__(self, ii):
         """Delete an item"""
+        logger.trace("%s.%s - delete index=%s", __name__, thisFuncName(),str(ii))
         del self._list[ii]
 
 
@@ -136,9 +137,11 @@ class TrolleyRoster(object):
 
     def delete(self,ii):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        currentPosition = self._list[ii].currentPosition
+        #currentPosition = self._list[ii].currentPosition
+        logger.trace("%s.%s - Roster Length=%s", __name__, thisFuncName(),len(self._list))
         self._list[ii-1].next = self._list[ii].next
         self.__delitem__(ii)
+        logger.trace("%s.%s - Roster Length=%s", __name__, thisFuncName(),len(self._list))
 
 
     def insert(self, ii, val):
@@ -333,8 +336,10 @@ class TrolleyRoster(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if trolley.currentPosition.address == currentPosition:
+                logger.trace("%s.%s - %s found in block %s", __name__, thisFuncName(),str(trolley.address),str(currentPosition))
                 return trolley
         #return find(lambda trolley: trolley.currentPosition == currentPosition, self._list)
+        logger.trace("%s.%s - No trollies found in block %s", __name__, thisFuncName(),str(currentPosition))
         return None
         
 
@@ -414,21 +419,21 @@ class TrolleyRoster(object):
         for trolley in self._list:
             if trolley.getSpeed() == 0:
                 if self.checkIfTrolleyCanMove(trolley):
-                    logger.info("Trolley: %s   Status: Not Moving (%s seconds) Action: Starting  Block: %s - %s",
+                    logger.info("Trolley %s Not Moving (%s seconds) Action: Starting  Block: %s - %s",
                             trolley.address, (datetime.datetime.now() - trolley.stopTime).total_seconds(),
                             trolley.currentPosition.address, trolley.currentPosition.description)
                     trolley.fullSpeed()
                     self.dump()
             else:
                 if self.checkIfTrolleyShouldStop(trolley):
-                    logger.info("Trolley: %s   Status: Is Running (%s seconds) Action: Stopping  Block: %s - %s",
+                    logger.info("Trolley %s Is Running (%s seconds) Action: Stopping  Block: %s - %s",
                             trolley.address, (datetime.datetime.now() - trolley.startTime).total_seconds(),
                             trolley.currentPosition.address, trolley.currentPosition.description)
                     trolley.slowStop()
                     self.dump()
                 elif self.checkIfTrolleyIsOverdue(trolley):
                     if (datetime.datetime.now() - trolley.lastAlertTime).total_seconds() > TrolleyRoster.SECONDS_BETWEEN_CONSOLE_ALERTS:
-                        logger.warn("Trolley: %s   Alert:  Trolley is Overdue in block: %s - %s",
+                        logger.warn("Trolley %s Alert: Trolley is Overdue in block: %s - %s",
                             trolley.address, trolley.currentPosition.address, trolley.currentPosition.description)
                         trolley.lastAlertTime = datetime.datetime.now()
                     if (datetime.datetime.now() - trolley.lastAudibleAlertTime).total_seconds() > TrolleyRoster.SECONDS_BETWEEN_AUDIBLE_ALERTS:
@@ -440,7 +445,7 @@ class TrolleyRoster(object):
     def checkIfTrolleyIsOverdue(self, trolley):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         travelTime = (datetime.datetime.now() - trolley.startTime).total_seconds() - self.SECONDS_BEFORE_OVERDUE
-        logger.debug("Trolley %s: TravelTime:%s SpeedFactor:%s Mult:%s, Length:%s",
+        logger.debug("Trolley %s TravelTime:%s SpeedFactor:%s Mult:%s, Length:%s",
                      trolley.address, travelTime, trolley.speedFactor, travelTime * trolley.speedFactor,
                      trolley.currentPosition.length)
         if (travelTime * trolley.speedFactor) > (trolley.currentPosition.length):
@@ -452,21 +457,21 @@ class TrolleyRoster(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         # If the next segment is occupied return false
         if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
-            logger.info("Trolley: %s   Status: Next segment occupied", trolley.address)
+            logger.info("Trolley %s Must stop next segment occupied", trolley.address)
             return True
         # If this trolley is in a block that requires a stop and has not been stopped long enough return true
         if trolley.currentPosition.stopRequired:
             if not self.__checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
-                logger.info("Trolley: %s   Status: Required stop time has not been met", trolley.address)
+                logger.info("Trolley %s Required stop time has not been met", trolley.address)
                 return True
         # If this trolley is not the next one scheduled for the next block return true
         if trolley.address != self.findByNextBlock(trolley.nextPosition.address).address: 
             # The exception to this is if the next block is part of the current segment the trolley is already in
             if trolley.currentPosition.segment != trolley.nextPosition.segment:
-                logger.info("Trolley: %s   Status: Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
+                logger.info("Trolley %s Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
                 return True
             else:
-                logger.info("Trolley: %s   Status: Not the first trolley scheduled for Block %s - ******* CONTINUE IN SEGMENT CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
+                logger.info("Trolley %s Not the first trolley scheduled for Block %s - ******* CONTINUE IN SEGMENT CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
             #return True
         #print "Reason: is allowed to move"
         return False
@@ -476,25 +481,25 @@ class TrolleyRoster(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         # If the slotId has not been set return false
         if trolley.slotId is None:
-            logger.info("Trolley: %s   Alert: Slot Not Yet Set", trolley.address)
+            logger.info("Trolley %s Alert: Slot Not Yet Set", trolley.address)
             return False
         # If the next segment is occupied return false
         if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and (trolley.currentPosition.segment != trolley.nextPosition.segment) : 
-            logger.debug("Trolley: %s   Status: Next segment occupied", trolley.address)
+            logger.debug("Trolley %s Next segment occupied", trolley.address)
             return False
         # If this trolley is in a block that requires a stop and has not been stopped long enough return false
         if trolley.currentPosition.stopRequired:
             if not self.__checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
-                logger.debug("Trolley: %s   Status: Required stop time has not been met", trolley.address)
+                logger.debug("Trolley %s Required stop time has not been met", trolley.address)
                 return False
         # If this trolley is not the next one scheduled for the next block return false
         if trolley.address != self.findByNextBlock(trolley.nextPosition.address).address:
             # The exception to this is if the next block is part of the current segment the trolley is already in
             if trolley.currentPosition.segment != trolley.nextPosition.segment:
-                logger.debug("Trolley: %s   Status: Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition().address)
+                logger.debug("Trolley %s Not the first trolley scheduled for Block %s", trolley.address, trolley.getNextPosition().address)
                 return False
             else:
-                logger.info("Trolley: %s   Status: Not the first trolley scheduled for Block %s - ******* START CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
+                logger.info("Trolley %s Not the first trolley scheduled for Block %s - ******* START CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
         #print "Reason: is allowed to move"
         return True
 
@@ -612,4 +617,5 @@ class TrolleyRoster(object):
                     break
                 trolley.currentPosition.set_blockOccupied()
                 if trolley == self._list[-1]: validationComplete = True
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return

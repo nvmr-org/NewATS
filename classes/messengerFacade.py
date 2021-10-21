@@ -306,11 +306,12 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # *******************************************************
     def requestThrottle(self,address, isLong, throttleWaitTime) : #sends 0xBF with loco address
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        if Messenger.__dTrace : logger.info("requested address = %s",str(address))
+        logger.debug("requested address = %s",str(address))
         try:
             throttle = jmri.jmrit.automat.AbstractAutomaton.getThrottle(address, isLong)  # address, long address = true
         except:
             throttle = None
+            logger.warn("throttle exception: %s", e)
             logger.warn("Unable to get throttle")
         logger.debug("sent throttle request: "+str(throttle))
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
