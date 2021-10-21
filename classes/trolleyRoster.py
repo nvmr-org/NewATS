@@ -606,16 +606,13 @@ class TrolleyRoster(object):
 
     def validatePositions(self, blockMap):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        validationComplete = False
-        while not validationComplete:
-            for trolley in self._list:
-                logger.debug("Checking trolley:%s", trolley.address)
-                if blockMap.findBlockByAddress(trolley.currentPosition.address) is None:
-                    logger.warning('Warning: Trolleys %s assigned to invalid block: %s', trolley.address, trolley.currentPosition.address)
-                    logger.warning('Warning: Trolleys %s will be removed', trolley.address)
-                    self.delete(self.getIndex(trolley))
-                    break
-                trolley.currentPosition.set_blockOccupied()
-                if trolley == self._list[-1]: validationComplete = True
+        for trolley in self._list:
+            logger.debug("Checking trolley:%s", trolley.address)
+            if blockMap.findBlockByAddress(trolley.currentPosition.address) is None:
+                logger.warning('Warning: Trolleys %s assigned to invalid block: %s', trolley.address, trolley.currentPosition.address)
+                logger.warning('Warning: Trolleys %s will be removed', trolley.address)
+                self.delete(self.getIndex(trolley))
+                break
+            trolley.currentPosition.set_blockOccupied()
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return

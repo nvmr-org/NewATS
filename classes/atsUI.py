@@ -633,7 +633,12 @@ class AtsUI(object):
             logger.info("DELETE Trolley: %s - %s", str(trolleyRoster[row].address),
                         ("Confirmed" if __response == 0 else "Cancelled"))
             if __response == 0:
+                position = trolleyRoster[row].currentPosition
                 trolleyRoster.delete(row)
+                logger.debug("Trolley %s - Checking if block %s is CLEAR", trolleyRoster[row].address, str(position.address))
+                if trolleyRoster.findByCurrentBlock(position.address) == None:
+                    logger.debug("Setting block %s to CLEAR", str(position.address))
+                    position.set_blockClear()
                 trolleyRoster.validatePositions(layoutMap)
                 trolleyRoster.dump()
                 layoutMap.printBlocks(trolleyRoster)
