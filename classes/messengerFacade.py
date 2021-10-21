@@ -308,8 +308,8 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         logger.debug("requested address = %s",str(address))
         try:
-            throttle = jmri.jmrit.automat.AbstractAutomaton.getThrottle(address, isLong)  # address, long address = true
-        except:
+            throttle = jmri.jmrit.automat.AbstractAutomaton().getThrottle(address, isLong, throttleWaitTime)  # address, long address = true
+        except Exception as e:
             throttle = None
             logger.warn("throttle exception: %s", e)
             logger.warn("Unable to get throttle")
