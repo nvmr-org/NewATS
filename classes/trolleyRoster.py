@@ -33,11 +33,6 @@ class TrolleyRoster(object):
         currentPosition:  This indicates the block that the trolley is currently in.
         nextPosition: This should always be currentPosition + 1.
     """
-    __eTrace = False #turn ENTER (In) / EXIT (Out) trace print off/on
-    __dTrace = False #turn limited section Debug trace print off/on
-    __iTrace = False #turn msgListener INCOMING opcode print off/on
-    __oTrace = False #turn sendLnMsg OUTGOING opcode messages off/on
-
 
     multipleDetectedInBlock = False
     #msg = Messenger()
@@ -223,7 +218,7 @@ class TrolleyRoster(object):
     def destroy(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
-            if TrolleyRoster.__dTrace : logger.info('Trolley: %s Free Slot #%s',str(trolley.address),str(trolley.slotId))
+            logger.trace('Trolley: %s Free Slot #%s',str(trolley.address),str(trolley.slotId))
             if trolley.slotId:
                 trolley.freeSlot()
                 logger.info('Trolley %s Stopped and Removed', trolley.address)
