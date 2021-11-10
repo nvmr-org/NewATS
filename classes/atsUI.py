@@ -7,11 +7,11 @@ import xml.etree.ElementTree as ET
 
 from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
-from classes.messengerFacade import Messenger
+#from classes.messengerFacade import Messenger
 from classes.blockMap import BlockMap
-from classes.block import Block
+#from classes.block import Block
 from classes.atsWinListener import AtsWinListener
-from classes.atsTrolleyAutomation import TrolleyAutomation
+#from classes.atsTrolleyAutomation import TrolleyAutomation
 from xml.dom import minidom
 
 from java.lang import Runtime
@@ -44,7 +44,7 @@ thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
 trolleyRoster = TrolleyRoster()
 layoutMap = BlockMap()
-msg = Messenger()
+#msg = Messenger()
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
 class AtsUI(object):
@@ -143,6 +143,7 @@ class AtsUI(object):
         self.loadRosterButton.setEnabled(False)
         self.saveRosterButton.setEnabled(False)
         self.loadLayoutButton.setEnabled(False)
+        #trolleyRoster.requestThrottles()
         self.automationObject.start()
         logger.info("Start Running button pressed")
         while self.automationObject.isRunning() == False:
@@ -209,7 +210,7 @@ class AtsUI(object):
         self.setDebugFlag(self.UiDebugCheckBox.isSelected())
         layoutMap[0].setDebugFlag(self.BlockDebugCheckBox.isSelected())
         layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
-        msg.setDebugFlag(self.MsgDebugCheckBox.isSelected())
+        #msg.setDebugFlag(self.MsgDebugCheckBox.isSelected())
         trolleyRoster[0].setDebugFlag(self.TrolleyDebugCheckBox.isSelected())
         trolleyRoster.setDebugFlag(self.RosterDebugCheckBox.isSelected())
         self.automationObject.setDebugFlag(self.AutoDebugCheckBox.isSelected())
@@ -517,7 +518,7 @@ class AtsUI(object):
         self.AutoDebugCheckBox.setSelected(self.automationObject.getDebugLevel()==logging.DEBUG)
         self.MsgDebugCheckBox = JCheckBox("Messaging", actionPerformed = self.whenCheckboxClicked)
         self.MsgDebugCheckBox.setToolTipText("Display messaging debug messages")
-        self.MsgDebugCheckBox.setSelected(msg.getDebugLevel()==logging.DEBUG)
+        #self.MsgDebugCheckBox.setSelected(msg.getDebugLevel()==logging.DEBUG)
         self.msgSpkCheckBox = JCheckBox("Announcer")
         self.msgSpkCheckBox.setToolTipText("Speak when alert is sent")
         self.msgSpkCheckBox.setSelected(True)

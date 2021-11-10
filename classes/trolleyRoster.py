@@ -43,7 +43,7 @@ class TrolleyRoster(object):
     #msg = Messenger()
     __instance = None  # Make sure there is only one version of the trolleyroster
     __allowRun = False
-    __automationObject = None
+    automationManager = None
     __outputRosterInfo = None
     __outputMessageInfo = None
     __layoutMap = None
@@ -52,14 +52,17 @@ class TrolleyRoster(object):
     SECONDS_BETWEEN_SLOT_REQUESTS = 10
     SECONDS_BEFORE_OVERDUE = 5
 
-    def __init__(self, trolleyObjects=None, layoutMap=None, title=None, messageManager=None):
+    def __init__(self, trolleyObjects=None, layoutMap=None, title=None, automationManager=None):
         """Initialize the class"""
         super(TrolleyRoster, self).__init__()
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.title = title
         self.comment = []
         self.SlotIdRequestTimer = datetime.datetime.now()
-        Trolley.msg = messageManager
+        #self.msg = messageManager
+        #Trolley.setMessageManager(messageManager)
+        TrolleyRoster.automationManager = automationManager
+        Trolley.setAutomationManager(automationManager)
         if trolleyObjects is not None:
             self._list = list(trolleyObjects)
             self.first = None
@@ -72,7 +75,7 @@ class TrolleyRoster(object):
             TrolleyRoster.__layoutMap = layoutMap
 
 
-    def __new__(cls, trolleyObjects=None, layoutMap=None, messageManager=None): # __new__ always a class method
+    def __new__(cls, trolleyObjects=None, layoutMap=None, automationManager=None): # __new__ always a class method
         if TrolleyRoster.__instance is None:
             TrolleyRoster.__instance = object.__new__(cls,trolleyObjects)
         return TrolleyRoster.__instance
@@ -180,6 +183,21 @@ class TrolleyRoster(object):
         return logger.level
 
 
+    def getMessageManager(self):
+        return self.msg
+
+
+    def setMessageManager(self, messageManager):
+        self.msg = messageManager
+
+
+    def setAutomationManager(self,automationObject):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        self.automationManager = automationObject
+        Trolley.setAutomationManager(automationObject)
+        return
+
+
     def setRosterInfoOutput(self,output=None):
         self.__outputRosterInfo=output
 
@@ -233,7 +251,7 @@ class TrolleyRoster(object):
 
     def dump(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.dump")
+        logger.trace("Enter trolleyRoster.dump")
         if self.__outputRosterInfo is None:
             print self.getRosterStatus()
         else:
@@ -284,6 +302,7 @@ class TrolleyRoster(object):
         logger.info('Address:%s MxSp:%s Sound:%s Pos:%s Description:%s', address, maxSpeed, soundEnabled, currentPosition, positionDescription)
         self.append(Trolley(self.__layoutMap,address=address, maxSpeed=maxSpeed,
                                soundEnabled=soundEnabled, currentPosition=currentPosition))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
 
 
     def setXmlElementKeyValuePair(self, xmlParent, tagName, tagValue):
@@ -345,8 +364,10 @@ class TrolleyRoster(object):
 
     def findByAddress(self, address):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("%s.%s - List Length %s", __name__, thisFuncName(),len(self._list))
         for trolley in self._list:
             if trolley.address == address:
+                logger.trace("%s.%s - Found %s", __name__, thisFuncName(),address)
                 return trolley
         return None
         #return find(lambda trolley: trolley.currentPosition == currentPosition, self._list)
@@ -383,11 +404,22 @@ class TrolleyRoster(object):
     def checkIfAllTrolleysAreRegistered(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
-            if trolley.slotId is None:
-                logger.debug("Not all trolleys are registered")
+            if trolley.throttle is None:
+                logger.trace("Not all trolleys are registered")
                 return False
-        logger.debug("All trolleys are registered")
+        logger.trace("All trolleys are registered")
         return True
+
+
+    def requestThrottles(self):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        for trolley in self._list:
+            if trolley.throttle is None:
+                logger.info("Trolley %s Requesting Throttle", trolley.address)
+                trolley.automationManager.prepareThrottleRequest(trolley.address)
+                trolley.automationManager.handle()
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
+        return 
 
 
     def refreshTrolleysSlots(self):
@@ -400,18 +432,26 @@ class TrolleyRoster(object):
 
     def registerOneTrolley(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        if (datetime.datetime.now() - self.SlotIdRequestTimer).total_seconds() < TrolleyRoster.SECONDS_BETWEEN_SLOT_REQUESTS: return
+        if (datetime.datetime.now() - self.SlotIdRequestTimer).total_seconds() < TrolleyRoster.SECONDS_BETWEEN_SLOT_REQUESTS:
+            logger.trace("%s.%s - SlotTimer:%s", __name__, thisFuncName(),(datetime.datetime.now() - self.SlotIdRequestTimer).total_seconds())
+            return
         for trolley in self._list:
-            if trolley.slotId:
+            logger.trace("Trolley %s - Checking Registration", trolley.address)
+            if trolley.throttle:
+                logger.trace("Trolley %s - Throttle Assigned: %s", trolley.address,str(trolley.throttle))
                 self.dump()
                 continue
             if trolley.slotRequestSent: 
                 logger.info("Trolley %s - Slot Id not yet assigned", trolley.address)
                 break
-            trolley.slotRequestSent = trolley.msg.requestSlot(trolley.address)
             self.SlotIdRequestTimer = datetime.datetime.now()
+            trolley.automationManager.prepareThrottleRequest(trolley.address)
+            #trolley.automationManager.handle()
+            #trolley.slotRequestSent = trolley.msg.requestSlot(trolley.address)
+            #self.SlotIdRequestTimer = datetime.datetime.now()
             logger.info("Trolley %s  SlotRequestSent=%s", trolley.address, trolley.slotRequestSent)
             break
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
 
 
     def processAllTrolleyMovement(self):
@@ -514,7 +554,7 @@ class TrolleyRoster(object):
 
     def processBlockEvent(self, sensorId):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        if not self.__automationObject.isRunning(): return
+        if not self.automationManager.isRunning(): return
         # We should only process sensors going HIGH or OCCUPIED
         # A sensor going high indicates that a trolley has moved into that block
         if TrolleyRoster.__layoutMap.findBlockByAddress(sensorId) :
@@ -554,12 +594,6 @@ class TrolleyRoster(object):
             TrolleyRoster.__layoutMap.printBlocks(self)
             TrolleyRoster.__layoutMap.printSegments(self)
             self.dump()
-        return
-
-
-    def setAutomationObject(self,automationObject):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
-        self.__automationObject = automationObject
         return
 
 

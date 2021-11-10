@@ -5,6 +5,8 @@ Created on Nov 18, 2016
 '''
 import sys
 import logging
+import jmri
+from jmri import Sensor
 
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
@@ -51,6 +53,7 @@ class Block(object):
         self.length = length
         self.description = description
         self.next = None
+        #self.sensor = jmri.provideSensor(str(blockAddress))
         logger.info("Block Added - "+repr(self))
 
 

@@ -16,7 +16,7 @@ from classes.block import Block
 
 
 class BlockMap(object):
-    """A trolley object that consists of the following properties:
+    """A block object that consists of the following properties:
 
     Attributes:
         address: The DCC address of the trolley object.

@@ -4,18 +4,25 @@ import sys
 import jmri
 from random import randint
 from classes.trolleyRoster import TrolleyRoster
-from classes.messengerFacade import Messenger
+#from classes.messengerFacade import Messenger
 
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
 thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 trolleyRoster = TrolleyRoster()
-msg = Messenger()
+#msg = Messenger()
 
 class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
+    #from classes.messengerFacade import Messenger
+    #msg = Messenger()
+    #msg.createListener()
+
     simulatorEnabled = False
     SIMULATOR_TIME_MULTIPLIER = 4.0
     HANDLER_TIME_SLICE_MILLISEC = 250
+    REQUEST_THROTTLE = False
+    THROTTLE_WAIT_TIME = 5
+    THROTTLE_REQUEST_ADDRESS = None
 
     def init(self):
         logger.info("Initialize Trolley Automation")
@@ -23,6 +30,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
     def handle(self):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         # handle() is called repeatedly until it returns false.
         #
         # We wait until handle gets called to check if trolleys
@@ -33,12 +41,17 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         #
         # This is where we should also check that all the trolleys
         # in the roster are current.
+        if (TrolleyAutomation.REQUEST_THROTTLE) :
+            self.getNewThrottle()
+            TrolleyAutomation.REQUEST_THROTTLE = False
+            TrolleyAutomation.THROTTLE_REQUEST_ADDRESS = None
+
         if self.isRunning():
             logger.trace("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 trolleyRoster.processAllTrolleyMovement()
                 if self.simulatorEnabled : self.simulateAllMovement()
-                trolleyRoster.refreshTrolleysSlots()
+                #trolleyRoster.refreshTrolleysSlots()
             else:
                 trolleyRoster.registerOneTrolley()
         #else:
@@ -63,7 +76,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
                 # Simulate random noise on used block
                 if randint(0, 999) > 990:
                     event =  trolley.currentPosition.address
-        if event: msg.sendSenorReportMsg(event)
+        if event: self.msg.sendSenorReportMsg(event)
         return event
 
 
@@ -93,3 +106,36 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
     def setSimulatorDisabled(self):
         self.simulatorEnabled = False
+
+
+    def getAutomationName(self):
+        return self.getName()
+
+    def prepareThrottleRequest(self, address):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        TrolleyAutomation.THROTTLE_REQUEST_ADDRESS = address
+        TrolleyAutomation.REQUEST_THROTTLE = True
+        logger.trace("%s.%s - Requesting Address:%s - %s", __name__, thisFuncName(),TrolleyAutomation.THROTTLE_REQUEST_ADDRESS,TrolleyAutomation.REQUEST_THROTTLE)
+
+
+    def getNewThrottle(self):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        isLong = True if TrolleyAutomation.THROTTLE_REQUEST_ADDRESS > 100 else False
+        trolley = trolleyRoster.findByAddress(TrolleyAutomation.THROTTLE_REQUEST_ADDRESS)
+        logger.trace("getNewThrottle -  address: %s isLong: %s", TrolleyAutomation.THROTTLE_REQUEST_ADDRESS, isLong)
+        logger.trace("getNewThrottle -  trolley address: %s", trolley.address)
+        try:
+            logger.trace("getNewThrottle -  Calling getThrottle")
+            trolley.slotRequestSent = True
+            trolley.throttle = self.getThrottle(TrolleyAutomation.THROTTLE_REQUEST_ADDRESS, isLong, TrolleyAutomation.THROTTLE_WAIT_TIME)  # address, long address = true
+            trolley.slotId = str(trolley.throttle)
+            logger.trace("getNewThrottle -  ThrottleId: %s ReqSent:%s", str(trolley.throttle),trolley.slotRequestSent)
+            logger.info("Trolley %s -  Throttle Assigned: %s", trolley.address, str(trolley.throttle))
+            trolleyRoster.dump()
+        except Exception as e:
+            trolley.throttle = None
+            logger.warn("getNewThrottle -  Throttle Exception: %s", e)
+            logger.warn("getNewThrottle -  Unable to get throttle")
+        logger.trace("getNewThrottle -  Sent Throttle Request: %s",str(trolley.throttle))
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
+        return 
