@@ -42,10 +42,6 @@ except ImportError:
 #    def message(self, msg):
 #        return
 class Messenger(jmri.jmrix.loconet.LocoNetListener):
-    __eTrace = False #turn ENTER (In) / EXIT (Out) trace print off/on
-    __dTrace = False #turn limited section Debug trace print off/on
-    __iTrace = False #turn msgListener INCOMING opcode print off/on
-    __oTrace = False #turn sendLnMsg OUTGOING opcode messages off/on
 
     __instance = None
     __lnListen = None
@@ -72,21 +68,6 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.eventQueue = eventQueue
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
-        return
-
-
-    # ******************************
-    # Enable Message Debugging 
-    # ******************************
-    def enableDebug(self, debugFlag='all'):
-        if debugFlag.lower() == 'all' or debugFlag.lower() == 'etrace' :
-            Messenger.__eTrace = True #turn ENTER (In) / EXIT (Out) trace print off/on
-        if debugFlag.lower() == 'all' or debugFlag.lower() == 'dtrace' :
-            Messenger.__dTrace = True #turn limited section DEBUG trace print off/on
-        if debugFlag.lower() == 'all' or debugFlag.lower() == 'itrace' :
-            Messenger.__iTrace = True #turn msgListener INCOMING opcode print off/on
-        if debugFlag.lower() == 'all' or debugFlag.lower() == 'otrace' :
-            Messenger.__oTrace = True #turn sendLnMsg OUTGOING opcode messages off/on
         return
 
 
@@ -132,8 +113,8 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         # send up to 16 bytes in the message - includes checksum
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         packet = self.createPacket(msgLength,opcode,ARGS)
-        if Messenger.__oTrace : logger.info("Just prior to send message - jmriFlag = %s", __jmriFlag)
-        if Messenger.__oTrace : logger.info("Packet ==>> %s", packet)           # print packet to Script Output window
+        logger.trace("Just prior to send message - jmriFlag = %s", __jmriFlag)
+        logger.trace("Packet ==>> %s", packet)           # print packet to Script Output window
         if __jmriFlag: 
             try:
                 jmri.InstanceManager.getList(jmri.jmrix.loconet.LocoNetSystemConnectionMemo).get(0).getLnTrafficController().sendLocoNetMessage(packet)
@@ -323,7 +304,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
     # *******************************************************
     def requestSlot(self,slotId) : #sends 0xBF with loco address
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        if Messenger.__dTrace : logger.info("requested slot = %s",str(slotId))
+        logger.debug("requested slot = %s",str(slotId))
         #self.noSlotID = True
         self.lastDeviceID = slotId
         self.dtxAddress = int(slotId)    # get address from entry field for LocoNet
@@ -421,7 +402,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         ######################################################################################
         if (msg.getOpCode() == jmri.jmrix.loconet.LnConstants.OPC_INPUT_REP) and ((msg.getElement(2) & 0x10) == 0x10) :
             eventAddr = msg.sensorAddr() + 1
-            if Messenger.__iTrace : logger.info("== eventAddr = " + str(eventAddr))
+            logger.trace("== eventAddr = " + str(eventAddr))
             trolleyRoster.processBlockEvent(eventAddr)
 
         #####################################################################
@@ -447,7 +428,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
                 # 11=IN_USE, 10=IDLE, 01=COMMON, 00=FREE SLOT and respond
                 if ((status >> 4) & 0x03) < 3: # if status is IDLE, COMMON, or FREE
                     if trolley.slotId is None: 
-                        if Messenger.__iTrace : logger.info("Trolley: "+str(address)+" Slot was IDLE, COMMON, or FREE")
+                        logger.trace("Trolley: "+str(address)+" Slot was IDLE, COMMON, or FREE")
                         self.setSlotInUse(slotId) # Set the slot to IN-USE
                         trolley.setSlotId(slotId=slotId)
                         logger.info("Trolley %s SlotId = %s",str(address), str(slotId))

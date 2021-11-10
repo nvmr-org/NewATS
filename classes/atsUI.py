@@ -636,7 +636,7 @@ class AtsUI(object):
             if __response == 0:
                 position = trolleyRoster[row].currentPosition
                 trolleyRoster.delete(row)
-                logger.debug("Trolley %s - Checking if block %s is CLEAR", trolleyRoster[row].address, str(position.address))
+                logger.debug("Trolley Deleted - Checking if block %s is CLEAR", str(position.address))
                 if trolleyRoster.findByCurrentBlock(position.address) == None:
                     logger.debug("Setting block %s to CLEAR", str(position.address))
                     position.set_blockClear()
