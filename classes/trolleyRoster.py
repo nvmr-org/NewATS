@@ -228,7 +228,6 @@ class TrolleyRoster(object):
 
     def dump(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        if TrolleyRoster.__eTrace : logger.info("Enter trolleyRoster.dump")
         if self.__outputRosterInfo is None:
             print self.getRosterStatus()
         else:
