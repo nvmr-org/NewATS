@@ -3,9 +3,12 @@ Created on Nov 18, 2016
 
 @author: ttb
 '''
+import sys
 import logging
 
 logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
 class Block(object):
     """The layout class defines blocks and segments of a layout.  Blocks should be 
@@ -27,7 +30,6 @@ class Block(object):
         description: A verbal description of the block.
         
     Class Properties:
-        blockCount: The total number of blocks
         segmentCount: The total number of segments
     """
     segmentCount = 0
@@ -36,6 +38,7 @@ class Block(object):
         """Return a Layout object whose id is *blockAddress* and *segmentAddress* 
         are negative if not provided.  Blocks should be added in the order they
         will be traversed."""
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         if newSegment == True:
             Block.segmentCount += 1
 
@@ -48,7 +51,11 @@ class Block(object):
         self.length = length
         self.description = description
         self.next = None
-        logger.info("Block Added - Address:"+str(self.address)+
+        logger.info("Block Added - "+repr(self))
+
+
+    def __repr__(self):
+        return ("Address:"+str(self.address)+
                     " Segment:"+str(self.segment)+
                     " Occupied:"+str(self.occupied)+
                     " StopReqd:"+str(self.stopRequired)+
@@ -56,22 +63,42 @@ class Block(object):
                     " Length:"+str(self.length)+
                     " Description:"+str(self.description))
 
+    def __str__(self):
+        return ("Addr:"+str(self.address)+
+                    " Seg:"+str(self.segment)+
+                    " Stop:"+str(self.stopRequired)+
+                    " Time:"+str(self.waitTime)+
+                    " Len:"+str(self.length)+
+                    " Desc:"+str(self.description))
+
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
+
+
+    def getDebugLevel(self):
+        return logger.level
+
 
     def set_blockAddress(self, blockAddress=-1):
-        # Set the Layout Block Address.
+        logger.debug("%s.%s: Setting block to address %s to segment %s", __name__, thisFuncName(), self.address)
         self.address = blockAddress
 
 
     def set_segmentAddress(self, segmentAddress=-1):
-        # Set the Layout Segment Address.
+        logger.debug("%s.%s: Setting block %s to segment %s", __name__, thisFuncName(), self.address, self.segment)
         self.segment = segmentAddress
 
 
     def set_blockOccupied(self):
+        logger.debug("%s.%s: Setting block %s to OCCUPIED", __name__, thisFuncName(), self.address)
         self.occupied = True
 
 
     def set_blockClear(self):
+        logger.debug("%s.%s: Setting block %s to CLEAR", __name__, thisFuncName(), self.address)
         self.occupied = False
 
 

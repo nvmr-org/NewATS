@@ -1,17 +1,22 @@
 import datetime
 import logging
+import sys
 import jmri
 from random import randint
 from classes.trolleyRoster import TrolleyRoster
 from classes.messengerFacade import Messenger
 
 logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 trolleyRoster = TrolleyRoster()
 msg = Messenger()
 
 class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
-    logger = logging.getLogger(__name__)
     simulatorEnabled = False
+    SIMULATOR_TIME_MULTIPLIER = 4.0
+    HANDLER_TIME_SLICE_MILLISEC = 250
+
     def init(self):
         logger.info("Initialize Trolley Automation")
         pass
@@ -29,16 +34,16 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         # This is where we should also check that all the trolleys
         # in the roster are current.
         if self.isRunning():
-            logger.debug("Automation is running")
+            logger.trace("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 trolleyRoster.processAllTrolleyMovement()
-                if TrolleyAutomation.simulatorEnabled : self.simulateAllMovement()
+                if self.simulatorEnabled : self.simulateAllMovement()
                 trolleyRoster.refreshTrolleysSlots()
             else:
                 trolleyRoster.registerOneTrolley()
-        else:
-            logger.info("Automation is NOT running")
-        self.waitMsec(250)
+        #else:
+            #logger.trace("Automation is NOT running")
+        self.waitMsec(self.HANDLER_TIME_SLICE_MILLISEC)
         return True
 
 
@@ -46,9 +51,14 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         event = None
         for trolley in trolleyRoster:
             if trolley.getSpeed() > 0:
-                travelTime = (datetime.datetime.now() - trolley.startTime).seconds
-                if travelTime > (trolley.currentPosition.length / 4):
-                    logger.info("Simulating event for SensorID: %s by Trolley: %s", trolley.nextPosition.address, trolley.address)
+                now = datetime.datetime.now()
+                travelTime = (now - trolley.startTime).total_seconds()
+                travelLength = travelTime * self.SIMULATOR_TIME_MULTIPLIER
+                logger.debug("Simulator - Trolley: %s - travelTime: %s TravelLength:%s",trolley.address, travelTime, travelLength)
+                if travelLength > (trolley.currentPosition.length):
+                    realSpeed = trolley.currentPosition.length / travelTime
+                    logger.info("Simulating event for SensorID: %s by Trolley: %s - Time:%s Length:%s RealSpeed:%s", trolley.nextPosition.address, 
+                                trolley.address, travelTime, trolley.currentPosition.length, str("{:.2f}".format(realSpeed)) )
                     event =  trolley.nextPosition.address
                 # Simulate random noise on used block
                 if randint(0, 999) > 990:
@@ -58,16 +68,28 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
     def isSimulatorEnabled(self):
-        return TrolleyAutomation.simulatorEnabled
+        return self.simulatorEnabled
+
+
+    def setDebugFlag(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
+
+
+    def getDebugLevel(self):
+        return logger.level
 
 
     def setSimulatorState(self, state):
-        TrolleyAutomation.simulatorEnabled = state
+        self.simulatorEnabled = state
+        logger.info("AUTOMATION - Set Simulator State: %s, %s",state, self.simulatorEnabled)
 
 
     def setSimulatorEnabled(self):
-        TrolleyAutomation.simulatorEnabled = True
+        self.simulatorEnabled = True
 
 
     def setSimulatorDisabled(self):
-        TrolleyAutomation.simulatorEnabled = False
+        self.simulatorEnabled = False
