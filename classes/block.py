@@ -53,7 +53,7 @@ class Block(object):
         self.length = length
         self.description = description
         self.next = None
-        #self.sensor = jmri.provideSensor(str(blockAddress))
+        self.sensor = jmri.InstanceManager.sensorManagerInstance().provideSensor(str(blockAddress))
         logger.info("Block Added - "+repr(self))
 
 
@@ -98,11 +98,13 @@ class Block(object):
     def set_blockOccupied(self):
         logger.debug("%s.%s: Setting block %s to OCCUPIED", __name__, thisFuncName(), self.address)
         self.occupied = True
+        self.sensor.setKnownState(jmri.Sensor.ACTIVE)
 
 
     def set_blockClear(self):
         logger.debug("%s.%s: Setting block %s to CLEAR", __name__, thisFuncName(), self.address)
         self.occupied = False
+        self.sensor.setKnownState(jmri.Sensor.INACTIVE)
 
 
     def get_blockAddress(self):
