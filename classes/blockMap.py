@@ -271,14 +271,6 @@ class BlockMap(object):
         return None
 
 
-    def findNextBlockByAddress(self,address):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
-        for block in self._blockmap:
-            if block.address == address:
-                return block.next
-        return None
-
-
     def printBlocks(self,trolleyRoster):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputBlockInfo is None:

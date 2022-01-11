@@ -44,7 +44,7 @@ class TrolleyRoster(object):
     __layoutMap = None
     SECONDS_BETWEEN_CONSOLE_ALERTS = 2
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 15
-    SECONDS_BETWEEN_SLOT_REQUESTS = 10
+    SECONDS_BETWEEN_SLOT_REQUESTS = 5
     SECONDS_BEFORE_OVERDUE = 5
 
     def __init__(self, trolleyObjects=None, layoutMap=None, title=None, messageManager=None):
@@ -509,45 +509,45 @@ class TrolleyRoster(object):
     def processBlockEvent(self, sensorId):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if not self.__automationObject.isRunning(): return
+        # check if this event is associated with a trolley that is already in this block
+        # if it is, then treat the event as a bouncy sensor reading
+        if self.findByCurrentBlock(sensorId):
+            logger.info('Bouncy sensor event for block: %s', sensorId)
+            return
         # We should only process sensors going HIGH or OCCUPIED
         # A sensor going high indicates that a trolley has moved into that block
-        if TrolleyRoster.__layoutMap.findBlockByAddress(sensorId) :
-            logger.debug('Processing event for SensorID = %s', sensorId)
-            # check if this event is associated with a trolley that is already in this block
-            # if it is, then treat the event as a bouncy sensor reading
-            if self.findByCurrentBlock(sensorId):
-                logger.info('Bouncy sensor event for block: %s', sensorId)
-                return
-            # check if this event is associated with a trolley that is already in this segment
-            # if it is, then use this trolley.  This gives priority to a trolley that is 
-            # already in a segment vs a new one entering the segment.
-            eventSegmentId = TrolleyRoster.__layoutMap.findSegmentByAddress(sensorId)
-            trolley = self.findByCurrentSegment(eventSegmentId)
-            if trolley and (trolley.isMoving() or trolley.wasMoving()):
-                # If we get here, this trolley was associated with this event
-                logger.info('Trolley %s found in Segment: %s  for Block: %s',trolley.address , eventSegmentId, sensorId)
-                # Move the trolley into the next block
-                trolley.advance(self, TrolleyRoster.__layoutMap)
-                # Check if the trolley should stop at this location
-                if trolley.currentPosition.segment <> trolley.nextPosition.segment: 
-                    if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
-                        logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
-                        trolley.slowStop()
-            else:
-                trolley = self.findByNextBlock(sensorId)
-                if trolley and (trolley.isMoving() or trolley.wasMoving()):
-                    # If we get here, this trolley was associated with this event
-                    logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
-                    # Move the trolley into the next block
-                    trolley.advance(self, TrolleyRoster.__layoutMap)
-                    # Check if the trolley should stop at this location
-                    if trolley.currentPosition.segment <> trolley.nextPosition.segment:
-                        if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
-                            logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
-                            trolley.slowStop()
+        # Priority shoud be given to a trolley that is already in a segment vs a new one entering the segment.
+        # findByNextBlock takes care of prioritizing
+        eventSegmentId = TrolleyRoster.__layoutMap.findSegmentByAddress(sensorId)
+        trolley = self.findByNextBlock(sensorId)
+        logger.debug('Processing event for SensorID = %s in Segment = %s', sensorId, eventSegmentId)
+        if trolley and (trolley.isMoving() or trolley.wasMoving()):
+            # If we get here, this trolley was associated with this event
+            logger.info('Trolley %s found in Segment: %s  for Block: %s',trolley.address , eventSegmentId, sensorId)
+            # Move the trolley into the next block
+            trolley.advance(self, TrolleyRoster.__layoutMap)
+            # Check if the trolley should stop at this location
+            if trolley.currentPosition.segment <> trolley.nextPosition.segment:
+                if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                    logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
+                    trolley.slowStop()
             TrolleyRoster.__layoutMap.printBlocks(self)
             TrolleyRoster.__layoutMap.printSegments(self)
             self.dump()
+        else:
+            logger.warn('DANGER - Sensor message detected for SensorID = %s in Segment = %s but nothing was heading there!', sensorId, eventSegmentId)
+            if trolley != None : logger.warn('DANGER - Trolley %s is scheduled for Block = %s but was not moving!', trolley.address, sensorId)
+            trolley = self.findByNextBlock(sensorId)
+            if trolley and (trolley.isMoving() or trolley.wasMoving()):
+                # If we get here, this trolley was associated with this event
+                logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
+                # Move the trolley into the next block
+                trolley.advance(self, TrolleyRoster.__layoutMap)
+                # Check if the trolley should stop at this location
+                if trolley.currentPosition.segment <> trolley.nextPosition.segment:
+                    if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                        logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
+                        trolley.slowStop()
         return
 
 
