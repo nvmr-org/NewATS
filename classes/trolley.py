@@ -306,7 +306,8 @@ class Trolley(object):
 
     def wasMoving(self):
         speedIsZero = (self.speed == 0)
-        stoppedLessThanMomentumTime = (((datetime.datetime.now() - self.stopTime()).seconds) < Trolley.MOMENTUM_DELAY_SEC)
+        timediff = (datetime.datetime.now() - self.stopTime).seconds
+        stoppedLessThanMomentumTime = (timediff < Trolley.MOMENTUM_DELAY_SEC)
         return ( speedIsZero and stoppedLessThanMomentumTime )
 
 
