@@ -536,8 +536,9 @@ class TrolleyRoster(object):
             self.dump()
         else:
             logger.warn('DANGER - Sensor message detected for SensorID = %s in Segment = %s but nothing was heading there!', sensorId, eventSegmentId)
-            if trolley != None : logger.warn('DANGER - Trolley %s is scheduled for Block = %s but was not moving!', trolley.address, sensorId)
-            audible.announceMessage("DANGER - Trolley "+str(trolley.address)+" in Block "+str(sensorId)+" but should not be moving!")
+            if trolley != None : 
+                logger.warn('DANGER - Trolley %s is scheduled for Block = %s but was not moving!', trolley.address, sensorId)
+                audible.announceMessage("DANGER - Trolley "+str(trolley.address)+" in Block "+str(sensorId)+" but should not be moving!")
             trolley = self.findByNextBlock(sensorId)
             if trolley and (trolley.isMoving() or trolley.wasMoving()):
                 # If we get here, this trolley was associated with this event
