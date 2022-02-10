@@ -146,6 +146,7 @@ class Trolley(object):
         #Trolley.msg.eStop(self.slotId)
         self.setSpeed(0)
         self.stopTime = datetime.datetime.now()
+        self.speedFactor = 1.0
         return
 
 
