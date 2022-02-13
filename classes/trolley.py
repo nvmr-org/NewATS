@@ -165,6 +165,7 @@ class Trolley(object):
         #Trolley.msg.eStop(self.slotId)
         self.setSpeed(0)
         self.stopTime = datetime.datetime.now()
+        self.speedFactor = 1.0
         return
 
 
@@ -328,13 +329,10 @@ class Trolley(object):
 
 
     def wasMoving(self):
-        try:
-            speedIsZero = (self.speed == 0)
-            stoppedLessThanMomentumTime = (((datetime.datetime.now() - self.stopTime()).seconds) < Trolley.MOMENTUM_DELAY_SEC)
-            return ( speedIsZero and stoppedLessThanMomentumTime )
-        except Exception as e:
-            logger.error(e)
-            return False
+        speedIsZero = (self.speed == 0)
+        timediff = (datetime.datetime.now() - self.stopTime).seconds
+        stoppedLessThanMomentumTime = (timediff < Trolley.MOMENTUM_DELAY_SEC)
+        return ( speedIsZero and stoppedLessThanMomentumTime )
 
 
     def getAddress(self):

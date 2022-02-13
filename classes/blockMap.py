@@ -276,14 +276,6 @@ class BlockMap(object):
         return None
 
 
-    def findNextBlockByAddress(self,address):
-        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), address)
-        for block in self._blockmap:
-            if block.address == address:
-                return block.next
-        return None
-
-
     def printBlocks(self,trolleyRoster):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputBlockInfo is None:
@@ -387,20 +379,20 @@ class BlockMap(object):
         self.comment.append(r'# Block 123 - Spencer Boulevard Shelter Yard Side')
         self.comment.append(r'# Block 121 - Spencer Boulevard Buckholtz Yard Side')
         self.comment.append(r'# Block 106 - Spencer Station Yard Side')
-        self.append(Block(blockAddress=100, newSegment=True,  stopRequired=True,  length=24,  description='Thomas Loop'))
+        self.append(Block(blockAddress=100, newSegment=True,  stopRequired=True,  length=26,  description='Thomas Loop'))
         self.append(Block(blockAddress=101, newSegment=True,  stopRequired=False, length=130, description='Spencer Station Aisle Side'))
-        self.append(Block(blockAddress=118, newSegment=True,  stopRequired=False, length=30,  description='Spencer Boulevard Buckholtz Aisle Side'))
-        self.append(Block(blockAddress=116, newSegment=True,  stopRequired=True,  length=135, description='Spencer Boulevard Traffic Intersection Aisle Side'))
-        self.append(Block(blockAddress=117, newSegment=True,  stopRequired=False, length=20,  description='Spencer Boulevard Aisle Track Signal'))
-        self.append(Block(blockAddress=102, newSegment=True,  stopRequired=False, length=48,  description='Single Track Spencer Side Outbound'))
-        self.append(Block(blockAddress=107, newSegment=False, stopRequired=False, length=40,  description='Single Track Majolica Side Outbound'))
-        self.append(Block(blockAddress=104, newSegment=False, stopRequired=False, length=40,  description='Majolica Outbound Loop'))
-        self.append(Block(blockAddress=103, newSegment=False, stopRequired=False, length=50,  description='Majolica Return Loop'))
-        self.append(Block(blockAddress=107, newSegment=False, stopRequired=False, length=40,  description='Single Track Majolica End Returning'))
-        self.append(Block(blockAddress=102, newSegment=False, stopRequired=False, length=48,  description='Single Track Spencer End Returning'))
-        self.append(Block(blockAddress=120, newSegment=True,  stopRequired=False, length=114, description='Spencer Boulevard WNC Interchange Yard Side'))
+        self.append(Block(blockAddress=118, newSegment=True,  stopRequired=False, length=31,  description='Spencer Boulevard Buckholtz Aisle Side'))
+        self.append(Block(blockAddress=116, newSegment=True,  stopRequired=True,  length=136, description='Spencer Boulevard Traffic Intersection Aisle Side'))
+        self.append(Block(blockAddress=117, newSegment=True,  stopRequired=False, length=21,  description='Spencer Boulevard Aisle Track Signal'))
+        self.append(Block(blockAddress=102, newSegment=True,  stopRequired=False, length=51,  description='Single Track Spencer Side Outbound'))
+        self.append(Block(blockAddress=107, newSegment=False, stopRequired=False, length=42,  description='Single Track Majolica Side Outbound'))
+        self.append(Block(blockAddress=104, newSegment=False, stopRequired=False, length=84,  description='Majolica Outbound Loop'))
+        self.append(Block(blockAddress=103, newSegment=False, stopRequired=False, length=58,  description='Majolica Return Loop'))
+        self.append(Block(blockAddress=107, newSegment=False, stopRequired=False, length=42,  description='Single Track Majolica End Returning'))
+        self.append(Block(blockAddress=102, newSegment=False, stopRequired=False, length=51,  description='Single Track Spencer End Returning'))
+        self.append(Block(blockAddress=120, newSegment=True,  stopRequired=False, length=116, description='Spencer Boulevard WNC Interchange Yard Side'))
         self.append(Block(blockAddress=123, newSegment=True,  stopRequired=True,  length=72,  description='Spencer Boulevard Bus Shelter Yard Side'))
-        self.append(Block(blockAddress=121, newSegment=True,  stopRequired=False, length=84,  description='Spencer Boulevard Buckholtz Yard Side'))
+        self.append(Block(blockAddress=121, newSegment=True,  stopRequired=False, length=83,  description='Spencer Boulevard Buckholtz Yard Side'))
         self.append(Block(blockAddress=106, newSegment=True,  stopRequired=True,  length=28,  description='Spencer Station Yard Side'))
 
 

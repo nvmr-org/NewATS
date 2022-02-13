@@ -40,24 +40,12 @@ enableSimulator = False
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
 class ATSLogHandler(logging.StreamHandler):
-#class ATSLogHandler(logging.Handler):
-    """ Not yet working -
-        Handler to redirect logging messages to the scroll text area in the application window
-    """
-    MAXLINES = 1000
     def emit(self, record):
         try:
             log_entry = self.format(record)
             AtsUI.instance.messageInfoText.append(log_entry+"\n")
-            length = AtsUI.instance.messageInfoText.getLineCount()
-            if length > ATSLogHandler.MAXLINES:
-                end = AtsUI.instance.messageInfoText.getLineEndOffset(0)
-                AtsUI.instance.messageInfoText.replaceRange("", 0, end)
-                AtsUI.instance.messageInfoText.setCaretPosition(
-                    AtsUI.instance.messageInfoText.getLineStartOffset(
-                        AtsUI.instance.messageInfoText.getLineCount() - 1))
         except Exception as e:
-            #print("ATSLogHandler Exception - %s",e)
+            print("ATSLogHandler Exception - %s",e)
             pass
 
 
