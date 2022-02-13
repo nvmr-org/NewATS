@@ -207,13 +207,13 @@ class AtsUI(object):
 
     def whenCheckboxClicked(self,event):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        self.setDebugFlag(self.UiDebugCheckBox.isSelected())
-        layoutMap[0].setDebugFlag(self.BlockDebugCheckBox.isSelected())
-        layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
-        #msg.setDebugFlag(self.MsgDebugCheckBox.isSelected())
-        trolleyRoster[0].setDebugFlag(self.TrolleyDebugCheckBox.isSelected())
-        trolleyRoster.setDebugFlag(self.RosterDebugCheckBox.isSelected())
-        self.automationObject.setDebugFlag(self.AutoDebugCheckBox.isSelected())
+        self.setDebugLevel(self.UiDebugCheckBox.isSelected())
+        layoutMap[0].setDebugLevel(self.BlockDebugCheckBox.isSelected())
+        layoutMap.setDebugLevel(self.BlockMapDebugCheckBox.isSelected())
+        #msg.setDebugLevel(self.MsgDebugCheckBox.isSelected())
+        trolleyRoster[0].setDebugLevel(self.TrolleyDebugCheckBox.isSelected())
+        trolleyRoster.setDebugLevel(self.RosterDebugCheckBox.isSelected())
+        self.automationObject.setDebugLevel(self.AutoDebugCheckBox.isSelected())
         logger.info("Debug Levels - UI:%s Block:%s BlockMap:%s Trolley:%s Roster:%s Automation:%s Messages:%s",
                     "DEBUG" if self.getDebugLevel()==logging.DEBUG else "INFO",
                     "DEBUG" if self.BlockDebugCheckBox.isSelected() else "INFO",
@@ -500,6 +500,10 @@ class AtsUI(object):
     def createLoggingComponents(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.logLabel1 = JLabel("Logging:")
+        #self.setDebugLevel(True)
+        #layoutMap.setDebugLevel(True)
+        #trolleyRoster.setDebugLevel(True)
+        #self.automationObject.setDebugLevel(True)
         self.UiDebugCheckBox = JCheckBox("UI", actionPerformed = self.whenCheckboxClicked)
         self.UiDebugCheckBox.setToolTipText("Display all UI debug messages")
         self.UiDebugCheckBox.setSelected(self.getDebugLevel()==logging.DEBUG)
@@ -635,6 +639,10 @@ class AtsUI(object):
                         ("Confirmed" if __response == 0 else "Cancelled"))
             if __response == 0:
                 position = trolleyRoster[row].currentPosition
+                if trolleyRoster[row].throttle:
+                    logger.debug("Trolley %s - Removing throttle", str(trolleyRoster[row].address))
+                    trolleyRoster[row].setSpeed(0)
+                    trolleyRoster[row].throttle.release()
                 trolleyRoster.delete(row)
                 logger.debug("Trolley Deleted - Checking if block %s is CLEAR", str(position.address))
                 if trolleyRoster.findByCurrentBlock(position.address) == None:

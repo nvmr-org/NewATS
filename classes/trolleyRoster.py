@@ -10,6 +10,7 @@ import re
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from classes.trolley import Trolley
+from classes.sensorListener import SensorListener
 
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
@@ -41,10 +42,10 @@ class TrolleyRoster(object):
     automationManager = None
     __outputRosterInfo = None
     __outputMessageInfo = None
-    __layoutMap = None
+    layoutMap = None
     SECONDS_BETWEEN_CONSOLE_ALERTS = 2
     SECONDS_BETWEEN_AUDIBLE_ALERTS = 15
-    SECONDS_BETWEEN_SLOT_REQUESTS = 10
+    SECONDS_BETWEEN_SLOT_REQUESTS = 5
     SECONDS_BEFORE_OVERDUE = 5
 
     def __init__(self, trolleyObjects=None, layoutMap=None, title=None, automationManager=None):
@@ -58,16 +59,17 @@ class TrolleyRoster(object):
         #Trolley.setMessageManager(messageManager)
         TrolleyRoster.automationManager = automationManager
         Trolley.setAutomationManager(automationManager)
+        SensorListener().registerRoster(TrolleyRoster.__instance)
         if trolleyObjects is not None:
             self._list = list(trolleyObjects)
             self.first = None
             self.last = None
-            TrolleyRoster.__layoutMap = layoutMap
+            TrolleyRoster.layoutMap = layoutMap
         else:
             self._list = list()
             self.first = None
             self.last = None
-            TrolleyRoster.__layoutMap = layoutMap
+            TrolleyRoster.layoutMap = layoutMap
 
 
     def __new__(cls, trolleyObjects=None, layoutMap=None, automationManager=None): # __new__ always a class method
@@ -162,7 +164,9 @@ class TrolleyRoster(object):
         if self.findByAddress(trolley.address) != None:
             logger.error("Error: Attempt to register multiple trolleys to the same address: %s", str(trolley.address))
         else:
-            self.checkForMultipleTrolleysInOneBlock()
+            if self.checkForMultipleTrolleysInOneBlock():
+                logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
+                logger.warning('Warning: Trolleys will depart in the order they were registered.')
             self.insert(len(self._list), trolley)
         return
 
@@ -180,6 +184,10 @@ class TrolleyRoster(object):
 
     def getMessageManager(self):
         return self.msg
+
+
+    def getInstance(self):
+        return TrolleyRoster.__instance
 
 
     def setMessageManager(self, messageManager):
@@ -237,8 +245,9 @@ class TrolleyRoster(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             logger.trace('Trolley: %s Free Slot #%s',str(trolley.address),str(trolley.slotId))
-            if trolley.slotId:
-                trolley.freeSlot()
+            if trolley.throttle:
+                trolley.eStop()
+                trolley.throttle.release()
                 logger.info('Trolley %s Stopped and Removed', trolley.address)
             else:
                 logger.debug("Trolley %s - No slot assigned",str(trolley.address))
@@ -294,7 +303,7 @@ class TrolleyRoster(object):
         currentPosition = int(trolley.find('currentPosition').text)
         positionDescription  = trolley.find('currentPositionDescription').text
         logger.info('Address:%s MxSp:%s Sound:%s Pos:%s Description:%s', address, maxSpeed, soundEnabled, currentPosition, positionDescription)
-        self.append(Trolley(self.__layoutMap,address=address, maxSpeed=maxSpeed,
+        self.append(Trolley(self.layoutMap,address=address, maxSpeed=maxSpeed,
                                soundEnabled=soundEnabled, currentPosition=currentPosition))
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
 
@@ -310,7 +319,7 @@ class TrolleyRoster(object):
         __rosterStatusInfo.append("*********************************************\n")
         __rosterStatusInfo.append(str(datetime.datetime.now())+" - TrolleyRoster\n")
         __rosterStatusInfo.append("*********************************************\n")
-        self.checkForMultipleTrolleysInOneBlock()
+        #self.checkForMultipleTrolleysInOneBlock()
         if self.checkForMultipleTrolleysInOneBlock():
             __rosterStatusInfo.append('Warning: Multiple trolleys registered to the same block.\n')
         __rosterStatusInfo.append("Roster Size: "+str(self.size()))
@@ -370,7 +379,7 @@ class TrolleyRoster(object):
     def findByNextBlock(self, nextPosition):
         logger.trace("Entering %s.%s %s", __name__, thisFuncName(), nextPosition)
         numScheduledForBlock = self.count(t for t in self._list if t.nextPosition.address == nextPosition)
-        segmentForNextPosition = TrolleyRoster.__layoutMap.findSegmentByAddress(nextPosition)
+        segmentForNextPosition = TrolleyRoster.layoutMap.findSegmentByAddress(nextPosition)
         logger.debug("Number of Trolleys Scheduled for Block  %s: %s", str(nextPosition), str(numScheduledForBlock) )
         trolleysScheduledForBlock = []
         for trolley in self._list:
@@ -490,7 +499,7 @@ class TrolleyRoster(object):
     def checkIfTrolleyShouldStop(self,trolley):
         logger.trace("Entering %s.%s %s", __name__, thisFuncName(), trolley.address)
         # If the next segment is occupied return false
-        if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
+        if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
             logger.info("Trolley %s Must stop next segment occupied", trolley.address)
             return True
         # If this trolley is in a block that requires a stop and has not been stopped long enough return true
@@ -498,15 +507,18 @@ class TrolleyRoster(object):
             if not self.__checkRequiredStopTimeMet(trolley.stopTime, trolley.currentPosition.waitTime): 
                 logger.info("Trolley %s Required stop time has not been met", trolley.address)
                 return True
-        # If this trolley is not the next one scheduled for the next block return true
-        if trolley.address != self.findByNextBlock(trolley.nextPosition.address).address: 
-            # The exception to this is if the next block is part of the current segment the trolley is already in
-            if trolley.currentPosition.segment != trolley.nextPosition.segment:
-                logger.info("Trolley %s Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
-                return True
-            else:
-                logger.info("Trolley %s Not the first trolley scheduled for Block %s - ******* CONTINUE IN SEGMENT CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
-            #return True
+        try:
+            # If this trolley is not the next one scheduled for the next block return true
+            if trolley.address != self.findByNextBlock(trolley.nextPosition.address).address: 
+                # The exception to this is if the next block is part of the current segment the trolley is already in
+                if trolley.currentPosition.segment != trolley.nextPosition.segment:
+                    logger.info("Trolley %s Not the first trolley scheduled for Block %s", trolley.address, trolley.nextPosition.address)
+                    return True
+                else:
+                    logger.info("Trolley %s Not the first trolley scheduled for Block %s - ******* CONTINUE IN SEGMENT CLEARANCE GRANTED", trolley.address, trolley.nextPosition.address)
+                #return True
+        except Exception as e:
+            logger.error("EXCEPTION: Trolley %s findByNextBlock=%s" , trolley.address, self.findByNextBlock(trolley.nextPosition.address))
         #print "Reason: is allowed to move"
         return False
 
@@ -518,7 +530,7 @@ class TrolleyRoster(object):
             logger.info("Trolley %s Alert: Slot Not Yet Set", trolley.address)
             return False
         # If the next segment is occupied return false
-        if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and (trolley.currentPosition.segment != trolley.nextPosition.segment) : 
+        if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and (trolley.currentPosition.segment != trolley.nextPosition.segment) : 
             logger.debug("Trolley %s Next segment occupied", trolley.address)
             return False
         # If this trolley is in a block that requires a stop and has not been stopped long enough return false
@@ -551,8 +563,9 @@ class TrolleyRoster(object):
         if not self.automationManager.isRunning(): return
         # We should only process sensors going HIGH or OCCUPIED
         # A sensor going high indicates that a trolley has moved into that block
-        if TrolleyRoster.__layoutMap.findBlockByAddress(sensorId) :
-            logger.debug('Processing event for SensorID = %s', sensorId)
+        logger.debug("Checking for block by address: %s", TrolleyRoster.layoutMap.findBlockByAddress(sensorId))
+        if TrolleyRoster.layoutMap.findBlockByAddress(sensorId) :
+            logger.info('Processing event for SensorID = %s', sensorId)
             # check if this event is associated with a trolley that is already in this block
             # if it is, then treat the event as a bouncy sensor reading
             if self.findByCurrentBlock(sensorId):
@@ -561,16 +574,16 @@ class TrolleyRoster(object):
             # check if this event is associated with a trolley that is already in this segment
             # if it is, then use this trolley.  This gives priority to a trolley that is 
             # already in a segment vs a new one entering the segment.
-            eventSegmentId = TrolleyRoster.__layoutMap.findSegmentByAddress(sensorId)
+            eventSegmentId = TrolleyRoster.layoutMap.findSegmentByAddress(sensorId)
             trolley = self.findByCurrentSegment(eventSegmentId)
             if trolley and (trolley.isMoving() or trolley.wasMoving()):
                 # If we get here, this trolley was associated with this event
                 logger.info('Trolley %s found in Segment: %s  for Block: %s',trolley.address , eventSegmentId, sensorId)
                 # Move the trolley into the next block
-                trolley.advance(self, TrolleyRoster.__layoutMap)
+                trolley.advance(self, TrolleyRoster.layoutMap)
                 # Check if the trolley should stop at this location
                 if trolley.currentPosition.segment <> trolley.nextPosition.segment: 
-                    if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                    if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
                         logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
                         trolley.slowStop()
             else:
@@ -579,14 +592,14 @@ class TrolleyRoster(object):
                     # If we get here, this trolley was associated with this event
                     logger.info('Trolley %s found for block: %s',trolley.address , sensorId)
                     # Move the trolley into the next block
-                    trolley.advance(self, TrolleyRoster.__layoutMap)
+                    trolley.advance(self, TrolleyRoster.layoutMap)
                     # Check if the trolley should stop at this location
                     if trolley.currentPosition.segment <> trolley.nextPosition.segment:
-                        if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
+                        if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
                             logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
                             trolley.slowStop()
-            TrolleyRoster.__layoutMap.printBlocks(self)
-            TrolleyRoster.__layoutMap.printSegments(self)
+            TrolleyRoster.layoutMap.printBlocks(self)
+            TrolleyRoster.layoutMap.printSegments(self)
             self.dump()
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return

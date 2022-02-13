@@ -5,12 +5,17 @@ Created on Nov 18, 2016
 '''
 import sys
 import logging
+import java.beans
 import jmri
 from jmri import Sensor
+from classes.sensorListener import SensorListener
+from classes.sensorListener import ManagerListener
+
 
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
 thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
+
 
 class Block(object):
     """The layout class defines blocks and segments of a layout.  Blocks should be 
@@ -35,6 +40,7 @@ class Block(object):
         segmentCount: The total number of segments
     """
     segmentCount = 0
+    listener = SensorListener()
 
     def __init__(self, blockAddress=-1, newSegment=False, stopRequired=True, waitTime=15, blockOccupied=False, length=10, description=None):
         """Return a Layout object whose id is *blockAddress* and *segmentAddress* 
@@ -54,6 +60,9 @@ class Block(object):
         self.description = description
         self.next = None
         self.sensor = jmri.InstanceManager.sensorManagerInstance().provideSensor(str(blockAddress))
+        self.sensor.addPropertyChangeListener(Block.listener)
+        if self.sensor.getRawState() == jmri.Sensor.UNKNOWN :
+            self.sensor.setKnownState(jmri.Sensor.INACTIVE)
         logger.info("Block Added - "+repr(self))
 
 
@@ -74,7 +83,7 @@ class Block(object):
                     " Len:"+str(self.length)+
                     " Desc:"+str(self.description))
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)
@@ -98,13 +107,13 @@ class Block(object):
     def set_blockOccupied(self):
         logger.debug("%s.%s: Setting block %s to OCCUPIED", __name__, thisFuncName(), self.address)
         self.occupied = True
-        self.sensor.setKnownState(jmri.Sensor.ACTIVE)
+        #self.sensor.setKnownState(jmri.Sensor.ACTIVE)
 
 
     def set_blockClear(self):
         logger.debug("%s.%s: Setting block %s to CLEAR", __name__, thisFuncName(), self.address)
         self.occupied = False
-        self.sensor.setKnownState(jmri.Sensor.INACTIVE)
+        #self.sensor.setKnownState(jmri.Sensor.INACTIVE)
 
 
     def get_blockAddress(self):

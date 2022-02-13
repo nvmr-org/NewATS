@@ -6,6 +6,7 @@ from random import randint
 from classes.trolleyRoster import TrolleyRoster
 #from classes.messengerFacade import Messenger
 
+
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
 thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
@@ -49,8 +50,9 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         if self.isRunning():
             logger.trace("Automation is running")
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
-                trolleyRoster.processAllTrolleyMovement()
                 if self.simulatorEnabled : self.simulateAllMovement()
+                trolleyRoster.processAllTrolleyMovement()
+                if self.simulatorEnabled : self.simulateBlockSensorUpdates()
                 #trolleyRoster.refreshTrolleysSlots()
             else:
                 trolleyRoster.registerOneTrolley()
@@ -69,16 +71,26 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
                 travelTime = (now - trolley.startTime).total_seconds()
                 travelLength = travelTime * self.SIMULATOR_TIME_MULTIPLIER
                 logger.debug("Simulator - Trolley: %s - travelTime: %s TravelLength:%s",trolley.address, travelTime, travelLength)
-                if travelLength > (trolley.currentPosition.length):
+                if (travelLength > (trolley.currentPosition.length)) and (trolley.nextPosition.sensor.getRawState() != jmri.Sensor.ACTIVE):
                     realSpeed = trolley.currentPosition.length / travelTime
                     logger.info("Simulating event for SensorID: %s by Trolley: %s - Time:%s Length:%s RealSpeed:%s", trolley.nextPosition.address, 
                                 trolley.address, travelTime, trolley.currentPosition.length, str("{:.2f}".format(realSpeed)) )
                     event =  trolley.nextPosition.address
+                    trolley.nextPosition.sensor.setKnownState(jmri.Sensor.ACTIVE)
                 # Simulate random noise on used block
-                if randint(0, 999) > 990:
-                    event =  trolley.currentPosition.address
-        if event: self.msg.sendSenorReportMsg(event)
+                #if randint(0, 999) > 990:
+                #    event =  trolley.currentPosition.address
+                #    trolley.currentPosition.set_blockOccupied()
         return event
+
+
+    def simulateBlockSensorUpdates(self):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        for block in trolleyRoster.layoutMap:
+            if (block.isBlockOccupied() == False) and (block.sensor.getRawState() != jmri.Sensor.INACTIVE):
+                logger.debug("Simulating event for SensorID: %s to INACTIVE", block.address)
+                block.sensor.setKnownState(jmri.Sensor.INACTIVE)
+        return
 
 
     def isSimulatorEnabled(self):
@@ -97,11 +109,18 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
     def setSimulatorState(self, state):
-        self.simulatorEnabled = state
+        if state :
+            self.setSimulatorEnabled()
+        else :
+            self.setSimulatorDisabled()
         logger.info("AUTOMATION - Set Simulator State: %s, %s",state, self.simulatorEnabled)
 
 
     def setSimulatorEnabled(self):
+        for trolley in trolleyRoster:
+            if trolley.currentPosition.sensor.getRawState() != jmri.Sensor.ACTIVE :
+                trolley.currentPosition.sensor.setKnownState(jmri.Sensor.ACTIVE)
+                trolley.currentPosition.set_blockOccupied()
         self.simulatorEnabled = True
 
 
@@ -140,3 +159,4 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         logger.debug("getNewThrottle -  Sent Throttle Request: %s",str(trolley.throttle))
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return 
+

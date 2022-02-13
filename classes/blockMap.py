@@ -129,6 +129,10 @@ class BlockMap(object):
         return logger.level
 
 
+    def getInstance(self):
+        return self.__instance
+
+
     def setBlockInfoOutput(self,output=None):
         self.__outputBlockInfo=output
 
@@ -306,8 +310,9 @@ class BlockMap(object):
         __blockStatusInfo.append("\n")
         for block in self._blockmap:
             #print seg.blockAddress
-            if block.isBlockOccupied()== True:
-                __blockStatusInfo.append("{:<4}".format(trolleyRoster.findByCurrentBlock(block.address).address)+ " ")
+            trolleyFoundInBlock = trolleyRoster.findByCurrentBlock(block.address)
+            if block.isBlockOccupied()== True and trolleyFoundInBlock:
+                __blockStatusInfo.append("{:<4}".format(trolleyFoundInBlock.address)+ " ")
                 #print "ttt  ",
             else:
                 __blockStatusInfo.append("**** ")
@@ -340,8 +345,9 @@ class BlockMap(object):
             __segmentStatusInfo.append("{0:<4}".format(segment)+" ")
         __segmentStatusInfo.append("\n")
         for segment in segments:
-            if self.isSegmentOccupied(segment)== True:
-                __segmentStatusInfo.append("{0:<4}".format(trolleyRoster.findByCurrentSegment(segment).address)+" ")
+            trolleyFoundInSegment=trolleyRoster.findByCurrentSegment(segment)
+            if self.isSegmentOccupied(segment)== True and trolleyFoundInSegment:
+                __segmentStatusInfo.append("{0:<4}".format(trolleyFoundInSegment.address)+" ")
             else:
                 __segmentStatusInfo.append("**** ")
         #__segmentStatusInfo.append("\n")

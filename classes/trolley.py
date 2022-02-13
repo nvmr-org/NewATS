@@ -200,6 +200,7 @@ class Trolley(object):
     def ringBell(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         #if self.soundEnabled: Trolley.msg.ringBell(self.slotId)
+        if self.soundEnabled: self.throttle.setF2Momentary(True)
         return
 
 
@@ -209,6 +210,7 @@ class Trolley(object):
     def lightOff(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         #Trolley.msg.lightOff(self.slotId)
+        if self.throttle: self.throttle.setF0(False)
         return
 
 
@@ -218,6 +220,7 @@ class Trolley(object):
     def lightOn(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         #Trolley.msg.lightOn(self.slotId)
+        if self.throttle: self.throttle.setF0(True)
         return
 
 
@@ -325,9 +328,13 @@ class Trolley(object):
 
 
     def wasMoving(self):
-        speedIsZero = (self.speed == 0)
-        stoppedLessThanMomentumTime = (((datetime.datetime.now() - self.stopTime()).seconds) < Trolley.MOMENTUM_DELAY_SEC)
-        return ( speedIsZero and stoppedLessThanMomentumTime )
+        try:
+            speedIsZero = (self.speed == 0)
+            stoppedLessThanMomentumTime = (((datetime.datetime.now() - self.stopTime()).seconds) < Trolley.MOMENTUM_DELAY_SEC)
+            return ( speedIsZero and stoppedLessThanMomentumTime )
+        except Exception as e:
+            logger.error(e)
+            return False
 
 
     def getAddress(self):

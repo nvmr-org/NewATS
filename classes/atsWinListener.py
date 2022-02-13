@@ -2,11 +2,11 @@ import logging
 import time
 import java.awt.event
 from classes.trolleyRoster import TrolleyRoster
-from classes.messengerFacade import Messenger
+#from classes.messengerFacade import Messenger
 
 logger = logging.getLogger("ATS."+__name__)
 trolleyRoster = TrolleyRoster()
-msg = Messenger()
+#msg = Messenger()
 
 # *************************************************************************
 # WindowListener is a interface class and therefore all of it's           *
@@ -17,8 +17,8 @@ class AtsWinListener(java.awt.event.WindowListener):
     def windowClosing(self, event):
         global killed, fr
         killed = True #this will signal scanReporter thread to exit
-        trolleyRoster.destroy()
-        msg.destroyListener()
+        #trolleyRoster.destroy()
+        #msg.destroyListener()
         return
 
     def windowActivated(self, event):
@@ -32,10 +32,10 @@ class AtsWinListener(java.awt.event.WindowListener):
 
     def windowClosed(self, event):
         global fr
-        trolleyRoster.destroy()
-        time.sleep(3.0) #wait 3 seconds before moving on to allow last free to complete
-        logger.info('slots freed and exited')
-        msg.destroyListener()
+        #trolleyRoster.destroy()
+        #time.sleep(3.0) #wait 3 seconds before moving on to allow last free to complete
+        #logger.info('slots freed and exited')
+        #msg.destroyListener()
         return
 
     def windowIconified(self, event):
