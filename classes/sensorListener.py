@@ -2,9 +2,14 @@
 # * Define the sensor listener: Print some *
 # * information on the status change.      *
 # ******************************************
-#import jmri
+import logging
+import sys
 import java
+import jmri
 
+logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.DEBUG)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 from classes.messenger import Messenger
 
 msg = Messenger()

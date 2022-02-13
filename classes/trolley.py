@@ -100,8 +100,8 @@ class Trolley(object):
     def setAutomationManager(automationObject):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         Trolley.automationManager = automationObject
-        logger.trace("%s.%s - Automation Object: %s",__name__, thisFuncName(),str(Trolley.automationManager))
-        logger.trace("%s.%s", __name__, thisFuncName())
+        logger.debug("%s.%s - Automation Object: %s",__name__, thisFuncName(),str(Trolley.automationManager))
+        logger.debug("Exiting %s.%s", __name__, thisFuncName())
         return
 
 
@@ -237,7 +237,7 @@ class Trolley(object):
             return
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         logger.info("Logger:%s Now at Level: %s", __name__, str(logger.level))
         for handler in logging.getLogger("ATS").handlers:
@@ -251,7 +251,7 @@ class Trolley(object):
 
 
     def setCurrentPosition(self, currentPosition=-1):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s ", __name__, thisFuncName(), currentPosition)
         """Set the Trolley's current position. Note that by setting the current position
         we are implicitly setting the next position"""
         self.currentPosition = currentPosition
@@ -261,7 +261,7 @@ class Trolley(object):
 
     # *******************************************************
     def setSpeed(self, speed=0):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), speed)
         if speed == 0 and self.speed > 0:
             logger.debug("Trolley %s - Updating Stop Time", self.address)
             self.stopTime = datetime.datetime.now() # Update the stop time if stopping
@@ -294,7 +294,7 @@ class Trolley(object):
 
     def advance(self, trolleyRoster, blockMap):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        logger.debug("Trolley %s - Advancing to next block", self.address)
+        logger.debug("Trolley %s - Advancing to block %s", self.address, self.nextPosition.address)
         lastBlock = self.currentPosition
         self.updateSpeedFactor(blockMap)
         self.currentPosition = self.nextPosition

@@ -71,7 +71,7 @@ class Messenger(jmri.jmrix.loconet.LocoNetListener):
         return
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)

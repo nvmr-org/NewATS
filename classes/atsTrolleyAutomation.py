@@ -61,6 +61,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
     def simulateAllMovement(self):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         event = None
         for trolley in trolleyRoster:
             if trolley.getSpeed() > 0:
@@ -84,7 +85,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         return self.simulatorEnabled
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)
@@ -115,27 +116,27 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         TrolleyAutomation.THROTTLE_REQUEST_ADDRESS = address
         TrolleyAutomation.REQUEST_THROTTLE = True
-        logger.trace("%s.%s - Requesting Address:%s - %s", __name__, thisFuncName(),TrolleyAutomation.THROTTLE_REQUEST_ADDRESS,TrolleyAutomation.REQUEST_THROTTLE)
+        logger.debug("%s.%s - Requesting Address:%s - %s", __name__, thisFuncName(),TrolleyAutomation.THROTTLE_REQUEST_ADDRESS,TrolleyAutomation.REQUEST_THROTTLE)
 
 
     def getNewThrottle(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         isLong = True if TrolleyAutomation.THROTTLE_REQUEST_ADDRESS > 100 else False
         trolley = trolleyRoster.findByAddress(TrolleyAutomation.THROTTLE_REQUEST_ADDRESS)
-        logger.trace("getNewThrottle -  address: %s isLong: %s", TrolleyAutomation.THROTTLE_REQUEST_ADDRESS, isLong)
-        logger.trace("getNewThrottle -  trolley address: %s", trolley.address)
+        logger.debug("getNewThrottle -  address: %s isLong: %s", TrolleyAutomation.THROTTLE_REQUEST_ADDRESS, isLong)
+        logger.debug("getNewThrottle -  trolley address: %s", trolley.address)
         try:
-            logger.trace("getNewThrottle -  Calling getThrottle")
+            logger.debug("getNewThrottle -  Calling getThrottle")
             trolley.slotRequestSent = True
             trolley.throttle = self.getThrottle(TrolleyAutomation.THROTTLE_REQUEST_ADDRESS, isLong, TrolleyAutomation.THROTTLE_WAIT_TIME)  # address, long address = true
             trolley.slotId = str(trolley.throttle)
-            logger.trace("getNewThrottle -  ThrottleId: %s ReqSent:%s", str(trolley.throttle),trolley.slotRequestSent)
+            logger.debug("getNewThrottle -  ThrottleId: %s ReqSent:%s", str(trolley.throttle),trolley.slotRequestSent)
             logger.info("Trolley %s -  Throttle Assigned: %s", trolley.address, str(trolley.throttle))
             trolleyRoster.dump()
         except Exception as e:
             trolley.throttle = None
             logger.warn("getNewThrottle -  Throttle Exception: %s", e)
             logger.warn("getNewThrottle -  Unable to get throttle")
-        logger.trace("getNewThrottle -  Sent Throttle Request: %s",str(trolley.throttle))
+        logger.debug("getNewThrottle -  Sent Throttle Request: %s",str(trolley.throttle))
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return 

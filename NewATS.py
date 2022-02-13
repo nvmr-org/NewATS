@@ -71,13 +71,13 @@ def trace(self, message, *args, **kws):
 logging.Logger.trace = trace
 if not len(logger.handlers):
     fileHandler = logging.FileHandler("{0}/{1}.log".format(jmriFileUtilSupport.getUserFilesPath(),'NewATS'))
-    fileHandler.setLevel(logging.INFO)
+    fileHandler.setLevel(logging.DEBUG)
     fileHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     consoleHandler = logging.StreamHandler()
-    consoleHandler.setLevel(TRACE)
+    consoleHandler.setLevel(logging.INFO)
     consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     atsLogHandler = ATSLogHandler()
-    atsLogHandler.setLevel(logging.INFO)
+    atsLogHandler.setLevel(logging.DEBUG)
     atsLogHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     
     logger.addHandler(fileHandler)

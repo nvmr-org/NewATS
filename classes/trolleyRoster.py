@@ -96,7 +96,7 @@ class TrolleyRoster(object):
 
     def __delitem__(self, ii):
         """Delete an item"""
-        logger.trace("%s.%s - delete index=%s", __name__, thisFuncName(),str(ii))
+        logger.debug("%s.%s - delete index=%s", __name__, thisFuncName(),str(ii))
         del self._list[ii]
 
 
@@ -136,10 +136,10 @@ class TrolleyRoster(object):
     def delete(self,ii):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         #currentPosition = self._list[ii].currentPosition
-        logger.trace("%s.%s - Roster Length=%s", __name__, thisFuncName(),len(self._list))
+        logger.debug("%s.%s - Roster Length=%s", __name__, thisFuncName(),len(self._list))
         self._list[ii-1].next = self._list[ii].next
         self.__delitem__(ii)
-        logger.trace("%s.%s - Roster Length=%s", __name__, thisFuncName(),len(self._list))
+        logger.debug("%s.%s - Roster Length=%s", __name__, thisFuncName(),len(self._list))
 
 
     def insert(self, ii, val):
@@ -167,7 +167,7 @@ class TrolleyRoster(object):
         return
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)
@@ -225,8 +225,8 @@ class TrolleyRoster(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
             if self.findByCurrentBlock(trolley.currentPosition.address).address <> trolley.address:
-                logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
-                logger.warning('Warning: Trolleys will depart in the order they were registered.')
+                #logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
+                #logger.warning('Warning: Trolleys will depart in the order they were registered.')
                 self.multipleDetectedInBlock = True
             else:
                 self.multipleDetectedInBlock = False
@@ -346,29 +346,29 @@ class TrolleyRoster(object):
         
 
     def findByCurrentBlock(self, currentPosition):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), currentPosition)
         for trolley in self._list:
             if trolley.currentPosition.address == currentPosition:
-                logger.trace("%s.%s - %s found in block %s", __name__, thisFuncName(),str(trolley.address),str(currentPosition))
+                logger.debug("%s.%s - %s found in block %s", __name__, thisFuncName(),str(trolley.address),str(currentPosition))
                 return trolley
         #return find(lambda trolley: trolley.currentPosition == currentPosition, self._list)
-        logger.trace("%s.%s - No trollies found in block %s", __name__, thisFuncName(),str(currentPosition))
+        logger.debug("%s.%s - No trolleys found in block %s", __name__, thisFuncName(),str(currentPosition))
         return None
         
 
     def findByAddress(self, address):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
-        logger.trace("%s.%s - List Length %s", __name__, thisFuncName(),len(self._list))
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), address)
+        logger.debug("%s.%s - List Length %s", __name__, thisFuncName(),len(self._list))
         for trolley in self._list:
             if trolley.address == address:
-                logger.trace("%s.%s - Found %s", __name__, thisFuncName(),address)
+                logger.debug("%s.%s - Found %s", __name__, thisFuncName(),address)
                 return trolley
         return None
         #return find(lambda trolley: trolley.currentPosition == currentPosition, self._list)
 
 
     def findByNextBlock(self, nextPosition):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), nextPosition)
         numScheduledForBlock = self.count(t for t in self._list if t.nextPosition.address == nextPosition)
         segmentForNextPosition = TrolleyRoster.__layoutMap.findSegmentByAddress(nextPosition)
         logger.debug("Number of Trolleys Scheduled for Block  %s: %s", str(nextPosition), str(numScheduledForBlock) )
@@ -388,7 +388,7 @@ class TrolleyRoster(object):
 
 
     def findByCurrentSegment(self, segment):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), segment)
         for trolley in self._list:
             if trolley.currentPosition.segment == segment:
                 logger.debug("Trolley %s found in Segment:%s",str(trolley.address),str(segment))
@@ -430,7 +430,7 @@ class TrolleyRoster(object):
             logger.trace("%s.%s - SlotTimer:%s", __name__, thisFuncName(),(datetime.datetime.now() - self.SlotIdRequestTimer).total_seconds())
             return
         for trolley in self._list:
-            logger.trace("Trolley %s - Checking Registration", trolley.address)
+            logger.debug("Trolley %s - Checking Registration", trolley.address)
             if trolley.throttle:
                 logger.trace("Trolley %s - Throttle Assigned: %s", trolley.address,str(trolley.throttle))
                 self.dump()
@@ -477,7 +477,7 @@ class TrolleyRoster(object):
 
 
     def checkIfTrolleyIsOverdue(self, trolley):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), trolley.address)
         travelTime = (datetime.datetime.now() - trolley.startTime).total_seconds() - self.SECONDS_BEFORE_OVERDUE
         logger.debug("Trolley %s TravelTime:%s SpeedFactor:%s Mult:%s, Length:%s",
                      trolley.address, travelTime, trolley.speedFactor, travelTime * trolley.speedFactor,
@@ -488,7 +488,7 @@ class TrolleyRoster(object):
 
 
     def checkIfTrolleyShouldStop(self,trolley):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), trolley.address)
         # If the next segment is occupied return false
         if TrolleyRoster.__layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
             logger.info("Trolley %s Must stop next segment occupied", trolley.address)
@@ -512,7 +512,7 @@ class TrolleyRoster(object):
 
 
     def checkIfTrolleyCanMove(self, trolley):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), trolley.address)
         # If the slotId has not been set return false
         if trolley.slotId is None:
             logger.info("Trolley %s Alert: Slot Not Yet Set", trolley.address)
@@ -539,7 +539,7 @@ class TrolleyRoster(object):
 
 
     def __checkRequiredStopTimeMet(self,stopTime, waitTime):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s %s", __name__, thisFuncName(), stopTime, waitTime)
         timeSinceStop = (datetime.datetime.now() - stopTime).total_seconds()
         #logger.info("Required Stop Time Met = %s (TimeStopped: %s   waitTime: %s)", timeSinceStop > waitTime, timeSinceStop, waitTime)
         if timeSinceStop > waitTime: return True
@@ -547,7 +547,7 @@ class TrolleyRoster(object):
 
 
     def processBlockEvent(self, sensorId):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s - sensorId=%s", __name__, thisFuncName(), sensorId)
         if not self.automationManager.isRunning(): return
         # We should only process sensors going HIGH or OCCUPIED
         # A sensor going high indicates that a trolley has moved into that block
@@ -588,6 +588,7 @@ class TrolleyRoster(object):
             TrolleyRoster.__layoutMap.printBlocks(self)
             TrolleyRoster.__layoutMap.printSegments(self)
             self.dump()
+        logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return
 
 

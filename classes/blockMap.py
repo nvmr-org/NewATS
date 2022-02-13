@@ -118,7 +118,7 @@ class BlockMap(object):
         self.__output=output
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)
@@ -235,18 +235,19 @@ class BlockMap(object):
 
 
     def isSegmentOccupied(self, segment):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), segment)
         for block in self._blockmap:
+            #logger.debug("Checking Segment %s - Block %s",segment, str(block.address))
             if block.segment == segment:
                 if block.occupied == True:
                     logger.debug("Segment %s is OCCUPIED - Block %s",segment, str(block.address))
                     return True
-        logger.debug("Segment %s is NOT OCCUPIED", segment)
+        logger.debug("Segment %s is CLEAR", segment)
         return False
 
 
     def findBlockByAddress(self,address):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), address)
         for block in self._blockmap:
             if block.address == address:
                 logger.debug("Block found for address %s",str(block.address))
@@ -255,7 +256,7 @@ class BlockMap(object):
 
 
     def findBlockByDescription(self,description):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), description)
         for block in self._blockmap:
             if block.description == description:
                 return block
@@ -263,7 +264,7 @@ class BlockMap(object):
 
 
     def findSegmentByAddress(self,address):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), address)
         for block in self._blockmap:
             if block.address == address:
                 logger.debug("Segment found for address %s",str(block.address))
@@ -272,7 +273,7 @@ class BlockMap(object):
 
 
     def findNextBlockByAddress(self,address):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), address)
         for block in self._blockmap:
             if block.address == address:
                 return block.next
@@ -311,6 +312,7 @@ class BlockMap(object):
             else:
                 __blockStatusInfo.append("**** ")
         #__blockStatusInfo.append("\n\n")
+        logger.debug(map(str,__blockStatusInfo))
         return ''.join(__blockStatusInfo)
 
 
@@ -343,6 +345,7 @@ class BlockMap(object):
             else:
                 __segmentStatusInfo.append("**** ")
         #__segmentStatusInfo.append("\n")
+        logger.debug(map(str,__segmentStatusInfo))
         return ''.join(__segmentStatusInfo)
 
 
