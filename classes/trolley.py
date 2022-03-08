@@ -309,6 +309,8 @@ class Trolley(object):
         if trolleyRoster.findByCurrentBlock(lastBlock.address) == None:
             logger.debug("Trolley %s - Setting block %s to CLEAR", self.address, str(lastBlock.address))
             lastBlock.set_blockClear()
+            if Trolley.automationManager.simulatorEnabled:
+                Trolley.automationManager.simulateSingleBlockSensorUpdate(lastBlock)
         return                
 
 

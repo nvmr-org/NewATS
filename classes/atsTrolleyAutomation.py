@@ -52,8 +52,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 if self.simulatorEnabled : self.simulateAllMovement()
                 trolleyRoster.processAllTrolleyMovement()
-                if self.simulatorEnabled : self.simulateBlockSensorUpdates()
-                #trolleyRoster.refreshTrolleysSlots()
+                #if self.simulatorEnabled : self.simulateBlockSensorUpdates()
             else:
                 trolleyRoster.registerOneTrolley()
         #else:
@@ -90,6 +89,14 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             if (block.isBlockOccupied() == False) and (block.sensor.getRawState() != jmri.Sensor.INACTIVE):
                 logger.debug("Simulating event for SensorID: %s to INACTIVE", block.address)
                 block.sensor.setKnownState(jmri.Sensor.INACTIVE)
+        return
+
+
+    def simulateSingleBlockSensorUpdate(self, block):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        if (block.isBlockOccupied() == False) and (block.sensor.getRawState() != jmri.Sensor.INACTIVE):
+            logger.debug("Simulating event for SensorID: %s to INACTIVE", block.address)
+            block.sensor.setKnownState(jmri.Sensor.INACTIVE)
         return
 
 

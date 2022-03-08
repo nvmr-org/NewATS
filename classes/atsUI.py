@@ -160,6 +160,8 @@ class AtsUI(object):
         self.automationObject.setSimulatorState(__simulatorState)
         if __simulatorState:
             self.simulatorButton.setText("Disable Simulator")
+            for trolley in trolleyRoster:
+                trolley.speedFactor = 4.0
         else:
             self.simulatorButton.setText("Enable Simulator")
 
