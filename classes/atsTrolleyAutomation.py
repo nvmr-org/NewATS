@@ -63,6 +63,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
                 # Simulate random noise on used block
                 if randint(0, 999) > 990:
                     event =  trolley.currentPosition.address
+                    logger.info("Simulating bouncy sensor event for SensorID: %s", event)
         if event: msg.sendSenorReportMsg(event)
         return event
 

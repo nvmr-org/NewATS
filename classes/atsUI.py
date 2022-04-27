@@ -9,21 +9,20 @@ from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
 from classes.messengerFacade import Messenger
 from classes.blockMap import BlockMap
-from classes.block import Block
 from classes.atsWinListener import AtsWinListener
-from classes.atsTrolleyAutomation import TrolleyAutomation
 from xml.dom import minidom
 
 from java.lang import Runtime
 from javax.swing import BorderFactory, Box
 from javax.swing import JButton, JComboBox, JCheckBox, JLabel, JPanel
-from javax.swing import JTextField, JTable, JTextPane, JTextArea
+from javax.swing import JTextField, JTable, JTextPane
 from javax.swing import JScrollPane, JOptionPane, JSpinner, SpinnerNumberModel
-from javax.swing.text import DefaultCaret, StyleConstants
+from javax.swing.text import StyleConstants
 from javax.swing.table import DefaultTableModel
 from java.awt import BorderLayout, Color, Dimension, FlowLayout, Font
 from java.awt import GridBagConstraints, GridBagLayout, Insets, Toolkit, Rectangle
 from java.awt.event import MouseAdapter
+from jmri.util.swing import TextAreaFIFO
 
 from javax.swing import JFileChooser;
 from javax.swing.filechooser import FileSystemView
@@ -64,6 +63,7 @@ class AtsUI(object):
     atsRosterStatusMessageWindowHeight= int(10*atsRowHeight)
     atsStatusMessageWindowHeight= int(10*atsRowHeight)
     messageInfoText = None
+    MAX_LOG_LINES = 500
 
     def __init__(self, automationObject=None, appName=None):
         # ------------------------------------------------------------------------------------------
@@ -478,13 +478,8 @@ class AtsUI(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         __panel = JPanel()
         __panel.add(JLabel(title))
-        self.messageInfoText = JTextArea(DefaultText, paneHeight, 0) # AtsUI.atsWindowWidth)
-        self.messageInfoText.getCaret().setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE) # automatically scroll to last message
-        self.messageInfoText.font=Font("monospaced", Font.PLAIN, AtsUI.atsFontSize)
-        self.messageInfoText.setText(DefaultText)
-        self.messageInfoText.setLineWrap(True)      # Lines will be wrapped if they are too long
-        self.messageInfoText.setWrapStyleWord(True) # Lines will be wrapped at word boundaries
-        self.messageInfoText.setEditable(False)     # we don't want our Text Area to be editable
+        self.messageInfoText = TextAreaFIFO(AtsUI.MAX_LOG_LINES)
+        self.messageInfoText.setAutoScroll(True)
         scrollField = JScrollPane(self.messageInfoText) #put text area in scroll field
         scrollField.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
         scrollField.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
