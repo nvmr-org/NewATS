@@ -639,7 +639,7 @@ class AtsUI(object):
                 if trolleyRoster[row].throttle:
                     logger.debug("Trolley %s - Removing throttle", str(trolleyRoster[row].address))
                     trolleyRoster[row].setSpeed(0)
-                    trolleyRoster[row].throttle.release()
+                    trolleyRoster[row].throttle.release(None)
                 trolleyRoster.delete(row)
                 logger.debug("Trolley Deleted - Checking if block %s is CLEAR", str(position.address))
                 if trolleyRoster.findByCurrentBlock(position.address) == None:
