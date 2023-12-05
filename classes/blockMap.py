@@ -169,7 +169,7 @@ class BlockMap(object):
             self.__outputBlockDump.append("\n")
         self.__outputBlockDump.append("\n")
         if printFlag:
-            print ''.join(self.__outputBlockDump)
+            print( ''.join(self.__outputBlockDump))
             self.__outputBlockDump = None
         else:
             pass
@@ -279,7 +279,7 @@ class BlockMap(object):
     def printBlocks(self,trolleyRoster):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputBlockInfo is None:
-            print self.getBlockStatus(trolleyRoster)
+            print( self.getBlockStatus(trolleyRoster))
         else:
             self.__outputBlockInfo.setText("")
             __doc = self.__outputBlockInfo.getDocument()
@@ -316,7 +316,7 @@ class BlockMap(object):
     def printSegments(self,trolleyRoster):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputSegmentInfo is None:
-            print self.getSegmentStatus(trolleyRoster)
+            print( self.getSegmentStatus(trolleyRoster))
         else:
             self.__outputSegmentInfo.setText("")
             __doc = self.__outputSegmentInfo.getDocument()
@@ -410,7 +410,7 @@ class BlockMap(object):
             self.title =  tree.find('title')
             for block in blocks.iter(tag = 'block'):
                 self.addXmlBlockToLayoutMap(block)
-        except Exception, e:
+        except Exception as e:
             logger.warning(e)
             logger.warning('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
             self.buildDefaultLayoutMap()

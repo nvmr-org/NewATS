@@ -18,7 +18,7 @@ Based on ATS.py written by
 
 import logging
 
-print "ATS Start"
+print( 'ATS Start' )
 
 try:
     jmriFlag = True

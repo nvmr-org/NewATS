@@ -560,7 +560,7 @@ class AtsUI(object):
             text_file.write(self.getFormattedXml(xmlString))
             text_file.close()
             logger.info("File Created: %s", fileName)
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             logger.error('Unable to save file: %s', fileName)
 

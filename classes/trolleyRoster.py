@@ -232,7 +232,7 @@ class TrolleyRoster(object):
     def checkForMultipleTrolleysInOneBlock(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         for trolley in self._list:
-            if self.findByCurrentBlock(trolley.currentPosition.address).address <> trolley.address:
+            if self.findByCurrentBlock(trolley.currentPosition.address).address != trolley.address:
                 #logger.warning('Warning: Multiple trolleys registered to the same block: %s', trolley.currentPosition.address)
                 #logger.warning('Warning: Trolleys will depart in the order they were registered.')
                 self.multipleDetectedInBlock = True
@@ -256,7 +256,7 @@ class TrolleyRoster(object):
     def dump(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputRosterInfo is None:
-            print self.getRosterStatus()
+            print( self.getRosterStatus())
         else:
             self.__outputRosterInfo.setText("")
             __doc = self.__outputRosterInfo.getDocument()
@@ -499,7 +499,7 @@ class TrolleyRoster(object):
     def checkIfTrolleyShouldStop(self,trolley):
         logger.trace("Entering %s.%s %s", __name__, thisFuncName(), trolley.address)
         # If the next segment is occupied return false
-        if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment <> trolley.nextPosition.segment: 
+        if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment) and trolley.currentPosition.segment != trolley.nextPosition.segment:
             logger.info("Trolley %s Must stop next segment occupied", trolley.address)
             return True
         # If this trolley is in a block that requires a stop and has not been stopped long enough return true
@@ -579,7 +579,7 @@ class TrolleyRoster(object):
             # Move the trolley into the next block
             trolley.advance(self, TrolleyRoster.layoutMap)
             # Check if the trolley should stop at this location
-            if trolley.currentPosition.segment <> trolley.nextPosition.segment:
+            if trolley.currentPosition.segment != trolley.nextPosition.segment:
                 if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
                     logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
                     trolley.slowStop()
@@ -598,7 +598,7 @@ class TrolleyRoster(object):
                 # Move the trolley into the next block
                 trolley.advance(self, TrolleyRoster.layoutMap)
                 # Check if the trolley should stop at this location
-                if trolley.currentPosition.segment <> trolley.nextPosition.segment:
+                if trolley.currentPosition.segment != trolley.nextPosition.segment:
                     if TrolleyRoster.layoutMap.isSegmentOccupied(trolley.nextPosition.segment):
                         logger.info('Trolley %s Stopping in: %s - Reason: Next Segment Occupied',trolley.address , sensorId)
                         trolley.slowStop()
@@ -646,7 +646,7 @@ class TrolleyRoster(object):
             self.reset()
             for trolley in roster.iter(tag = 'trolley'):
                 self.addXmlTrolleyToRoster(trolley)
-        except Exception, e:
+        except Exception as e:
             logger.warning(e)
             logger.warning('Unable to open roster file: %s - Building Default Roster', trolleyRosterFile)
             #TrolleyRoster.buildDefaultRoster()
