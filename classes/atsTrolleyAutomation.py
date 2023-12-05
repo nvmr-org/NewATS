@@ -52,7 +52,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             if trolleyRoster.checkIfAllTrolleysAreRegistered():
                 if self.simulatorEnabled : self.simulateAllMovement()
                 trolleyRoster.processAllTrolleyMovement()
-                #if self.simulatorEnabled : self.simulateBlockSensorUpdates()
+                if self.simulatorEnabled : self.simulateBlockSensorUpdates()
             else:
                 trolleyRoster.registerOneTrolley()
         #else:
@@ -69,7 +69,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
                 now = datetime.datetime.now()
                 travelTime = (now - trolley.startTime).total_seconds()
                 travelLength = travelTime * self.SIMULATOR_TIME_MULTIPLIER
-                logger.debug("Simulator - Trolley: %s - travelTime: %s TravelLength:%s",trolley.address, travelTime, travelLength)
+                #logger.debug("Simulator - Trolley: %s - travelTime: %s TravelLength:%s",trolley.address, travelTime, travelLength)
                 if (travelLength > (trolley.currentPosition.length)) and (trolley.nextPosition.sensor.getRawState() != jmri.Sensor.ACTIVE):
                     realSpeed = trolley.currentPosition.length / travelTime
                     logger.info("Simulating event for SensorID: %s by Trolley: %s - Time:%s Length:%s RealSpeed:%s", trolley.nextPosition.address, 
@@ -124,6 +124,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
 
     def setSimulatorEnabled(self):
+        self.simulateBlockSensorUpdates()
         for trolley in trolleyRoster:
             if trolley.currentPosition.sensor.getRawState() != jmri.Sensor.ACTIVE :
                 trolley.currentPosition.sensor.setKnownState(jmri.Sensor.ACTIVE)
