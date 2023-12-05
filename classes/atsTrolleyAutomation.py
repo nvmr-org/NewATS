@@ -22,7 +22,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
     SIMULATOR_TIME_MULTIPLIER = 4.0
     HANDLER_TIME_SLICE_MILLISEC = 250
     REQUEST_THROTTLE = False
-    THROTTLE_WAIT_TIME = 5
+    THROTTLE_WAIT_TIME = 15
     THROTTLE_REQUEST_ADDRESS = None
 
     def init(self):
@@ -157,13 +157,14 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
             trolley.slotRequestSent = True
             trolley.throttle = self.getThrottle(TrolleyAutomation.THROTTLE_REQUEST_ADDRESS, isLong, TrolleyAutomation.THROTTLE_WAIT_TIME)  # address, long address = true
             trolley.slotId = str(trolley.throttle)
+            trolley.ringBell()
             logger.debug("getNewThrottle -  ThrottleId: %s ReqSent:%s", str(trolley.throttle),trolley.slotRequestSent)
             logger.info("Trolley %s -  Throttle Assigned: %s", trolley.address, str(trolley.throttle))
             trolleyRoster.dump()
         except Exception as e:
             trolley.throttle = None
-            logger.warn("getNewThrottle -  Throttle Exception: %s", e)
-            logger.warn("getNewThrottle -  Unable to get throttle")
+            logger.error("getNewThrottle -  Throttle Exception: %s", e)
+            logger.error("getNewThrottle -  Unable to get throttle")
         logger.debug("getNewThrottle -  Sent Throttle Request: %s",str(trolley.throttle))
         logger.trace("Exiting %s.%s", __name__, thisFuncName())
         return 
