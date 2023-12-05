@@ -36,7 +36,6 @@ class Trolley(object):
 
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.address = address
-        isLong = True if self.address > 100 else False
         self.speed = 0              # Current Speed
         self.maxSpeed = maxSpeed    # Speed when running
         self.soundEnabled = soundEnabled
@@ -65,22 +64,9 @@ class Trolley(object):
         # Keep track of when the last throttle message occurred so we can refresh the throttle
         self.throttleLastMsgTime=datetime.datetime.now()
 
-        #while self.slotId is None:
-        #    logger.info("Waiting for SlotId assignment on Trolley: %s", self.address)
-            #Trolley.interruptableSleep.wait(10)
-        #   time.sleep(0.01)
-        logger.info("Going to add throttle for address: %s isLong: %s", self.address, isLong)
-        #self.throttle = Trolley.msg.requestThrottle(self.address, isLong, Trolley.THROTTLE_WAIT_TIME)  # address, long address = true
+        #logger.info("Going to add throttle for address: %s", self.address)
         self.throttle = None
-        #Trolley.automationManager.REQUEST_THROTTLE = True
-        #Trolley.automationManager.prepareThrottleRequest(self.address)
-        #Trolley.automationManager.handle()
-        #self.throttle = None
-        #logger.info("Return from handle")
         self.slotId = None
-        #if (self.throttle == None) :
-        #    logger.warning("Couldn't assign throttle for address: %s", self.address)
-        #logger.info("Trolley %s - Throttle: %s", self.address, str(self.throttle))
         self.slotRequestSent = None
         logger.info("Trolley Added: %s  in Block: %s at Slot: %s", self.address, self.currentPosition.address,self.slotId)
 
@@ -201,7 +187,7 @@ class Trolley(object):
     def ringBell(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         #if self.soundEnabled: Trolley.msg.ringBell(self.slotId)
-        if self.soundEnabled: self.throttle.setF2Momentary(True)
+        if self.soundEnabled and self.throttle: self.throttle.setF2Momentary(True)
         return
 
 
@@ -266,6 +252,7 @@ class Trolley(object):
     # *******************************************************
     def setSpeed(self, speed=0):
         logger.trace("Entering %s.%s %s", __name__, thisFuncName(), speed)
+        if not self.throttle: return
         if speed == 0 and self.speed > 0:
             logger.debug("Trolley %s - Updating Stop Time", self.address)
             self.stopTime = datetime.datetime.now() # Update the stop time if stopping

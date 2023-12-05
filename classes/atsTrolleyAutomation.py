@@ -147,7 +147,7 @@ class TrolleyAutomation(jmri.jmrit.automat.AbstractAutomaton):
 
     def getNewThrottle(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        isLong = True if TrolleyAutomation.THROTTLE_REQUEST_ADDRESS > 100 else False
+        isLong = True if TrolleyAutomation.THROTTLE_REQUEST_ADDRESS > 127 else False
         trolley = trolleyRoster.findByAddress(TrolleyAutomation.THROTTLE_REQUEST_ADDRESS)
         logger.debug("getNewThrottle -  address: %s isLong: %s", TrolleyAutomation.THROTTLE_REQUEST_ADDRESS, isLong)
         logger.debug("getNewThrottle -  trolley address: %s", trolley.address)
