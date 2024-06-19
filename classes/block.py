@@ -5,10 +5,17 @@ Created on Nov 18, 2016
 '''
 import sys
 import logging
+#import java.beans
+import jmri
+#from jmri import Sensor
+from classes.sensorListener import SensorListener
+#from classes.sensorListener import ManagerListener
+
 
 logger = logging.getLogger("ATS."+__name__)
 logger.setLevel(logging.INFO)
 thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
+
 
 class Block(object):
     """The layout class defines blocks and segments of a layout.  Blocks should be 
@@ -33,8 +40,11 @@ class Block(object):
         segmentCount: The total number of segments
     """
     segmentCount = 0
+    listener = SensorListener()
+    blockManager = jmri.BlockManager()
 
-    def __init__(self, blockAddress=-1, newSegment=False, stopRequired=True, waitTime=15, blockOccupied=False, length=10, description=None):
+    def __init__(self, blockAddress=-1, newSegment=False, stopRequired=True, waitTime=15, blockOccupied=False, length=10,
+                 curvature=None, speed=None, description=None):
         """Return a Layout object whose id is *blockAddress* and *segmentAddress* 
         are negative if not provided.  Blocks should be added in the order they
         will be traversed."""
@@ -51,6 +61,23 @@ class Block(object):
         self.length = length
         self.description = description
         self.next = None
+        self.sensor = jmri.InstanceManager.sensorManagerInstance().provideSensor(str(blockAddress))
+        self.sensor.addPropertyChangeListener(Block.listener)
+        if self.sensor.getRawState() == jmri.Sensor.UNKNOWN :
+            self.sensor.setKnownState(jmri.Sensor.INACTIVE)
+        systemName="IB:BRTPL:"+str(blockAddress).zfill(4)
+        userName="BK"+str(blockAddress)
+        self.block = jmri.InstanceManager.getDefault(jmri.BlockManager).getBlock(systemName)
+        if self.block == None:
+            logger.info("Could not get block with systemName:%s - Creating",systemName)
+            self.block = jmri.InstanceManager.getDefault(jmri.BlockManager).createNewBlock(systemName, userName);
+            if self.block == None:
+                logger.error("BlockManager not block with systemName:%s and userName:%s",systemName,userName)
+            else:
+                self.block.setComment(self.description)
+                self.block.setLength(25.4*self.length)
+                self.block.setSensor("LS"+str(blockAddress))
+                logger.info("BlockManager created block %s",str(self.block))
         logger.info("Block Added - "+repr(self))
 
 
@@ -71,10 +98,11 @@ class Block(object):
                     " Len:"+str(self.length)+
                     " Desc:"+str(self.description))
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)
+        Block.listener.setDebugLevel(state)
         logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
 
 
@@ -95,11 +123,13 @@ class Block(object):
     def set_blockOccupied(self):
         logger.debug("%s.%s: Setting block %s to OCCUPIED", __name__, thisFuncName(), self.address)
         self.occupied = True
+        #self.sensor.setKnownState(jmri.Sensor.ACTIVE)
 
 
     def set_blockClear(self):
         logger.debug("%s.%s: Setting block %s to CLEAR", __name__, thisFuncName(), self.address)
         self.occupied = False
+        #self.sensor.setKnownState(jmri.Sensor.INACTIVE)
 
 
     def get_blockAddress(self):

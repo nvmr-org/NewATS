@@ -16,7 +16,7 @@ from classes.block import Block
 
 
 class BlockMap(object):
-    """A trolley object that consists of the following properties:
+    """A block object that consists of the following properties:
 
     Attributes:
         address: The DCC address of the trolley object.
@@ -118,7 +118,7 @@ class BlockMap(object):
         self.__output=output
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)
@@ -127,6 +127,10 @@ class BlockMap(object):
 
     def getDebugLevel(self):
         return logger.level
+
+
+    def getInstance(self):
+        return self.__instance
 
 
     def setBlockInfoOutput(self,output=None):
@@ -165,7 +169,7 @@ class BlockMap(object):
             self.__outputBlockDump.append("\n")
         self.__outputBlockDump.append("\n")
         if printFlag:
-            print ''.join(self.__outputBlockDump)
+            print( ''.join(self.__outputBlockDump))
             self.__outputBlockDump = None
         else:
             pass
@@ -235,18 +239,19 @@ class BlockMap(object):
 
 
     def isSegmentOccupied(self, segment):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), segment)
         for block in self._blockmap:
+            #logger.debug("Checking Segment %s - Block %s",segment, str(block.address))
             if block.segment == segment:
                 if block.occupied == True:
                     logger.debug("Segment %s is OCCUPIED - Block %s",segment, str(block.address))
                     return True
-        logger.debug("Segment %s is NOT OCCUPIED", segment)
+        logger.debug("Segment %s is CLEAR", segment)
         return False
 
 
     def findBlockByAddress(self,address):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), address)
         for block in self._blockmap:
             if block.address == address:
                 logger.debug("Block found for address %s",str(block.address))
@@ -255,7 +260,7 @@ class BlockMap(object):
 
 
     def findBlockByDescription(self,description):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), description)
         for block in self._blockmap:
             if block.description == description:
                 return block
@@ -263,7 +268,7 @@ class BlockMap(object):
 
 
     def findSegmentByAddress(self,address):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), address)
         for block in self._blockmap:
             if block.address == address:
                 logger.debug("Segment found for address %s",str(block.address))
@@ -274,7 +279,7 @@ class BlockMap(object):
     def printBlocks(self,trolleyRoster):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputBlockInfo is None:
-            print self.getBlockStatus(trolleyRoster)
+            print( self.getBlockStatus(trolleyRoster))
         else:
             self.__outputBlockInfo.setText("")
             __doc = self.__outputBlockInfo.getDocument()
@@ -297,19 +302,21 @@ class BlockMap(object):
         __blockStatusInfo.append("\n")
         for block in self._blockmap:
             #print seg.blockAddress
-            if block.isBlockOccupied()== True:
-                __blockStatusInfo.append("{:<4}".format(trolleyRoster.findByCurrentBlock(block.address).address)+ " ")
+            trolleyFoundInBlock = trolleyRoster.findByCurrentBlock(block.address)
+            if block.isBlockOccupied()== True and trolleyFoundInBlock:
+                __blockStatusInfo.append("{:<4}".format(trolleyFoundInBlock.address)+ " ")
                 #print "ttt  ",
             else:
                 __blockStatusInfo.append("**** ")
         #__blockStatusInfo.append("\n\n")
+        logger.debug(map(str,__blockStatusInfo))
         return ''.join(__blockStatusInfo)
 
 
     def printSegments(self,trolleyRoster):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         if self.__outputSegmentInfo is None:
-            print self.getSegmentStatus(trolleyRoster)
+            print( self.getSegmentStatus(trolleyRoster))
         else:
             self.__outputSegmentInfo.setText("")
             __doc = self.__outputSegmentInfo.getDocument()
@@ -330,11 +337,13 @@ class BlockMap(object):
             __segmentStatusInfo.append("{0:<4}".format(segment)+" ")
         __segmentStatusInfo.append("\n")
         for segment in segments:
-            if self.isSegmentOccupied(segment)== True:
-                __segmentStatusInfo.append("{0:<4}".format(trolleyRoster.findByCurrentSegment(segment).address)+" ")
+            trolleyFoundInSegment=trolleyRoster.findByCurrentSegment(segment)
+            if self.isSegmentOccupied(segment)== True and trolleyFoundInSegment:
+                __segmentStatusInfo.append("{0:<4}".format(trolleyFoundInSegment.address)+" ")
             else:
                 __segmentStatusInfo.append("**** ")
         #__segmentStatusInfo.append("\n")
+        logger.debug(map(str,__segmentStatusInfo))
         return ''.join(__segmentStatusInfo)
 
 
@@ -370,14 +379,14 @@ class BlockMap(object):
         self.comment.append(r'# Block 123 - Spencer Boulevard Shelter Yard Side')
         self.comment.append(r'# Block 121 - Spencer Boulevard Buckholtz Yard Side')
         self.comment.append(r'# Block 106 - Spencer Station Yard Side')
-        self.append(Block(blockAddress=100, newSegment=True,  stopRequired=True,  length=26,  description='Thomas Loop'))
+        self.append(Block(blockAddress=100, newSegment=True,  stopRequired=True,  length=26,  curvature="SEVERE", speed=50, description='Thomas Loop'))
         self.append(Block(blockAddress=101, newSegment=True,  stopRequired=False, length=130, description='Spencer Station Aisle Side'))
         self.append(Block(blockAddress=118, newSegment=True,  stopRequired=False, length=31,  description='Spencer Boulevard Buckholtz Aisle Side'))
         self.append(Block(blockAddress=116, newSegment=True,  stopRequired=True,  length=136, description='Spencer Boulevard Traffic Intersection Aisle Side'))
         self.append(Block(blockAddress=117, newSegment=True,  stopRequired=False, length=21,  description='Spencer Boulevard Aisle Track Signal'))
         self.append(Block(blockAddress=102, newSegment=True,  stopRequired=False, length=51,  description='Single Track Spencer Side Outbound'))
         self.append(Block(blockAddress=107, newSegment=False, stopRequired=False, length=42,  description='Single Track Majolica Side Outbound'))
-        self.append(Block(blockAddress=104, newSegment=False, stopRequired=False, length=84,  description='Majolica Outbound Loop'))
+        self.append(Block(blockAddress=104, newSegment=False, stopRequired=False, length=84,  curvature="SEVERE", speed=50, description='Majolica Outbound Loop'))
         self.append(Block(blockAddress=103, newSegment=False, stopRequired=False, length=58,  description='Majolica Return Loop'))
         self.append(Block(blockAddress=107, newSegment=False, stopRequired=False, length=42,  description='Single Track Majolica End Returning'))
         self.append(Block(blockAddress=102, newSegment=False, stopRequired=False, length=51,  description='Single Track Spencer End Returning'))
@@ -401,7 +410,7 @@ class BlockMap(object):
             self.title =  tree.find('title')
             for block in blocks.iter(tag = 'block'):
                 self.addXmlBlockToLayoutMap(block)
-        except Exception, e:
+        except Exception as e:
             logger.warning(e)
             logger.warning('Unable to open Layout Map: %s - Building Default Layout', layoutMapFile)
             self.buildDefaultLayoutMap()

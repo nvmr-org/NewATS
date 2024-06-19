@@ -2,37 +2,75 @@
 # * Define the sensor listener: Print some *
 # * information on the status change.      *
 # ******************************************
-#import jmri
+import logging
+import sys
 import java
+import jmri
 
-from classes.messenger import Messenger
-
-msg = Messenger()
-
+logger = logging.getLogger("ATS."+__name__)
+logger.setLevel(logging.INFO)
+thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
 class SensorListener(java.beans.PropertyChangeListener):
+    # Define routine to map status numbers to text
+    rosterManager = None
+
+    def stateName(self, state) :
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        if (state == jmri.Sensor.ACTIVE) :
+            return "OCCUPIED"
+        if (state == jmri.Sensor.INACTIVE) :
+            return "CLEAR"
+        if (state == jmri.Sensor.INCONSISTENT) :
+            return "INCONSISTENT"
+        if (state == jmri.Sensor.UNKNOWN) :
+            return "UNKNOWN"
+        return "(invalid)"
+
 
     def propertyChange(self, event):
-        global snrStatusArr
-        
-        #tmsg = "event.propertyName = "+event.propertyName
-        #scrollArea.setText(scrollArea.getText()+tmsg+"\n")
-        #tmsg = "event.source.systemName = "+event.source.systemName
-        #scrollArea.setText(scrollArea.getText()+tmsg+"\n")
-        #print event.propertyName
-        if (event.propertyName == "KnownState"):
-            systemName = event.source.systemName
-            mesg = "Sensor " + systemName
-            mesg = mesg.replace(mesg[:2], '') #delete first two characters
-            if (event.source.userName != None):
-                mesg += " (" + event.source.userName + ")"
-            mesg += " is now " + str(event.newValue)
-            #mesg += " from "+stateName(event.oldValue)
-            #mesg += " to "+stateName(event.newValue)
-            # print mesg
-            # display and/or speak if either range value is empty
-            snrStatusArr[systemName] = event.newValue
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        if (event.propertyName == "KnownState") :
+            mesg = "SensorListener: Sensor "+event.source.systemName
+            sensor_num = int(event.source.systemName[2:])
+            logger.debug("SensorListener: Event Detected for block %s", sensor_num)
+            logger.debug("SensorListener: Block OldState=%s NewState=%s Active=%s",event.oldValue,event.newValue,jmri.Sensor.ACTIVE)
+            if event.newValue == jmri.Sensor.ACTIVE :
+                logger.debug("SensorListener: Block Event Detected for block %s", sensor_num)
+                if SensorListener.rosterManager : SensorListener.rosterManager.processBlockEvent(sensor_num)
+            if (event.source.userName != None) :
+                mesg += " ("+event.source.userName+")"
+            mesg += " from "+self.stateName(event.oldValue)
+            mesg += " to "+self.stateName(event.newValue)
+            logger.debug(mesg)
         return
 
 
-    
+    def registerRoster(self, rosterManager = None):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        SensorListener.rosterManager = rosterManager
+        return
+
+
+    def setDebugLevel(self,state):
+        logger.setLevel(logging.DEBUG if state else logging.INFO)
+        for handler in logging.getLogger("ATS").handlers:
+            handler.setLevel(logging.DEBUG)
+        logger.debug("%s.%s - Logger:%s - Set Debug Flag:%s", __name__, thisFuncName(),str(logger),str(state))
+
+
+    def getDebugLevel(self):
+        return logger.level
+
+
+# Define a Manager listener.  When invoked, a new
+# item has been added, so go through the list of items removing the 
+# old listener and adding a new one (works for both already registered
+# and new sensors)
+class ManagerListener(java.beans.PropertyChangeListener):
+    def propertyChange(self, event):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        sensorList = event.source.getNamedBeanSet()
+        for sensor in sensorList :
+            sensor.removePropertyChangeListener(SensorListener())
+            sensor.addPropertyChangeListener(SensorListener())

@@ -18,7 +18,7 @@ Based on ATS.py written by
 
 import logging
 
-print "ATS Start"
+print( 'ATS Start' )
 
 try:
     jmriFlag = True
@@ -34,7 +34,7 @@ except ImportError:
 
 CONFIGURATION_FILE_NAME = "ATS_Config_File.xml"
 TROLLEY_ROSTER_FILE_NAME = 'ATS_Roster_File.xml'
-LAYOUT_MAP_FILE_NAME ='ATS_Layout_Map.xml'
+LAYOUT_MAP_FILE_NAME ='ATS_Layout_Map_Default.xml'
 APPLICATION_NAME = "Automatic Trolley Sequencer"
 enableSimulator = False
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
@@ -59,28 +59,28 @@ def trace(self, message, *args, **kws):
 logging.Logger.trace = trace
 if not len(logger.handlers):
     fileHandler = logging.FileHandler("{0}/{1}.log".format(jmriFileUtilSupport.getUserFilesPath(),'NewATS'))
-    fileHandler.setLevel(logging.INFO)
+    fileHandler.setLevel(logging.DEBUG)
     fileHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
-    #consoleHandler = logging.StreamHandler()
-    #consoleHandler.setLevel(logging.WARNING)
-    #consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setLevel(logging.INFO)
+    consoleHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     atsLogHandler = ATSLogHandler()
-    atsLogHandler.setLevel(logging.INFO)
+    atsLogHandler.setLevel(logging.DEBUG)
     atsLogHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     
     logger.addHandler(fileHandler)
-    #logger.addHandler(consoleHandler)
+    logger.addHandler(consoleHandler)
     logger.addHandler(atsLogHandler)
 
 from classes.trolleyRoster import TrolleyRoster
 from classes.blockMap import BlockMap
 from classes.announcer import MessageAnnouncer
-from classes.messengerFacade import Messenger
+#from classes.messengerFacade import Messenger
 from classes.atsTrolleyAutomation import TrolleyAutomation
 from classes.atsUI import AtsUI
 
-msg = Messenger()
-msg.createListener()
+#msg = Messenger()
+#msg.createListener()
 # create a TrolleyAutomation object
 trolleyAutomationObject = TrolleyAutomation()
 
@@ -88,7 +88,7 @@ trolleyAutomationObject = TrolleyAutomation()
 logger.info("Initialize Empty Layout Map")
 layoutMap = BlockMap() # Initialize and empty block map to define the layout
 logger.info("Initialize Empty Trolley Roster")
-trolleyRoster = TrolleyRoster(layoutMap=layoutMap, messageManager=msg)  # Initialize an empty roster of trolley devices
+trolleyRoster = TrolleyRoster(layoutMap=layoutMap, automationManager=trolleyAutomationObject)  # Initialize an empty roster of trolley devices
 
 
 # *************************************
@@ -98,7 +98,7 @@ atsUi = AtsUI(automationObject=trolleyAutomationObject, appName=APPLICATION_NAME
 
 # set the name - This will show in the thread monitor
 trolleyAutomationObject.setName(APPLICATION_NAME)
-trolleyRoster.setAutomationObject(trolleyAutomationObject)
+#trolleyRoster.setAutomationManager(trolleyAutomationObject)
 audible = MessageAnnouncer(atsUi.msgSpkCheckBox)
 trolleyRoster.setMessageAnnouncer(audible)
 audible.announceMessage("Welcome to the "+APPLICATION_NAME)

@@ -21,10 +21,11 @@ class Trolley(object):
         nextPosition: This should always be currentPosition + 1.
     """
     #global layoutLength
-
+    automationManager = None
     THROTTLE_REFRESH_TIME = 2 # Seconds between status updates for throttles on a slot
-    THROTTLE_WAIT_TIME = 30
+    THROTTLE_WAIT_TIME = 5
     MOMENTUM_DELAY_SEC = 2 # Seconds to allows for momentum to be considered still moving
+
 
     msg = None
 
@@ -32,9 +33,9 @@ class Trolley(object):
         """Return a Trolley object whose id is *id* and starting position and next 
         position are the 0th and 1st blocks if not provided.  Priority should reflect the 
         order of the trolley's on the Layout."""
+
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.address = address
-        isLong = True if self.address > 100 else False
         self.speed = 0              # Current Speed
         self.maxSpeed = maxSpeed    # Speed when running
         self.soundEnabled = soundEnabled
@@ -55,24 +56,18 @@ class Trolley(object):
         self.lastAlertTime = datetime.datetime.now()        # Time when console alert was generated
         self.lastAudibleAlertTime = datetime.datetime.now() # Time when audible alert was generated
         self.slotId = None
-        self.slotRequestSent = None
+        self.slotRequestSent = True
         self.speedFactor = 1.0  # Default to one inch per second for calculating overdue
-        #print "Going to add throttle for address: ", self.address, "isLong:", isLong
-        #self.throttle = Trolley.msg.requestThrottle(self.address, isLong, Trolley.THROTTLE_WAIT_TIME)  # address, long address = true
-        #print "Return from getThrottle"
         #self.slotId = self.throttle.getLocoNetSlot()\
         #self.slotRequestSent = Trolley.msg.requestSlot(address)
         #logger.info("Trolley SlotRequestSent=%s", self.slotRequestSent)
         # Keep track of when the last throttle message occurred so we can refresh the throttle
         self.throttleLastMsgTime=datetime.datetime.now()
 
-        #while self.slotId is None:
-        #    logger.info("Waiting for SlotId assignment on Trolley: %s", self.address)
-            #Trolley.interruptableSleep.wait(10)
-        #   time.sleep(0.01)
-        #self.slotId = None
-        #if (self.throttle == None) :
-        #    print "Couldn't assign throttle!"
+        #logger.info("Going to add throttle for address: %s", self.address)
+        self.throttle = None
+        self.slotId = None
+        self.slotRequestSent = None
         logger.info("Trolley Added: %s  in Block: %s at Slot: %s", self.address, self.currentPosition.address,self.slotId)
 
 
@@ -83,7 +78,17 @@ class Trolley(object):
 
     @staticmethod
     def setMessageManager(messageManager):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
         Trolley.msg = messageManager
+
+
+    @staticmethod
+    def setAutomationManager(automationObject):
+        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        Trolley.automationManager = automationObject
+        logger.debug("%s.%s - Automation Object: %s",__name__, thisFuncName(),str(Trolley.automationManager))
+        logger.debug("Exiting %s.%s", __name__, thisFuncName())
+        return
 
 
     @staticmethod
@@ -118,7 +123,7 @@ class Trolley(object):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         """Request the Trolley's DCC SlotId."""
         logger.info("Set SlotId - Trolley: "+str(self.address)+" SlotId:"+str(slotId))
-        Trolley.msg.requestSlot(slotId)
+        #Trolley.msg.requestSlot(slotId)
         self.setThrottleLastMsgTime()
         self.setSpeed(0)
 
@@ -132,7 +137,7 @@ class Trolley(object):
         #self.slotRequestSent=False
         time.sleep(0.5) #wait 500 milliseconds
         self.slotRequestSent = None
-        Trolley.msg.freeSlot(self.slotId)
+        #Trolley.msg.freeSlot(self.slotId)
         self.setThrottleLastMsgTime()
         self.slotId = None
         return
@@ -181,7 +186,8 @@ class Trolley(object):
     # *********************************************
     def ringBell(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        if self.soundEnabled: Trolley.msg.ringBell(self.slotId)
+        #if self.soundEnabled: Trolley.msg.ringBell(self.slotId)
+        if self.soundEnabled and self.throttle: self.throttle.setF2Momentary(True)
         return
 
 
@@ -190,7 +196,8 @@ class Trolley(object):
     # **************************
     def lightOff(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        Trolley.msg.lightOff(self.slotId)
+        #Trolley.msg.lightOff(self.slotId)
+        if self.throttle: self.throttle.setF0(False)
         return
 
 
@@ -199,7 +206,8 @@ class Trolley(object):
     # **************************
     def lightOn(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        Trolley.msg.lightOn(self.slotId)
+        #Trolley.msg.lightOn(self.slotId)
+        if self.throttle: self.throttle.setF0(True)
         return
 
 
@@ -219,7 +227,7 @@ class Trolley(object):
             return
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         logger.info("Logger:%s Now at Level: %s", __name__, str(logger.level))
         for handler in logging.getLogger("ATS").handlers:
@@ -233,7 +241,7 @@ class Trolley(object):
 
 
     def setCurrentPosition(self, currentPosition=-1):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s ", __name__, thisFuncName(), currentPosition)
         """Set the Trolley's current position. Note that by setting the current position
         we are implicitly setting the next position"""
         self.currentPosition = currentPosition
@@ -243,12 +251,14 @@ class Trolley(object):
 
     # *******************************************************
     def setSpeed(self, speed=0):
-        logger.trace("Entering %s.%s", __name__, thisFuncName())
+        logger.trace("Entering %s.%s %s", __name__, thisFuncName(), speed)
+        if not self.throttle: return
         if speed == 0 and self.speed > 0:
             logger.debug("Trolley %s - Updating Stop Time", self.address)
             self.stopTime = datetime.datetime.now() # Update the stop time if stopping
-        Trolley.msg.setSpeed(self.slotId, speed)
-        Trolley.msg.setSpeed(self.slotId, speed)  # Send a second time until we figure out why this is needed
+        #Trolley.msg.setSpeed(self.slotId, speed)
+        #Trolley.msg.setSpeed(self.slotId, speed)  # Send a second time until we figure out why this is needed
+        self.throttle.setSpeedSetting(float(speed)/128.0)
         self.setThrottleLastMsgTime()
         if self.speed == 0 and speed > 0:
             logger.debug("Trolley %s - Updating Start Time", self.address)
@@ -275,7 +285,7 @@ class Trolley(object):
 
     def advance(self, trolleyRoster, blockMap):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        logger.debug("Trolley %s - Advancing to next block", self.address)
+        logger.debug("Trolley %s - Advancing to block %s", self.address, self.nextPosition.address)
         lastBlock = self.currentPosition
         self.updateSpeedFactor(blockMap)
         self.currentPosition = self.nextPosition
@@ -286,6 +296,8 @@ class Trolley(object):
         if trolleyRoster.findByCurrentBlock(lastBlock.address) == None:
             logger.debug("Trolley %s - Setting block %s to CLEAR", self.address, str(lastBlock.address))
             lastBlock.set_blockClear()
+            if Trolley.automationManager.simulatorEnabled:
+                Trolley.automationManager.simulateSingleBlockSensorUpdate(lastBlock)
         return                
 
 

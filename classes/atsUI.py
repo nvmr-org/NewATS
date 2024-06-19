@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 from classes.trolley import Trolley
 from classes.trolleyRoster import TrolleyRoster
-from classes.messengerFacade import Messenger
+#from classes.messengerFacade import Messenger
 from classes.blockMap import BlockMap
 from classes.atsWinListener import AtsWinListener
 from xml.dom import minidom
@@ -43,7 +43,7 @@ thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 
 trolleyRoster = TrolleyRoster()
 layoutMap = BlockMap()
-msg = Messenger()
+#msg = Messenger()
 jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
 class AtsUI(object):
@@ -143,6 +143,7 @@ class AtsUI(object):
         self.loadRosterButton.setEnabled(False)
         self.saveRosterButton.setEnabled(False)
         self.loadLayoutButton.setEnabled(False)
+        #trolleyRoster.requestThrottles()
         self.automationObject.start()
         logger.info("Start Running button pressed")
         while self.automationObject.isRunning() == False:
@@ -159,6 +160,8 @@ class AtsUI(object):
         self.automationObject.setSimulatorState(__simulatorState)
         if __simulatorState:
             self.simulatorButton.setText("Disable Simulator")
+            for trolley in trolleyRoster:
+                trolley.speedFactor = 4.0
         else:
             self.simulatorButton.setText("Enable Simulator")
 
@@ -206,13 +209,13 @@ class AtsUI(object):
 
     def whenCheckboxClicked(self,event):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        self.setDebugFlag(self.UiDebugCheckBox.isSelected())
-        layoutMap[0].setDebugFlag(self.BlockDebugCheckBox.isSelected())
-        layoutMap.setDebugFlag(self.BlockMapDebugCheckBox.isSelected())
-        msg.setDebugFlag(self.MsgDebugCheckBox.isSelected())
-        trolleyRoster[0].setDebugFlag(self.TrolleyDebugCheckBox.isSelected())
-        trolleyRoster.setDebugFlag(self.RosterDebugCheckBox.isSelected())
-        self.automationObject.setDebugFlag(self.AutoDebugCheckBox.isSelected())
+        self.setDebugLevel(self.UiDebugCheckBox.isSelected())
+        layoutMap[0].setDebugLevel(self.BlockDebugCheckBox.isSelected())
+        layoutMap.setDebugLevel(self.BlockMapDebugCheckBox.isSelected())
+        #msg.setDebugLevel(self.MsgDebugCheckBox.isSelected())
+        trolleyRoster[0].setDebugLevel(self.TrolleyDebugCheckBox.isSelected())
+        trolleyRoster.setDebugLevel(self.RosterDebugCheckBox.isSelected())
+        self.automationObject.setDebugLevel(self.AutoDebugCheckBox.isSelected())
         logger.info("Debug Levels - UI:%s Block:%s BlockMap:%s Trolley:%s Roster:%s Automation:%s Messages:%s",
                     "DEBUG" if self.getDebugLevel()==logging.DEBUG else "INFO",
                     "DEBUG" if self.BlockDebugCheckBox.isSelected() else "INFO",
@@ -311,7 +314,7 @@ class AtsUI(object):
         container.add(component, gbc)
 
 
-    def setDebugFlag(self,state):
+    def setDebugLevel(self,state):
         logger.setLevel(logging.DEBUG if state else logging.INFO)
         for handler in logging.getLogger("ATS").handlers:
             handler.setLevel(logging.DEBUG)
@@ -494,6 +497,10 @@ class AtsUI(object):
     def createLoggingComponents(self):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
         self.logLabel1 = JLabel("Logging:")
+        #self.setDebugLevel(True)
+        #layoutMap.setDebugLevel(True)
+        #trolleyRoster.setDebugLevel(True)
+        #self.automationObject.setDebugLevel(True)
         self.UiDebugCheckBox = JCheckBox("UI", actionPerformed = self.whenCheckboxClicked)
         self.UiDebugCheckBox.setToolTipText("Display all UI debug messages")
         self.UiDebugCheckBox.setSelected(self.getDebugLevel()==logging.DEBUG)
@@ -512,7 +519,7 @@ class AtsUI(object):
         self.AutoDebugCheckBox.setSelected(self.automationObject.getDebugLevel()==logging.DEBUG)
         self.MsgDebugCheckBox = JCheckBox("Messaging", actionPerformed = self.whenCheckboxClicked)
         self.MsgDebugCheckBox.setToolTipText("Display messaging debug messages")
-        self.MsgDebugCheckBox.setSelected(msg.getDebugLevel()==logging.DEBUG)
+        #self.MsgDebugCheckBox.setSelected(msg.getDebugLevel()==logging.DEBUG)
         self.msgSpkCheckBox = JCheckBox("Announcer")
         self.msgSpkCheckBox.setToolTipText("Speak when alert is sent")
         self.msgSpkCheckBox.setSelected(True)
@@ -553,7 +560,7 @@ class AtsUI(object):
             text_file.write(self.getFormattedXml(xmlString))
             text_file.close()
             logger.info("File Created: %s", fileName)
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             logger.error('Unable to save file: %s', fileName)
 
@@ -629,6 +636,10 @@ class AtsUI(object):
                         ("Confirmed" if __response == 0 else "Cancelled"))
             if __response == 0:
                 position = trolleyRoster[row].currentPosition
+                if trolleyRoster[row].throttle:
+                    logger.debug("Trolley %s - Removing throttle", str(trolleyRoster[row].address))
+                    trolleyRoster[row].setSpeed(0)
+                    trolleyRoster[row].throttle.release(None)
                 trolleyRoster.delete(row)
                 logger.debug("Trolley Deleted - Checking if block %s is CLEAR", str(position.address))
                 if trolleyRoster.findByCurrentBlock(position.address) == None:
