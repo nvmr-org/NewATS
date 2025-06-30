@@ -37,7 +37,6 @@ TROLLEY_ROSTER_FILE_NAME = 'ATS_Roster_File.xml'
 LAYOUT_MAP_FILE_NAME ='ATS_Layout_Map_Default.xml'
 APPLICATION_NAME = "Automatic Trolley Sequencer"
 enableSimulator = False
-jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
 class ATSLogHandler(logging.StreamHandler):
     def emit(self, record):
@@ -58,7 +57,7 @@ def trace(self, message, *args, **kws):
     self._log(TRACE, message, args, **kws) 
 logging.Logger.trace = trace
 if not len(logger.handlers):
-    fileHandler = logging.FileHandler("{0}/{1}.log".format(jmriFileUtilSupport.getUserFilesPath(),'NewATS'))
+    fileHandler = logging.FileHandler("{0}/{1}.log".format(jmri.util.FileUtil.getUserFilesPath(),'NewATS'))
     fileHandler.setLevel(logging.DEBUG)
     fileHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
     consoleHandler = logging.StreamHandler()
@@ -111,7 +110,7 @@ trolleyRoster.setRosterInfoOutput(output=atsUi.rosterInfoPane)
 trolleyRoster.setMessageInfoOutput(output=atsUi.messageInfoPane)
 
 logger.info("Loading Layout Map")
-layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
+layoutMapFilePath = jmri.util.FileUtil.getUserFilesPath()
 layoutMapFile = layoutMapFilePath + LAYOUT_MAP_FILE_NAME
 logger.info("User Files Path: %s", layoutMapFilePath)
 logger.info('Layout Map File: %s', layoutMapFile)
@@ -119,7 +118,7 @@ layoutMap.loadLayoutMapFromXml(layoutMapFile)
 layoutMap.dump()
 
 logger.info("Building Trolley Roster")
-trolleyRosterFilePath = jmriFileUtilSupport.getUserFilesPath()
+trolleyRosterFilePath = jmri.util.FileUtil.getUserFilesPath()
 trolleyRosterFile = trolleyRosterFilePath + TROLLEY_ROSTER_FILE_NAME
 logger.info("User Files Path: %s", trolleyRosterFilePath)
 logger.info("Roster File: %s", trolleyRosterFile)

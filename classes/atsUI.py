@@ -44,7 +44,6 @@ thisFuncName = lambda n=0: sys._getframe(n + 1).f_code.co_name
 trolleyRoster = TrolleyRoster()
 layoutMap = BlockMap()
 #msg = Messenger()
-jmriFileUtilSupport = jmri.util.FileUtilSupport()
 
 class AtsUI(object):
     
@@ -283,7 +282,7 @@ class AtsUI(object):
 
     def getUserSelectedFile(self, description, extensionFilterList, Mode='OPEN'):
         logger.trace("Entering %s.%s", __name__, thisFuncName())
-        layoutMapFilePath = jmriFileUtilSupport.getUserFilesPath()
+        layoutMapFilePath = jmri.util.FileUtil.getUserFilesPath()
         logger.info("User Files Path: %s" + layoutMapFilePath)
         fileChooser = JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory())
         fileFilter =  FileNameExtensionFilter(description, extensionFilterList)
