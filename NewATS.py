@@ -42,7 +42,10 @@ class ATSLogHandler(logging.StreamHandler):
     def emit(self, record):
         try:
             log_entry = self.format(record)
-            AtsUI.instance.messageInfoText.append(log_entry+"\n")
+            if 'AtsUI' in globals() and hasattr(AtsUI, 'instance'):
+                AtsUI.instance.messageInfoText.append(log_entry+"\n")
+            else:
+                print(log_entry)
         except Exception as e:
             print("ATSLogHandler Exception - %s",e)
             pass
