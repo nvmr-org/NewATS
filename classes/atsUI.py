@@ -142,12 +142,8 @@ class AtsUI(object):
         self.loadRosterButton.setEnabled(False)
         self.saveRosterButton.setEnabled(False)
         self.loadLayoutButton.setEnabled(False)
-        #trolleyRoster.requestThrottles()
         self.automationObject.start()
         logger.info("Start Running button pressed")
-        while self.automationObject.isRunning() == False:
-            logger.info("Waiting for Automation to start")
-            time.sleep(1.0)
         return
 
 
